@@ -49,13 +49,23 @@ public class AlbumController {
     }
 
     // PUT update album
-    @PutMapping("/{id}/update-album")
-    public Album updateAlbum(@RequestBody Album album) {
-        return albumRepository.save(album);
+    @PutMapping("/update-album/{id}")
+    public Album updateAlbum(@PathVariable Integer id, @RequestBody Album album) {
+        return albumRepository.findById(id).map(existingAlbum -> {
+            existingAlbum.setAlbumName(album.getAlbumName());
+            existingAlbum.setGenre(album.getGenre());
+            existingAlbum.setReleaseYear(album.getReleaseYear());
+            existingAlbum.setRating(album.getRating());
+            existingAlbum.setArtist(album.getArtist());
+            return albumRepository.save(existingAlbum);
+        }).orElseGet(() -> {
+            album.setId(id);
+            return albumRepository.save(album);
+        });
     }
 
     // DELETE album
-    @DeleteMapping("/{id}/delete-album")
+    @DeleteMapping("/delete-album/{id}")
     public void deleteAlbum(@PathVariable Integer id) {
         albumRepository.deleteById(id);
     }

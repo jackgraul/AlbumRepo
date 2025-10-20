@@ -38,13 +38,21 @@ public class ArtistController {
     }
 
     // PUT update artist
-    @PutMapping("/{id}/update-artist")
-    public Artist updateArtist(@RequestBody Artist artist) {
-        return artistRepository.save(artist);
+    @PutMapping("/update-artist/{id}")
+    public Artist updateArtist(@PathVariable Integer id, @RequestBody Artist artist) {
+        return artistRepository.findById(id).map(existingArtist -> {
+            existingArtist.setArtistName(artist.getArtistName());
+            existingArtist.setLetter(artist.getLetter());
+            existingArtist.setAlbums(artist.getAlbums());
+            return artistRepository.save(existingArtist);
+        }).orElseGet(() -> {
+            artist.setId(id);
+            return artistRepository.save(artist);
+        });
     }
 
     // DELETE artist
-    @DeleteMapping("/{id}/delete-artist")
+    @DeleteMapping("/delete-artist/{id}")
     public void deleteArtist(@PathVariable Integer id) {
         artistRepository.deleteById(id);
     }
