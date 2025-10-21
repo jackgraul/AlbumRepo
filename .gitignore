@@ -18,7 +18,7 @@ backend/.mvn/wrapper/maven-wrapper.jar
 !backend/**/src/main/**/target/
 !backend/**/src/test/**/target/
 
-# STS
+# STS (Spring Tool Suite)
 backend/.apt_generated
 backend/.classpath
 backend/.factorypath
@@ -53,13 +53,11 @@ frontend/node_modules/
 frontend/build/
 frontend/dist/
 frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+frontend/.env.*         # catches all variants (.env.local, .env.dev, etc.)
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
+frontend/pnpm-debug.log*
 frontend/.next/
 frontend/out/
 frontend/.parcel-cache/
@@ -75,3 +73,17 @@ frontend/.vite/
 *.class
 ehthumbs.db
 desktop.ini
+
+# =========================================
+# Optional Global Ignores (useful for local builds)
+# =========================================
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows Thumbs
+ehthumbs_vista.db
+
+# JetBrains Fleet / Rider / WebStorm
+.fleet/
+.idea_modules/
