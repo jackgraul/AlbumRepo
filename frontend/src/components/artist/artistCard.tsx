@@ -1,9 +1,6 @@
 import React from "react";
-import {
-  Card,
-  CardContent,
-  Typography
-} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, Typography, CardActionArea } from "@mui/material";
 
 interface ArtistCardProps {
   id: number;
@@ -11,11 +8,9 @@ interface ArtistCardProps {
   artistName: string;
 }
 
-const ArtistCard: React.FC<ArtistCardProps> = ({
-  id,
-  letter,
-  artistName
-}) => {
+const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName }) => {
+  const navigate = useNavigate();
+
   return (
     <Card
       sx={{
@@ -24,18 +19,23 @@ const ArtistCard: React.FC<ArtistCardProps> = ({
         display: "flex",
         flexDirection: "column",
         transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        "&:hover": { transform: "translateY(-4px)", boxShadow: 6 },
+        "&:hover": { transform: "translateY(-4px)", boxShadow: 6, borderColor: "primary.main" },
       }}
     >
-      <CardContent>
-        <Typography variant="h6" noWrap>
-          {artistName || "Unknown Artist"}
-        </Typography>
+      <CardActionArea
+        onClick={() => navigate(`/artists/${id}`)}
+        sx={{ flexGrow: 1 }}
+      >
+        <CardContent>
+          <Typography variant="h6" noWrap>
+            {artistName || "Unknown Artist"}
+          </Typography>
 
-        <Typography variant="body2" color="text.secondary" noWrap>
-          {letter}
-        </Typography>
-      </CardContent>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {letter}
+          </Typography>
+        </CardContent>
+      </CardActionArea>
     </Card>
   );
 };

@@ -12,5 +12,5 @@ export interface Artist {
   id: number;
   letter: string;
   artistName: string;
-  albums: Album[];
+  albums?: Album[];
 }

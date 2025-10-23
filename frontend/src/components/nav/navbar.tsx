@@ -11,14 +11,20 @@ const Navbar: React.FC = () => {
           variant="h6"
           component={Link}
           to="/"
-          style={{ color: "white", textDecoration: "none", flexGrow: 1 }}
+          sx={{
+            color: "white",
+            textDecoration: "none",
+            flexGrow: 1,
+            "&:hover": { color: "#1976d2" },
+            transition: "color 0.2s ease",
+          }}
         >
           AlbumRepo
         </Typography>
-        <Button color="inherit" component={Link} to="/">
+        <Button color="inherit" component={Link} to="/" sx={{color: "inherit", "&:hover": {color: "primary.main"}}}>
           Albums
         </Button>
-        <Button color="inherit" component={Link} to="/artists">
+        <Button color="inherit" component={Link} to="/artists" sx={{color: "inherit", "&:hover": {color: "primary.main"}}}>
           Artists
         </Button>
       </Toolbar>

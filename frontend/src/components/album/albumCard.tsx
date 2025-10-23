@@ -1,6 +1,6 @@
 import React from "react";
-import { Card, CardContent, Typography, Box } from "@mui/material";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, Typography, Box, CardActionArea } from "@mui/material";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 
@@ -27,27 +27,30 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
   coverURL,
   artistName,
 }) => {
+  const navigate = useNavigate();
+
   const proxiedUrl = coverURL
     ? `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(coverURL)}`
     : "/images/default-cover.png";
 
-  return (
-    <Link
-      to={`/albums/${id}`}
-      style={{ textDecoration: "none", color: "inherit"}}
-    >
-      <Card
-      sx={{
-        height: IMAGE_SIZE + CONTENT_MIN_HEIGHT, // Total height (390px)
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: "background.paper",
-        borderRadius: 2,
-        overflow: "hidden",
-        transition: "box-shadow 0.2s ease, transform 0.2s ease",
-        "&:hover": { boxShadow: 6, transform: "translateY(-4px)" },
-      }}
+return (
+  <Card
+    sx={{
+      height: IMAGE_SIZE + CONTENT_MIN_HEIGHT,
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      backgroundColor: "background.paper",
+      borderRadius: 2,
+      overflow: "hidden",
+      transition: "box-shadow 0.2s ease, transform 0.2s ease",
+      border: "2px solid transparent",
+      "&:hover": { boxShadow: 6, transform: "translateY(-4px)", borderColor: "#1976d2" },
+    }}
+  >
+    <CardActionArea
+      onClick={() => navigate(`/albums/${id}`)}
+      sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch" }}
     >
       {/* ✅ Square image section */}
       <Box
@@ -76,7 +79,6 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
         />
       </Box>
 
-      {/* ✅ Larger text block */}
       <CardContent
         sx={{
           minHeight: CONTENT_MIN_HEIGHT,
@@ -86,12 +88,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
           justifyContent: "flex-start",
         }}
       >
-        <Typography
-          variant="h6"
-          fontWeight={600}
-          noWrap
-          sx={{ lineHeight: 1.2, pb: 1 }}
-        >
+        <Typography variant="h6" fontWeight={600} noWrap sx={{ lineHeight: 1.2, pb: 1 }}>
           {albumName}
         </Typography>
 
@@ -107,9 +104,9 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
           <Box sx={{ mt: 1, height: 20 }} />
         )}
       </CardContent>
-      </Card>
-    </Link>
-  );
+    </CardActionArea>
+  </Card>
+);
 };
 
 export default AlbumCard;

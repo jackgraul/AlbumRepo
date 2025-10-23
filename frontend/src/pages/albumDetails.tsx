@@ -19,23 +19,47 @@ import { Album } from "../models/models";
 const AlbumDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [album, setAlbum] = useState<Album | null>(null);
-  const [loading, setLoading] = useState(true);
+  const isNew = id === "new";
+
+  const [album, setAlbum] = useState<Album | null>(
+    isNew
+      ? {
+          id: 0,
+          albumName: "",
+          releaseYear: new Date().getFullYear(),
+          genre: "",
+          rating: null,
+          coverURL: "",
+          artist: { id: 0, letter: "", artistName: "" },
+        }
+      : null
+  );
+  const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
-  // ✅ Toast state
   const [toast, setToast] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error",
   });
 
-  // ✅ Fetch album
+  const [previewUrl, setPreviewUrl] = useState<string>("/images/default-cover.png");
+
+  // ✅ Fetch album (only if not new)
   useEffect(() => {
+    if (isNew) return;
+
     api
       .get<Album>(`/albums/${id}`)
       .then((res) => {
         setAlbum(res.data);
+        if (res.data.coverURL) {
+          setPreviewUrl(
+            `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(
+              res.data.coverURL
+            )}`
+          );
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -46,7 +70,20 @@ const AlbumDetails: React.FC = () => {
         });
         setLoading(false);
       });
-  }, [id]);
+  }, [id, isNew]);
+
+  // ✅ Live cover preview update
+  useEffect(() => {
+    if (album?.coverURL) {
+      setPreviewUrl(
+        `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(
+          album.coverURL
+        )}`
+      );
+    } else {
+      setPreviewUrl("/images/default-cover.png");
+    }
+  }, [album?.coverURL]);
 
   const handleChange = (field: keyof Album, value: any) => {
     setAlbum((prev) => (prev ? { ...prev, [field]: value } : prev));
@@ -55,12 +92,18 @@ const AlbumDetails: React.FC = () => {
   const handleSave = () => {
     if (!album) return;
     setSaving(true);
-    api
-      .put(`/albums/update-album/${album.id}`, album)
+
+    const request = isNew
+      ? api.post("/albums/add-album", album)
+      : api.put(`/albums/update-album/${album.id}`, album);
+
+    request
       .then(() => {
         setToast({
           open: true,
-          message: "Album saved successfully!",
+          message: isNew
+            ? "Album created successfully!"
+            : "Album saved successfully!",
           severity: "success",
         });
         setSaving(false);
@@ -79,7 +122,7 @@ const AlbumDetails: React.FC = () => {
   const handleDelete = () => {
     if (!album) return;
     api
-      .delete(`/albums/delete-album/${album.id}`)
+      .delete(`/albums/${album.id}`)
       .then(() => {
         setToast({
           open: true,
@@ -106,13 +149,7 @@ const AlbumDetails: React.FC = () => {
       </Box>
     );
 
-  if (!album) return <Typography>Album not found.</Typography>;
-
-  const proxiedUrl = album.coverURL
-    ? `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(
-        album.coverURL
-      )}`
-    : "/images/default-cover.png";
+  if (!album) return null;
 
   return (
     <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center", mt: 5 }}>
@@ -128,7 +165,7 @@ const AlbumDetails: React.FC = () => {
         {/* Left column: Form */}
         <Grid item xs={12} md={7}>
           <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-            Edit Album
+            {isNew ? "Add New Album" : "Edit Album"}
           </Typography>
 
           <Stack spacing={2}>
@@ -186,18 +223,26 @@ const AlbumDetails: React.FC = () => {
               onClick={handleSave}
               disabled={saving}
             >
-              {saving ? "Saving..." : "Save Changes"}
+              {saving
+                ? "Saving..."
+                : isNew
+                ? "Create Album"
+                : "Save Changes"}
             </Button>
-            <Button variant="outlined" color="error" onClick={handleDelete}>
-              Delete Album
-            </Button>
+
+            {!isNew && (
+              <Button variant="outlined" color="error" onClick={handleDelete}>
+                Delete Album
+              </Button>
+            )}
+
             <Button variant="text" onClick={() => navigate("/")}>
               Cancel
             </Button>
           </Stack>
         </Grid>
 
-        {/* Right column: Cover image */}
+        {/* Right column: Cover image preview */}
         <Grid item xs={12} md={5}>
           <Card
             sx={{
@@ -207,15 +252,18 @@ const AlbumDetails: React.FC = () => {
               borderRadius: 2,
               overflow: "hidden",
               boxShadow: 3,
-              marginTop: 15
+              mt: { xs: 4, md: 15 },
             }}
           >
             <CardMedia
               component="img"
               height="320"
-              image={proxiedUrl}
+              image={previewUrl}
               alt={album.albumName}
               sx={{ objectFit: "cover" }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/images/default-cover.png";
+              }}
             />
           </Card>
         </Grid>

@@ -73,6 +73,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
       alignItems="center"
       justifyContent="space-between"
       mb={3}
+      mt={1}
     >
       {/* Search */}
       <TextField
@@ -137,6 +138,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
           onChange={(e) => setSortBy(e.target.value)}
         >
           <MenuItem value="year">Year</MenuItem>
+          <MenuItem value="letter">Letter</MenuItem>
           <MenuItem value="artist">Artist</MenuItem>
           <MenuItem value="title">Title</MenuItem>
           <MenuItem value="genre">Genre</MenuItem>

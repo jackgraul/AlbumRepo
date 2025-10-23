@@ -4,6 +4,7 @@ import { Grid, Box, CircularProgress, Typography } from "@mui/material";
 import api from "../../api/apiClient";
 import ArtistCard from "../artist/artistCard";
 import ArtistFilters from "../artist/artistFilters";
+import ArtistSummaryBar from "./artistSummaryBar";
 
 const ArtistList: React.FC = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -125,6 +126,9 @@ useEffect(() => {
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
       />
+
+      {/* ✅ Summary bar */}
+      <ArtistSummaryBar totalArtists={filteredArtists.length} />
 
       <Grid container spacing={2}>
         {filteredArtists.map((artist) => (

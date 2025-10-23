@@ -4,6 +4,7 @@ import { FixedSizeList as List } from "react-window";
 import api from "../../api/apiClient";
 import AlbumCard from "./albumCard";
 import AlbumFilters from "./albumFilters";
+import AlbumSummaryBar from "./albumSummaryBar";
 import { Album } from "../../models/models";
 
 const CARD_WIDTH = 280;
@@ -20,7 +21,7 @@ const AlbumList: React.FC = () => {
   const [selectedLetter, setSelectedLetter] = useState<string>("");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
   const [minRating, setMinRating] = useState<number | "">("");
-  const [sortBy, setSortBy] = useState<string>("year");
+  const [sortBy, setSortBy] = useState<string>("letter");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [artistOptions, setArtistOptions] = useState<string[]>([]);
 
@@ -92,6 +93,10 @@ const AlbumList: React.FC = () => {
           valA = a.albumName.toLowerCase();
           valB = b.albumName.toLowerCase();
           break;
+        case "letter":
+          valA = a.artist.letter;
+          valB = b.artist.letter;
+          break;
         case "artist":
           valA = a.artist?.artistName?.toLowerCase() ?? "";
           valB = b.artist?.artistName?.toLowerCase() ?? "";
@@ -134,6 +139,7 @@ const AlbumList: React.FC = () => {
               width: "100%",
               px: 1,
               py: 0,
+              pt: 1,
               paddingRight: 3
             }}
           >
@@ -189,6 +195,14 @@ const AlbumList: React.FC = () => {
         setSortBy={setSortBy}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
+      />
+
+      {/* ✅ Summary bar */}
+      <AlbumSummaryBar
+        totalAlbums={filteredAlbums.length}
+        uniqueArtists={
+          new Set(filteredAlbums.map((a) => a.artist?.artistName)).size
+        }
       />
 
       {filteredAlbums.length === 0 ? (
