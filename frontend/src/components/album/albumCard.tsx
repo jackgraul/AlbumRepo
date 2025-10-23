@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, CardContent, Typography, Box } from "@mui/material";
+import { Link } from "react-router-dom";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 
@@ -15,9 +16,10 @@ interface AlbumCardProps {
 
 // Keep consistent with AlbumList
 const IMAGE_SIZE = 280;           // Square cover area
-const CONTENT_MIN_HEIGHT = 110;   // Increased from 80 → fits multi-line text and rating
+const CONTENT_MIN_HEIGHT = 120;   // Increased from 80 → fits multi-line text and rating
 
 const AlbumCard: React.FC<AlbumCardProps> = ({
+  id,
   albumName,
   releaseYear,
   rating,
@@ -30,7 +32,11 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
     : "/images/default-cover.png";
 
   return (
-    <Card
+    <Link
+      to={`/albums/${id}`}
+      style={{ textDecoration: "none", color: "inherit"}}
+    >
+      <Card
       sx={{
         height: IMAGE_SIZE + CONTENT_MIN_HEIGHT, // Total height (390px)
         width: "100%",
@@ -84,7 +90,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
           variant="h6"
           fontWeight={600}
           noWrap
-          sx={{ lineHeight: 1.2, mb: 0.5 }}
+          sx={{ lineHeight: 1.2, pb: 1 }}
         >
           {albumName}
         </Typography>
@@ -95,13 +101,14 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
 
         {rating !== undefined ? (
           <Typography variant="body2" sx={{ mt: 1 }}>
-            ⭐ {rating}/10
+            ⭐ {rating} / 10
           </Typography>
         ) : (
           <Box sx={{ mt: 1, height: 20 }} />
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </Link>
   );
 };
 

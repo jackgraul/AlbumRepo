@@ -7,7 +7,7 @@ import AlbumFilters from "./albumFilters";
 import { Album } from "../../models/models";
 
 const CARD_WIDTH = 280;
-const CARD_HEIGHT = 360; // match AlbumCard height
+const CARD_HEIGHT = 370; // match AlbumCard height
 const GAP = 15; // uniform spacing for both directions
 
 const AlbumList: React.FC = () => {

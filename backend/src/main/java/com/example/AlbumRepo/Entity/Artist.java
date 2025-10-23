@@ -1,6 +1,7 @@
 package com.example.AlbumRepo.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.util.ArrayList;
@@ -20,8 +21,8 @@ public class Artist {
     private String artistName;
 
     @OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonBackReference
-    private List<Album> albums = new ArrayList<>();
+    @JsonIgnoreProperties("artist")
+    private List<Album> albums;
 
     // Getters and Setters
     public Integer getId() { return id; }
