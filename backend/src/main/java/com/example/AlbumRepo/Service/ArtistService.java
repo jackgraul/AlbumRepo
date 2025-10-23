@@ -15,6 +15,10 @@ public class ArtistService {
         this.artistRepository = artistRepository;
     }
 
+    public List<Artist> getArtistsWithAlbums() {
+        return artistRepository.findAllWithAlbums();
+    }
+
     // ✅ Get all artists (optionally sorted)
     public List<Artist> getAllArtists(String sortBy, String direction) {
         Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);

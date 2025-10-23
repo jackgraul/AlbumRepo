@@ -8,6 +8,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface IArtistRepository extends JpaRepository<Artist,Integer> {
+    @Query("SELECT a FROM Artist a LEFT JOIN FETCH a.albums")
+    List<Artist> findAllWithAlbums();
+
     // Find artists whose names start with a letter
     List<Artist> findByArtistNameStartingWithIgnoreCase(String letter);
 

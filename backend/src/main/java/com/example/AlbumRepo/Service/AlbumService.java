@@ -19,6 +19,10 @@ public class AlbumService {
         this.artistRepository = artistRepository;
     }
 
+    public List<Album> getAlbumsWithArtists() {
+        return albumRepository.findAllWithArtists();
+    }
+
     // ✅ Filter by artist
     public List<Album> getAlbumsByArtist(Integer artistId, String sortBy, String direction) {
         Artist artist = artistRepository.findById(artistId)

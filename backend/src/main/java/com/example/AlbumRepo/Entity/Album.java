@@ -1,6 +1,7 @@
 package com.example.AlbumRepo.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 @Entity
@@ -12,7 +13,7 @@ public class Album {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "artist_id", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Artist artist;
 
     @Column(name = "album_name")

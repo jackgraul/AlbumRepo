@@ -22,7 +22,7 @@ public class ArtistController {
     // GET all artists
     @GetMapping
     public List<Artist> getAllArtists() {
-        return artistRepository.findAll();
+        return artistService.getArtistsWithAlbums();
     }
 
     // GET artist by id
