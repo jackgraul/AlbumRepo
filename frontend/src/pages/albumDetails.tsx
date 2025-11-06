@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   TextField,
+  Autocomplete,
   Typography,
   CircularProgress,
   Stack,
@@ -24,9 +25,27 @@ const AlbumDetails: React.FC = () => {
   const preservedSearch =
     location.search || ((location.state as { fromSearch?: string } | null)?.fromSearch ?? "");
 
+  const fromArtistPath =
+    (location.state as { fromArtistPath?: string } | null)?.fromArtistPath ?? null;
+
   const isNew = id === "new";
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+
+  type ArtistOption = { id: number; artistName: string; letter: string };
+
+  const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
+  const [artistLoading, setArtistLoading] = useState(false);
+
+  useEffect(() => {
+    setArtistLoading(true);
+    api.get<ArtistOption[]>("/artists")
+      .then(res => {
+        const opts = res.data.map(a => ({ id: a.id, artistName: a.artistName, letter: a.letter }));
+        setArtistOptions(opts);
+      })
+      .finally(() => setArtistLoading(false));
+  }, []);
 
   const [album, setAlbum] = useState<Album | null>(
     isNew
@@ -40,6 +59,11 @@ const AlbumDetails: React.FC = () => {
           artist: { id: 0, letter: "", artistName: "" },
         }
       : null
+  );
+
+  const selectedArtist = useMemo(
+    () => artistOptions.find(o => o.id === album?.artist?.id) ?? null,
+    [artistOptions, album?.artist?.id]
   );
 
   const [toast, setToast] = useState<{
@@ -84,15 +108,20 @@ const AlbumDetails: React.FC = () => {
     setAlbum((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
-  const goBackToList = () =>
-    navigate({ pathname: "/albums", search: preservedSearch});
+  const goBack = () => {
+    if (fromArtistPath) {
+      navigate(fromArtistPath, {replace: true});
+    } else {
+      navigate({ pathname: "/albums", search: preservedSearch });
+    }
+  };
 
   const handleSave = () => {
     if (!album) return;
     setSaving(true);
 
     const request = isNew
-      ? api.post("/albums/add-album", album)
+      ? api.post("/albums/add-album", (({ id, ...rest }) => rest)(album as any))
       : api.put(`/albums/update-album/${album.id}`, album);
 
     request
@@ -105,7 +134,7 @@ const AlbumDetails: React.FC = () => {
           severity: "success",
         });
         setSaving(false);
-        setTimeout(goBackToList, 1200);
+        setTimeout(goBack, 1200);
       })
       .catch(() => {
         setToast({
@@ -127,7 +156,7 @@ const AlbumDetails: React.FC = () => {
           message: "Album deleted successfully!",
           severity: "success",
         });
-        setTimeout(goBackToList, 1000);
+        setTimeout(goBack, 1000);
       })
       .catch(() => {
         setToast({
@@ -173,16 +202,22 @@ const AlbumDetails: React.FC = () => {
               fullWidth
             />
 
-            <TextField
-              label="Artist"
-              value={album.artist?.artistName ?? ""}
-              onChange={(e) =>
-                handleChange("artist", {
-                  ...album.artist,
-                  artistName: e.target.value,
-                })
-              }
-              fullWidth
+            <Autocomplete
+              options={artistOptions}
+              value={selectedArtist}
+              loading={artistLoading}
+              getOptionLabel={(o) => o?.artistName ?? ""}
+              isOptionEqualToValue={(o, v) => o.id === v.id}
+              onChange={(_, newValue) => {
+                 handleChange("artist", newValue ? ({ id: newValue.id } as any) : ({ id: 0 } as any));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Artist"
+                  placeholder="Search artists…"
+                />
+              )}
             />
 
             <TextField
@@ -243,7 +278,7 @@ const AlbumDetails: React.FC = () => {
               </Button>
             )}
 
-            <Button variant="text" onClick={goBackToList}>
+            <Button variant="text" onClick={goBack}>
               Cancel
             </Button>
           </Stack>

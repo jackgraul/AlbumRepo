@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
+  Card,
+  CardActionArea,
+  CardContent,
   Button,
   TextField,
   Typography,
@@ -66,9 +69,20 @@ const ArtistDetails: React.FC = () => {
     if (!artist) return;
     setSaving(true);
 
+    console.log("Updating artist:", {
+  id,
+  artistName: artist.artistName,
+  letter: artist.letter,
+  albums: artist.albums ?? []
+});
+
     const request = isNew
-      ? api.post("/artists/add-artist", artist)
-      : api.put(`/artists/update-artist/${artist.id}`, artist);
+      ? api.post("/artists/add-artist", {artistName: artist.artistName, letter: artist.letter})
+      : api.put(`/artists/update-artist/${artist.id}`, {
+    artistName: artist.artistName,
+    letter: artist.letter,
+    albums: artist.albums ? artist.albums : [],
+  });
 
     request
       .then(() => {
@@ -82,10 +96,11 @@ const ArtistDetails: React.FC = () => {
         setSaving(false);
         setTimeout(() => navigate("/artists"), 1200);
       })
-      .catch(() => {
+      .catch((err) => {
         setToast({
           open: true,
-          message: "Failed to save artist.",
+          message: err?.response?.data?.message ||
+          "Failed to save artist.",
           severity: "error",
         });
         setSaving(false);
@@ -95,7 +110,7 @@ const ArtistDetails: React.FC = () => {
   const handleDelete = () => {
     if (!artist) return;
     api
-      .delete(`/artists/${artist.id}`)
+      .delete(`/artists/delete-artist/${artist.id}`)
       .then(() => {
         setToast({
           open: true,
@@ -150,7 +165,7 @@ const ArtistDetails: React.FC = () => {
             <TextField
               label="Letter"
               value={artist.letter}
-              onChange={(e) => handleChange("letter", e.target.value)}
+              onChange={(e) => handleChange("letter", e.target.value.toUpperCase())}
               fullWidth
             />
           </Stack>
@@ -186,55 +201,57 @@ const ArtistDetails: React.FC = () => {
 
               {artist.albums?.length ? (
                 artist.albums.map((a) => (
-                  <Box
+                  <Card
                     key={a.id}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,   
-                      px: 2,
-                      py: 1.25,
                       borderRadius: 1.5,
                       border: "1px solid",
                       borderColor: "divider",
+                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                      "&:hover": {
+                        transform: "translateY(-4px)",
+                        boxShadow: 6,
+                        borderColor: "primary.main",
+                      },
                     }}
                   >
-                    <LazyLoadImage
-                      src={a.coverURL ?? ""}
-                      alt={a.albumName ?? "Album cover"}
-                      effect="blur"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/images/default-cover.png";
-                      }}
-                      style={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: 8,
-                        objectFit: "cover",
-                        objectPosition: "center",
-                        flexShrink: 0,
-                      }}
-                    />
+                    <CardActionArea onClick={() => navigate(`/albums/${a.id}`, {state: {fromArtistPath: `/artists/${artist.id}`}})}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 2, py: 1.25 }}>
+                        <LazyLoadImage
+                          src={a.coverURL ?? ""}
+                          alt={a.albumName ?? "Album cover"}
+                          effect="blur"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/images/default-cover.png";
+                          }}
+                          style={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: 8,
+                            objectFit: "cover",
+                            objectPosition: "center",
+                            flexShrink: 0,
+                          }}
+                        />
 
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        {a.albumName}
-                      </Typography>
-
-                      <Typography variant="body2" color="text.secondary">
-                        {a.releaseYear ?? ""}
-                      </Typography>
-
-                      <Typography variant="body2" color="text.secondary">
-                        {a.rating != null ? `★ ${a.rating}` : ""}
-                      </Typography>
-
-                      <Typography variant="body2" color="text.secondary">
-                        {a.genre ?? ""}
-                      </Typography>
-                    </Box>
-                  </Box>
+                        <CardContent sx={{ flexGrow: 1, p: 0 }}>
+                          <Typography variant="subtitle1" fontWeight={600}>
+                            {a.albumName}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {a.releaseYear ?? ""}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {a.rating != null ? `★ ${a.rating}` : ""}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {a.genre ?? ""}
+                          </Typography>
+                        </CardContent>
+                      </Box>
+                    </CardActionArea>
+                  </Card>
                 ))
               ) : (
                 <Typography color="text.secondary">No albums for this artist.</Typography>

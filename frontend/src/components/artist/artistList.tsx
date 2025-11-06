@@ -128,6 +128,7 @@ useEffect(() => {
               id={artist.id}
               letter={artist.letter}
               artistName={artist.artistName}
+              albums={artist.albums ?? []}
             />
           </Grid>
         ))}

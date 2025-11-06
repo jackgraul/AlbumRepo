@@ -43,12 +43,8 @@ public class ArtistController {
         return artistRepository.findById(id).map(existingArtist -> {
             existingArtist.setArtistName(artist.getArtistName());
             existingArtist.setLetter(artist.getLetter());
-            existingArtist.setAlbums(artist.getAlbums());
             return artistRepository.save(existingArtist);
-        }).orElseGet(() -> {
-            artist.setId(id);
-            return artistRepository.save(artist);
-        });
+        }).orElse(null);
     }
 
     // DELETE artist
