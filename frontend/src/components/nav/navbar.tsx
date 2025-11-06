@@ -7,6 +7,12 @@ const Navbar: React.FC = () => {
   return (
     <AppBar position="sticky" color="primary">
       <Toolbar>
+        <img
+          src="/logo.png"
+          alt="AlbumRepo Logo"
+          style={{ width: 50, height: 50 }}
+        />
+
         <Typography
           variant="h6"
           component={Link}

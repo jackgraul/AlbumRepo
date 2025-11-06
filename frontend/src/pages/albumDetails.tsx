@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
   Button,
@@ -18,8 +18,15 @@ import { Album } from "../models/models";
 
 const AlbumDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const preservedSearch =
+    location.search || ((location.state as { fromSearch?: string } | null)?.fromSearch ?? "");
+
   const isNew = id === "new";
+  const [loading, setLoading] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
 
   const [album, setAlbum] = useState<Album | null>(
     isNew
@@ -34,16 +41,25 @@ const AlbumDetails: React.FC = () => {
         }
       : null
   );
-  const [loading, setLoading] = useState(!isNew);
-  const [saving, setSaving] = useState(false);
 
-  const [toast, setToast] = useState({
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({
     open: false,
     message: "",
-    severity: "success" as "success" | "error",
+    severity: "success",
   });
 
-  const [previewUrl, setPreviewUrl] = useState<string>("/images/default-cover.png");
+  const previewUrl = useMemo(() => {
+    if (album?.coverURL) {
+      return `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(
+        album.coverURL
+      )}`;
+    }
+    return "/images/default-cover.png";
+  }, [album?.coverURL]);
 
   useEffect(() => {
     if (isNew) return;
@@ -52,13 +68,6 @@ const AlbumDetails: React.FC = () => {
       .get<Album>(`/albums/${id}`)
       .then((res) => {
         setAlbum(res.data);
-        if (res.data.coverURL) {
-          setPreviewUrl(
-            `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(
-              res.data.coverURL
-            )}`
-          );
-        }
         setLoading(false);
       })
       .catch(() => {
@@ -71,21 +80,12 @@ const AlbumDetails: React.FC = () => {
       });
   }, [id, isNew]);
 
-  useEffect(() => {
-    if (album?.coverURL) {
-      setPreviewUrl(
-        `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(
-          album.coverURL
-        )}`
-      );
-    } else {
-      setPreviewUrl("/images/default-cover.png");
-    }
-  }, [album?.coverURL]);
-
   const handleChange = (field: keyof Album, value: any) => {
     setAlbum((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
+
+  const goBackToList = () =>
+    navigate({ pathname: "/albums", search: preservedSearch});
 
   const handleSave = () => {
     if (!album) return;
@@ -105,7 +105,7 @@ const AlbumDetails: React.FC = () => {
           severity: "success",
         });
         setSaving(false);
-        setTimeout(() => navigate("/"), 1200);
+        setTimeout(goBackToList, 1200);
       })
       .catch(() => {
         setToast({
@@ -127,7 +127,7 @@ const AlbumDetails: React.FC = () => {
           message: "Album deleted successfully!",
           severity: "success",
         });
-        setTimeout(() => navigate("/"), 1000);
+        setTimeout(goBackToList, 1000);
       })
       .catch(() => {
         setToast({
@@ -172,6 +172,7 @@ const AlbumDetails: React.FC = () => {
               onChange={(e) => handleChange("albumName", e.target.value)}
               fullWidth
             />
+
             <TextField
               label="Artist"
               value={album.artist?.artistName ?? ""}
@@ -183,6 +184,7 @@ const AlbumDetails: React.FC = () => {
               }
               fullWidth
             />
+
             <TextField
               label="Release Year"
               type="number"
@@ -190,27 +192,35 @@ const AlbumDetails: React.FC = () => {
               onChange={(e) => handleChange("releaseYear", Number(e.target.value))}
               fullWidth
             />
+
             <TextField
               label="Genre"
               value={album.genre ?? ""}
               onChange={(e) => handleChange("genre", e.target.value)}
               fullWidth
             />
+
             <TextField
               label="Rating"
               type="number"
               value={album.rating ?? ""}
               onChange={(e) =>
-                handleChange("rating", e.target.value ? Number(e.target.value) : null)
+                handleChange(
+                  "rating",
+                  e.target.value ? Number(e.target.value) : null
+                )
               }
               fullWidth
             />
-            <TextField
+
+            {!isNew && (
+              <TextField
               label="Cover URL"
               value={album.coverURL ?? ""}
               onChange={(e) => handleChange("coverURL", e.target.value)}
               fullWidth
-            />
+              />
+            )}
           </Stack>
 
           <Stack direction="row" spacing={2} mt={4}>
@@ -233,36 +243,38 @@ const AlbumDetails: React.FC = () => {
               </Button>
             )}
 
-            <Button variant="text" onClick={() => navigate("/")}>
+            <Button variant="text" onClick={goBackToList}>
               Cancel
             </Button>
           </Stack>
         </Grid>
 
-        <Grid item xs={12} md={5}>
-          <Card
-            sx={{
-              width: "100%",
-              maxWidth: 320,
-              mx: "auto",
-              borderRadius: 2,
-              overflow: "hidden",
-              boxShadow: 3,
-              mt: { xs: 4, md: 15 },
-            }}
-          >
-            <CardMedia
-              component="img"
-              height="320"
-              image={previewUrl}
-              alt={album.albumName}
-              sx={{ objectFit: "cover" }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/images/default-cover.png";
+        {!isNew && (
+          <Grid item xs={12} md={5}>
+            <Card
+              sx={{
+                width: "100%",
+                maxWidth: 320,
+                mx: "auto",
+                borderRadius: 2,
+                overflow: "hidden",
+                boxShadow: 3,
+                mt: { xs: 4, md: 15 },
               }}
-            />
-          </Card>
-        </Grid>
+            >
+              <CardMedia
+                component="img"
+                height="320"
+                image={previewUrl}
+                alt={album.albumName}
+                sx={{ objectFit: "cover" }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/images/default-cover.png";
+                }}
+              />
+            </Card>
+          </Grid>
+        )}
       </Grid>
 
       <Snackbar

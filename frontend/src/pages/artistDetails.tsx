@@ -11,6 +11,8 @@ import {
   Alert,
   Grid,
 } from "@mui/material";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import "react-lazy-load-image-component/src/effects/blur.css";
 import api from "../api/apiClient";
 import { Artist } from "../models/models";
 
@@ -177,6 +179,68 @@ const ArtistDetails: React.FC = () => {
               Cancel
             </Button>
           </Stack>
+
+          {!isNew && (
+            <Stack spacing={2} sx={{ mt: 4 }}>
+              <Typography variant="h6">Albums</Typography>
+
+              {artist.albums?.length ? (
+                artist.albums.map((a) => (
+                  <Box
+                    key={a.id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,   
+                      px: 2,
+                      py: 1.25,
+                      borderRadius: 1.5,
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    <LazyLoadImage
+                      src={a.coverURL ?? ""}
+                      alt={a.albumName ?? "Album cover"}
+                      effect="blur"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/images/default-cover.png";
+                      }}
+                      style={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: 8,
+                        objectFit: "cover",
+                        objectPosition: "center",
+                        flexShrink: 0,
+                      }}
+                    />
+
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {a.albumName}
+                      </Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {a.releaseYear ?? ""}
+                      </Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {a.rating != null ? `★ ${a.rating}` : ""}
+                      </Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {a.genre ?? ""}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))
+              ) : (
+                <Typography color="text.secondary">No albums for this artist.</Typography>
+              )}
+            </Stack>
+          )}
         </Grid>
       </Grid>
 

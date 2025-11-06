@@ -1,13 +1,22 @@
 import React, { useMemo } from "react";
 import {
   Box,
+  Button,
   TextField,
   InputLabel,
   MenuItem,
   FormControl,
   Select,
-  Autocomplete
+  Autocomplete,
 } from "@mui/material";
+
+type SortOrder = "asc" | "desc";
+type SortBy = "title" | "letter" | "artist" | "rating" | "year";
+
+export interface ArtistOption {
+  name: string;
+  letter: string;
+}
 
 interface AlbumFiltersProps {
   searchQuery: string;
@@ -16,13 +25,17 @@ interface AlbumFiltersProps {
   setSelectedLetter: (value: string) => void;
   selectedArtist: string | null;
   setSelectedArtist: (value: string | null) => void;
-  artistOptions: string[];
+  genreQuery: string | null;
+  setGenreQuery: (value: string | null) => void;
+  yearQuery: string | null;
+  setYearQuery: (value: string | null) => void;
   minRating: number | "";
   setMinRating: (value: number | "") => void;
-  sortBy: string;
-  setSortBy: (value: string) => void;
-  sortOrder: "asc" | "desc";
-  setSortOrder: (value: "asc" | "desc") => void;
+  sortBy: SortBy | string;
+  setSortBy: (value: SortBy | string) => void;
+  sortOrder: SortOrder;
+  setSortOrder: (value: SortOrder) => void;
+  artistOptions: ArtistOption[];
 }
 
 const AlbumFilters: React.FC<AlbumFiltersProps> = ({
@@ -32,13 +45,17 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
   setSelectedLetter,
   selectedArtist,
   setSelectedArtist,
-  artistOptions,
+  genreQuery,
+  setGenreQuery,
+  yearQuery,
+  setYearQuery,
   minRating,
   setMinRating,
   sortBy,
   setSortBy,
   sortOrder,
   setSortOrder,
+  artistOptions,
 }) => {
   const letters = ["#", ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
 
@@ -52,17 +69,30 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
     if (value) setSelectedLetter("");
   };
 
-  const filteredArtistOptions = useMemo(() => {
-    if (!selectedLetter) return artistOptions;
+    const handleResetFilters = () => {
+    setSearchQuery("");
+    setSelectedLetter("");
+    setSelectedArtist(null);
+    setGenreQuery("");
+    setYearQuery("");
+    setMinRating("");
+    setSortBy("letter");
+    setSortOrder("asc");
+  };
 
-    if (selectedLetter === "#") {
-      return artistOptions.filter((name) => /^[0-9]/.test(name));
-    }
+const filteredArtistOptions = useMemo(() => {
+  if (!selectedLetter) return artistOptions;
 
-    return artistOptions.filter((name) =>
-      name.toUpperCase().startsWith(selectedLetter.toUpperCase())
-    );
-  }, [artistOptions, selectedLetter]);
+  const L = selectedLetter.toUpperCase();
+  return L === "#"
+    ? artistOptions.filter((o) => o.letter === "#")
+    : artistOptions.filter((o) => o.letter.toUpperCase() === L);
+}, [artistOptions, selectedLetter]);
+
+  const selectedArtistOption =
+    selectedArtist
+      ? artistOptions.find((o) => o.name === selectedArtist) ?? null
+      : null;
 
   return (
     <Box
@@ -80,10 +110,10 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         size="small"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        sx={{ flex: 1, minWidth: "250px" }}
+        sx={{ flex: 1, minWidth: "200px" }}
       />
 
-      <FormControl size="small" sx={{ width: 120 }}>
+      <FormControl size="small" sx={{ width: 90 }}>
         <InputLabel>Letter</InputLabel>
         <Select
           value={selectedLetter}
@@ -102,16 +132,36 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
       <Autocomplete
         size="small"
         options={filteredArtistOptions}
-        value={selectedArtist}
-        onChange={(_, newValue) => handleArtistChange(newValue)}
+        groupBy={(o) => (o.letter || "").toUpperCase()}
+        getOptionLabel={(o) => o.name}
+        value={selectedArtistOption}
+        onChange={(_, newVal) => handleArtistChange(newVal?.name ?? null)}
         renderInput={(params) => (
           <TextField {...params} label="Artist" variant="outlined" />
         )}
         sx={{ width: 220 }}
       />
 
-      <FormControl size="small" sx={{ width: 150 }}>
-        <InputLabel>Min Rating</InputLabel>
+      <TextField
+        label="Search genre"
+        variant="outlined"
+        size="small"
+        value={genreQuery ?? ""}
+        onChange={(e) => setGenreQuery(e.target.value)}
+        sx={{ flex: 1, minWidth: "100px" }}
+      />
+
+      <TextField
+        label="Search year"
+        variant="outlined"
+        size="small"
+        value={yearQuery ?? ""}
+        onChange={(e) => setYearQuery(e.target.value)}
+        sx={{ flex: 1, minWidth: "100px" }}
+      />
+
+      <FormControl size="small" sx={{ width: 125 }}>
+        <InputLabel>Rating</InputLabel>
         <Select
           value={minRating}
           label="Min Rating"
@@ -124,7 +174,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         </Select>
       </FormControl>
 
-      <FormControl size="small" sx={{ width: 160 }}>
+      <FormControl size="small" sx={{ width: 125 }}>
         <InputLabel>Sort By</InputLabel>
         <Select
           value={sortBy}
@@ -145,12 +195,21 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         <Select
           value={sortOrder}
           label="Order"
-          onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+          onChange={(e) => setSortOrder(e.target.value as SortOrder)}
         >
           <MenuItem value="asc">Ascending</MenuItem>
           <MenuItem value="desc">Descending</MenuItem>
         </Select>
       </FormControl>
+
+      <Button
+        variant="outlined"
+        color="primary"
+        onClick={handleResetFilters}
+        sx={{ ml: "auto", height: 40 }}
+      >
+        Reset Filters
+      </Button>
     </Box>
   );
 };

@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, Typography, Box, CardActionArea } from "@mui/material";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
@@ -12,6 +12,7 @@ interface AlbumCardProps {
   genre?: string;
   coverURL?: string;
   artistName: string;
+  fromSearch: string;
 }
 
 const IMAGE_SIZE = 280;
@@ -25,8 +26,11 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
   genre,
   coverURL,
   artistName,
+  fromSearch
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchToCarry = fromSearch || location.search;
 
   const proxiedUrl = coverURL
     ? `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(coverURL)}`
@@ -48,7 +52,12 @@ return (
     }}
   >
     <CardActionArea
-      onClick={() => navigate(`/albums/${id}`)}
+      onClick={() =>
+          navigate(
+            { pathname: `/albums/${id}`, search: searchToCarry },
+            { state: { fromSearch: searchToCarry } }
+          )
+       }
       sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch" }}
     >
       <Box
@@ -100,7 +109,7 @@ return (
 
         {rating !== undefined ? (
           <Typography variant="body2" sx={{ mt: 1 }}>
-            ⭐ {rating} / 10
+            ★ {rating} / 10
           </Typography>
         ) : (
           <Box sx={{ mt: 1, height: 20 }} />
