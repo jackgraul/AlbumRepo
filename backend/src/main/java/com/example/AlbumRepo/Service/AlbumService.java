@@ -22,34 +22,4 @@ public class AlbumService {
     public List<Album> getAlbumsWithArtists() {
         return albumRepository.findAllWithArtists();
     }
-
-    // ✅ Filter by artist
-    public List<Album> getAlbumsByArtist(Integer artistId, String sortBy, String direction) {
-        Artist artist = artistRepository.findById(artistId)
-                .orElseThrow(() -> new RuntimeException("Artist not found"));
-
-        Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
-        List<Album> albums = albumRepository.findByArtist(artist);
-
-        return albums.stream()
-                .sorted((a, b) -> direction.equalsIgnoreCase("asc")
-                        ? a.getAlbumName().compareToIgnoreCase(b.getAlbumName())
-                        : b.getAlbumName().compareToIgnoreCase(a.getAlbumName()))
-                .toList();
-    }
-
-    // ✅ Filter by genre
-    public List<Album> getAlbumsByGenre(String genre) {
-        return albumRepository.findByGenreIgnoreCase(genre);
-    }
-
-    // ✅ Filter by release year
-    public List<Album> getAlbumsByYear(Integer year) {
-        return albumRepository.findByReleaseYear(year);
-    }
-
-    // ✅ Filter by rating threshold
-    public List<Album> getAlbumsByRating(double minRating) {
-        return albumRepository.findByRatingGreaterThanEqual(minRating);
-    }
 }

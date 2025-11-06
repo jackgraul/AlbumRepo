@@ -37,7 +37,6 @@ const ArtistDetails: React.FC = () => {
     severity: "success" as "success" | "error",
   });
 
-  // ✅ Fetch artist if editing
   useEffect(() => {
     if (isNew) return;
 
@@ -181,7 +180,6 @@ const ArtistDetails: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* ✅ Snackbar Toast */}
       <Snackbar
         open={toast.open}
         autoHideDuration={2500}

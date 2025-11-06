@@ -48,7 +48,6 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
     if (value) setSelectedLetter("");
   };
 
-  // 🔤 Filter the artist list dynamically based on selected letter
   const filteredArtistOptions = useMemo(() => {
     if (!selectedLetter) return artistOptions;
 
@@ -70,7 +69,6 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
       justifyContent="space-between"
       mb={3}
     >
-      {/* Search */}
       <TextField
         label="Search artists"
         variant="outlined"
@@ -80,7 +78,6 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
         sx={{ flex: 1, minWidth: "250px" }}
       />
 
-      {/* Letter */}
       <FormControl size="small" sx={{ width: 120 }}>
         <InputLabel>Letter</InputLabel>
         <Select
@@ -97,7 +94,6 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
         </Select>
       </FormControl>
 
-      {/* Artist */}
       <Autocomplete
         size="small"
         options={filteredArtistOptions}
@@ -109,7 +105,6 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
         sx={{ width: 220 }}
       />
 
-      {/* Sorting */}
       <FormControl size="small" sx={{ width: 160 }}>
         <InputLabel>Sort By</InputLabel>
         <Select

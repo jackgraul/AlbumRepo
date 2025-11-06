@@ -45,7 +45,6 @@ const AlbumDetails: React.FC = () => {
 
   const [previewUrl, setPreviewUrl] = useState<string>("/images/default-cover.png");
 
-  // ✅ Fetch album (only if not new)
   useEffect(() => {
     if (isNew) return;
 
@@ -72,7 +71,6 @@ const AlbumDetails: React.FC = () => {
       });
   }, [id, isNew]);
 
-  // ✅ Live cover preview update
   useEffect(() => {
     if (album?.coverURL) {
       setPreviewUrl(
@@ -162,7 +160,6 @@ const AlbumDetails: React.FC = () => {
           justifyContent: "center",
         }}
       >
-        {/* Left column: Form */}
         <Grid item xs={12} md={7}>
           <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
             {isNew ? "Add New Album" : "Edit Album"}
@@ -242,7 +239,6 @@ const AlbumDetails: React.FC = () => {
           </Stack>
         </Grid>
 
-        {/* Right column: Cover image preview */}
         <Grid item xs={12} md={5}>
           <Card
             sx={{
@@ -269,7 +265,6 @@ const AlbumDetails: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* ✅ Snackbar Toast */}
       <Snackbar
         open={toast.open}
         autoHideDuration={2500}

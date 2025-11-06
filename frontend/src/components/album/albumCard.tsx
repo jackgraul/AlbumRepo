@@ -14,9 +14,8 @@ interface AlbumCardProps {
   artistName: string;
 }
 
-// Keep consistent with AlbumList
-const IMAGE_SIZE = 280;           // Square cover area
-const CONTENT_MIN_HEIGHT = 120;   // Increased from 80 → fits multi-line text and rating
+const IMAGE_SIZE = 280;
+const CONTENT_MIN_HEIGHT = 120;
 
 const AlbumCard: React.FC<AlbumCardProps> = ({
   id,
@@ -52,7 +51,6 @@ return (
       onClick={() => navigate(`/albums/${id}`)}
       sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "stretch" }}
     >
-      {/* ✅ Square image section */}
       <Box
         sx={{
           width: "100%",
@@ -93,7 +91,11 @@ return (
         </Typography>
 
         <Typography variant="body2" color="text.secondary" noWrap>
-          {artistName} • {releaseYear} {genre && `• ${genre}`}
+          {artistName} • {releaseYear}
+        </Typography>
+
+        <Typography variant="body2" sx={{ flexGrow: 1 }}>
+          {genre}
         </Typography>
 
         {rating !== undefined ? (

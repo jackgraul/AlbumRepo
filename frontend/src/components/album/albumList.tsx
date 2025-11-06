@@ -8,15 +8,14 @@ import AlbumSummaryBar from "./albumSummaryBar";
 import { Album } from "../../models/models";
 
 const CARD_WIDTH = 280;
-const CARD_HEIGHT = 370; // match AlbumCard height
-const GAP = 15; // uniform spacing for both directions
+const CARD_HEIGHT = 370;
+const GAP = 15;
 
 const AlbumList: React.FC = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [filteredAlbums, setFilteredAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [containerWidth, setContainerWidth] = useState(window.innerWidth);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLetter, setSelectedLetter] = useState<string>("");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
@@ -197,7 +196,6 @@ const AlbumList: React.FC = () => {
         setSortOrder={setSortOrder}
       />
 
-      {/* ✅ Summary bar */}
       <AlbumSummaryBar
         totalAlbums={filteredAlbums.length}
         uniqueArtists={
@@ -214,7 +212,7 @@ const AlbumList: React.FC = () => {
           <List
             height={window.innerHeight - 180}
             itemCount={rowCount}
-            itemSize={CARD_HEIGHT + GAP * 3} // ✅ equal vertical & horizontal gap
+            itemSize={CARD_HEIGHT + GAP * 3}
             width={containerWidth}
           >
             {Row}

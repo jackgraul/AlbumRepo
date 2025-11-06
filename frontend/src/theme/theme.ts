@@ -1,14 +1,13 @@
-// src/theme/theme.ts
 import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#1e88e5", // blue accent
+      main: "#1e88e5",
     },
     secondary: {
-      main: "#f50057", // pink accent
+      main: "#f50057",
     },
     background: {
       default: "#121212",

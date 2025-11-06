@@ -25,14 +25,12 @@ const ArtistSummaryBar: React.FC<ArtistSummaryBarProps> = ({ totalArtists }) => 
         flexWrap: "wrap",
       }}
     >
-      {/* Left side: total count */}
       <Stack direction="row" spacing={3} alignItems="center">
         <Typography variant="subtitle1" fontWeight={600}>
           Total Artists: {totalArtists}
         </Typography>
       </Stack>
 
-      {/* Right side: new button */}
       <Button
         variant="contained"
         color="primary"

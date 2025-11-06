@@ -1,16 +1,12 @@
 package com.example.AlbumRepo.Entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "\"Artists\"") // Quote to preserve exact casing
+@Table(name = "Artists")
 public class Artist {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -24,7 +20,6 @@ public class Artist {
     @JsonIgnoreProperties("artist")
     private List<Album> albums;
 
-    // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

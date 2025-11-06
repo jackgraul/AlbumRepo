@@ -29,7 +29,6 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
         flexWrap: "wrap",
       }}
     >
-      {/* Left side: totals */}
       <Stack direction="row" spacing={3} alignItems="center">
         <Typography variant="subtitle1" fontWeight={600}>
           Total Albums: {totalAlbums}
@@ -39,7 +38,6 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
         </Typography>
       </Stack>
 
-      {/* Right side: action button */}
       <Button
         variant="contained"
         color="primary"

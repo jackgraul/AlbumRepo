@@ -10,8 +10,6 @@ const ArtistList: React.FC = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [filteredArtists, setFilteredArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Filters & sorting state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLetter, setSelectedLetter] = useState<string>("");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
@@ -19,11 +17,10 @@ const ArtistList: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [artistOptions, setArtistOptions] = useState<string[]>([]);
 
-  // Fetch data
 useEffect(() => {
   api.get<Artist[]>("/artists")
     .then((res) => {
-      console.log("🎨 Artists fetched:", res.data);
+      console.log("Artists fetched:", res.data);
       setArtists(res.data);
       setLoading(false);
 
@@ -39,11 +36,9 @@ useEffect(() => {
     });
 }, []);
 
-  // Filtering + sorting
   useEffect(() => {
     let filtered = [...artists];
 
-    // 🔍 Search filter (artist name only)
     if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         filtered = filtered.filter(
@@ -53,7 +48,6 @@ useEffect(() => {
         );
     }
 
-    // 🔤 Letter filter
     if (selectedLetter) {
       filtered = filtered.filter((a) => {
         const name = a.artistName ?? "";
@@ -62,14 +56,12 @@ useEffect(() => {
       });
     }
 
-    // 🎨 Artist filter
     if (selectedArtist) {
       filtered = filtered.filter(
         (a) => a.artistName.toLowerCase() === selectedArtist.toLowerCase()
       );
     }
 
-    // 🔽 Sorting
     filtered.sort((a, b) => {
       let valA: any;
       let valB: any;
@@ -127,7 +119,6 @@ useEffect(() => {
         setSortOrder={setSortOrder}
       />
 
-      {/* ✅ Summary bar */}
       <ArtistSummaryBar totalArtists={filteredArtists.length} />
 
       <Grid container spacing={2}>
