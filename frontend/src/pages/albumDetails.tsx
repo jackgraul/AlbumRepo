@@ -149,7 +149,7 @@ const AlbumDetails: React.FC = () => {
   const handleDelete = () => {
     if (!album) return;
     api
-      .delete(`/albums/${album.id}`)
+      .delete(`/albums/delete-album/${album.id}`)
       .then(() => {
         setToast({
           open: true,
@@ -209,7 +209,20 @@ const AlbumDetails: React.FC = () => {
               getOptionLabel={(o) => o?.artistName ?? ""}
               isOptionEqualToValue={(o, v) => o.id === v.id}
               onChange={(_, newValue) => {
-                 handleChange("artist", newValue ? ({ id: newValue.id } as any) : ({ id: 0 } as any));
+                handleChange(
+                  "artist",
+                  newValue
+                    ? {
+                        id: newValue.id,
+                        artistName: newValue.artistName,
+                        letter: newValue.letter,
+                      }
+                    : {
+                        id: 0,
+                        artistName: "",
+                        letter: "",
+                      }
+                );
               }}
               renderInput={(params) => (
                 <TextField

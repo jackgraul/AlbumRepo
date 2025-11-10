@@ -1,99 +1,124 @@
 import React, { useEffect, useState } from "react";
-import { Artist } from "../../models/models"
+import { Artist } from "../../models/models";
 import { Grid, Box, CircularProgress, Typography } from "@mui/material";
 import api from "../../api/apiClient";
 import ArtistCard from "../artist/artistCard";
 import ArtistFilters from "../artist/artistFilters";
 import ArtistSummaryBar from "./artistSummaryBar";
+import { ArtistOption } from "../album/albumFilters";
+import { normalizeArtistName, getNormalizedLetter } from "../artist/artistFilters";
 
 const ArtistList: React.FC = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [filteredArtists, setFilteredArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLetter, setSelectedLetter] = useState<string>("");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>("letter");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [artistOptions, setArtistOptions] = useState<string[]>([]);
 
-useEffect(() => {
-  api.get<Artist[]>("/artists")
-    .then((res) => {
-      console.log("Artists fetched:", res.data);
-      setArtists(res.data);
-      setLoading(false);
+  const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
 
-      const names = Array.from(
-        new Set(res.data.map((a) => a.artistName).filter(Boolean))
-      ).sort((a, b) => a.localeCompare(b));
+  useEffect(() => {
+    api
+      .get<Artist[]>("/artists")
+      .then((res) => {
+        setArtists(res.data);
 
-      setArtistOptions(names);
-    })
-    .catch((err) => {
-      console.error("❌ Error fetching artists:", err);
-      setLoading(false);
-    });
-}, []);
+        const byKey = new Map<string, ArtistOption>();
+
+        res.data.forEach((a) => {
+          const name = a.artistName?.trim();
+          if (!name) return;
+
+          const letter = getNormalizedLetter(a.artistName);
+          const key = name.toLowerCase();
+
+          if (!byKey.has(key)) {
+            byKey.set(key, { name, letter });
+          }
+        });
+
+        const options = Array.from(byKey.values()).sort((x, y) => {
+          const lx = x.letter.toUpperCase();
+          const ly = y.letter.toUpperCase();
+          if (lx < ly) return -1;
+          if (lx > ly) return 1;
+
+          const nx = normalizeArtistName(x.name);
+          const ny = normalizeArtistName(y.name);
+          return nx.localeCompare(ny);
+        });
+
+        setArtistOptions(options);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("❌ Error fetching artists:", err);
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     let filtered = [...artists];
 
+    // search
     if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        filtered = filtered.filter(
-        (a) =>
-            a.artistName &&
-            a.artistName.toLowerCase().includes(q)
-        );
-    }
-
-    if (selectedLetter) {
-      filtered = filtered.filter((a) => {
-        const name = a.artistName ?? "";
-        if (selectedLetter === "#") return /^[0-9]/.test(name);
-        return name.toUpperCase().startsWith(selectedLetter.toUpperCase());
-      });
-    }
-
-    if (selectedArtist) {
+      const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (a) => a.artistName.toLowerCase() === selectedArtist.toLowerCase()
+        (a) => a.artistName && a.artistName.toLowerCase().includes(q)
       );
     }
 
-    filtered.sort((a, b) => {
-      let valA: any;
-      let valB: any;
+    // letter filter (use same logic as options)
+    if (selectedLetter) {
+      const target = selectedLetter.toUpperCase();
+      filtered =
+        target === "#"
+          ? filtered.filter((a) => getNormalizedLetter(a.artistName) === "#")
+          : filtered.filter((a) => getNormalizedLetter(a.artistName) === target);
+    }
 
-      switch (sortBy) {
-        case "letter":
-          valA = a.letter;
-          valB = b.letter;
-          break;
-        case "artist":
-          valA = a.artistName.toLowerCase();
-          valB = b.artistName.toLowerCase();
-          break;
-        default:
-          valA = a.artistName.toLowerCase();
-          valB = b.artistName.toLowerCase();
+    // specific artist
+    if (selectedArtist) {
+      const target = selectedArtist.toLowerCase();
+      filtered = filtered.filter(
+        (a) => a.artistName?.toLowerCase() === target
+      );
+    }
+
+    const dir = sortOrder === "asc" ? 1 : -1;
+
+    filtered.sort((a, b) => {
+      const aName = a.artistName || "";
+      const bName = b.artistName || "";
+
+      const aNorm = normalizeArtistName(aName);
+      const bNorm = normalizeArtistName(bName);
+
+      const aLetter = getNormalizedLetter(a.artistName);
+      const bLetter = getNormalizedLetter(b.artistName);
+
+      if (sortBy === "letter") {
+        if (aLetter < bLetter) return -1 * dir;
+        if (aLetter > bLetter) return 1 * dir;
+
+        if (aNorm < bNorm) return -1 * dir;
+        if (aNorm > bNorm) return 1 * dir;
+
+        return 0;
       }
 
-      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
-      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      // sortBy === "artist"
+      if (aNorm < bNorm) return -1 * dir;
+      if (aNorm > bNorm) return 1 * dir;
       return 0;
     });
 
     setFilteredArtists(filtered);
-  }, [
-    artists,
-    searchQuery,
-    selectedLetter,
-    selectedArtist,
-    sortBy,
-    sortOrder,
-  ]);
+  }, [artists, searchQuery, selectedLetter, selectedArtist, sortBy, sortOrder]);
 
   if (loading) {
     return (
@@ -126,7 +151,7 @@ useEffect(() => {
           <Grid item xs={12} sm={6} md={4} lg={3} key={artist.id}>
             <ArtistCard
               id={artist.id}
-              letter={artist.letter}
+              letter={getNormalizedLetter(artist.artistName)}
               artistName={artist.artistName}
               albums={artist.albums ?? []}
             />

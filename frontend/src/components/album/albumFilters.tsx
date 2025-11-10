@@ -10,9 +10,6 @@ import {
   Autocomplete,
 } from "@mui/material";
 
-type SortOrder = "asc" | "desc";
-type SortBy = "title" | "letter" | "artist" | "rating" | "year";
-
 export interface ArtistOption {
   name: string;
   letter: string;
@@ -31,12 +28,46 @@ interface AlbumFiltersProps {
   setYearQuery: (value: string | null) => void;
   minRating: number | "";
   setMinRating: (value: number | "") => void;
-  sortBy: SortBy | string;
-  setSortBy: (value: SortBy | string) => void;
-  sortOrder: SortOrder;
-  setSortOrder: (value: SortOrder) => void;
+  sortBy: string;
+  setSortBy: (value: string) => void;
+  sortOrder: string;
+  setSortOrder: (value: string) => void;
   artistOptions: ArtistOption[];
 }
+
+const letters = ["#", ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
+
+const ARTIST_SORT_ALIASES: Record<string, string> = {
+  "夢遊病者": "Sleepwalker"
+};
+
+const stripAccentsAndLigatures = (input: string): string =>
+  input
+    .replace(/Æ/g, "Ae")
+    .replace(/æ/g, "ae")
+    .replace(/Œ/g, "Oe")
+    .replace(/œ/g, "oe")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+export const getSortBaseName = (name?: string | null): string => {
+  const raw = (name || "").trim();
+  const aliased = ARTIST_SORT_ALIASES[raw] ?? raw;
+  return stripAccentsAndLigatures(aliased);
+};
+
+export const normalizeArtistName = (name?: string | null): string =>
+  getSortBaseName(name)
+    .trim()
+    .replace(/^(the|a|an)\s+/i, "")
+    .toLowerCase();
+
+export const getNormalizedLetter = (name?: string | null): string => {
+  const norm = normalizeArtistName(name);
+  if (!norm) return "#";
+  if (/^[0-9]/.test(norm)) return "#";
+  return norm[0].toUpperCase();
+};
 
 const AlbumFilters: React.FC<AlbumFiltersProps> = ({
   searchQuery,
@@ -57,8 +88,6 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
   setSortOrder,
   artistOptions,
 }) => {
-  const letters = ["#", ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
-
   const handleLetterChange = (value: string) => {
     setSelectedLetter(value);
     if (value) setSelectedArtist(null);
@@ -69,7 +98,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
     if (value) setSelectedLetter("");
   };
 
-    const handleResetFilters = () => {
+  const handleResetFilters = () => {
     setSearchQuery("");
     setSelectedLetter("");
     setSelectedArtist(null);
@@ -80,14 +109,36 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
     setSortOrder("asc");
   };
 
-const filteredArtistOptions = useMemo(() => {
-  if (!selectedLetter) return artistOptions;
+  // Filter + sort artist options:
+  // - filter by selectedLetter (if any)
+  // - sort by letter
+  // - then by normalized name (ignoring The/A/An)
+  const filteredArtistOptions = useMemo(() => {
+    let base =
+      !selectedLetter
+        ? artistOptions
+        : selectedLetter.toUpperCase() === "#"
+        ? artistOptions.filter((o) => o.letter === "#")
+        : artistOptions.filter(
+            (o) => (o.letter || "").toUpperCase() === selectedLetter.toUpperCase()
+          );
 
-  const L = selectedLetter.toUpperCase();
-  return L === "#"
-    ? artistOptions.filter((o) => o.letter === "#")
-    : artistOptions.filter((o) => o.letter.toUpperCase() === L);
-}, [artistOptions, selectedLetter]);
+    return [...base].sort((a, b) => {
+      const aLetter = (a.letter || "#").toUpperCase();
+      const bLetter = (b.letter || "#").toUpperCase();
+
+      if (aLetter < bLetter) return -1;
+      if (aLetter > bLetter) return 1;
+
+      const aName = normalizeArtistName(a.name);
+      const bName = normalizeArtistName(b.name);
+
+      if (aName < bName) return -1;
+      if (aName > bName) return 1;
+
+      return 0;
+    });
+  }, [artistOptions, selectedLetter]);
 
   const selectedArtistOption =
     selectedArtist
@@ -168,8 +219,10 @@ const filteredArtistOptions = useMemo(() => {
           onChange={(e) => setMinRating(e.target.value as number | "")}
         >
           <MenuItem value="">All</MenuItem>
-          {[1,2,3,4,5,6,7,8,9,10].map((r) => (
-            <MenuItem key={r} value={r}>{r}</MenuItem>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((r) => (
+            <MenuItem key={r} value={r}>
+              {r}
+            </MenuItem>
           ))}
         </Select>
       </FormControl>
@@ -181,10 +234,9 @@ const filteredArtistOptions = useMemo(() => {
           label="Sort By"
           onChange={(e) => setSortBy(e.target.value)}
         >
-          <MenuItem value="year">Year</MenuItem>
-          <MenuItem value="letter">Letter</MenuItem>
           <MenuItem value="artist">Artist</MenuItem>
           <MenuItem value="title">Title</MenuItem>
+          <MenuItem value="year">Year</MenuItem>
           <MenuItem value="genre">Genre</MenuItem>
           <MenuItem value="rating">Rating</MenuItem>
         </Select>
@@ -195,7 +247,7 @@ const filteredArtistOptions = useMemo(() => {
         <Select
           value={sortOrder}
           label="Order"
-          onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+          onChange={(e) => setSortOrder(e.target.value)}
         >
           <MenuItem value="asc">Ascending</MenuItem>
           <MenuItem value="desc">Descending</MenuItem>

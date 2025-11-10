@@ -7,6 +7,7 @@ import AlbumCard from "./albumCard";
 import AlbumFilters, { ArtistOption } from "./albumFilters";
 import AlbumSummaryBar from "./albumSummaryBar";
 import { Album } from "../../models/models";
+import { getNormalizedLetter, normalizeArtistName } from "../album/albumFilters";
 
 const CARD_WIDTH = 280;
 const CARD_HEIGHT = 370;
@@ -22,7 +23,7 @@ interface ParsedSearch {
   year: string | null;
   min: number | "";
   sortBy: string;
-  order: SortOrder;
+  order: string;
 }
 
 function parseSearch(search: string): ParsedSearch {
@@ -38,15 +39,19 @@ function parseSearch(search: string): ParsedSearch {
     genre: get("genre"),
     year: get("year"),
     min: minRaw !== null && minRaw !== "" ? Number(minRaw) : "",
-    sortBy: get("sortBy") ?? "letter",
+    sortBy: get("sortBy") ?? "artist",
     order: orderRaw === "desc" ? "desc" : "asc",
   };
 }
+
+const getArtistLetter = (album: Album): string =>
+  getNormalizedLetter(album.artist?.artistName);
 
 const AlbumList: React.FC = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const initial = useRef<ParsedSearch>(parseSearch(location.search)).current;
+
   const [searchQuery, setSearchQuery] = useState<string>(initial.q);
   const [selectedLetter, setSelectedLetter] = useState<string>(initial.letter);
   const [selectedArtist, setSelectedArtist] = useState<string | null>(initial.artist);
@@ -54,7 +59,8 @@ const AlbumList: React.FC = () => {
   const [yearQuery, setYearQuery] = useState<string | null>(initial.year);
   const [minRating, setMinRating] = useState<number | "">(initial.min);
   const [sortBy, setSortBy] = useState<string>(initial.sortBy);
-  const [sortOrder, setSortOrder] = useState<SortOrder>(initial.order);
+  const [sortOrder, setSortOrder] = useState<string>(initial.order);
+
   const [albums, setAlbums] = useState<Album[]>([]);
   const [filteredAlbums, setFilteredAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,42 +124,46 @@ const AlbumList: React.FC = () => {
     setSearchParams,
   ]);
 
- useEffect(() => {
-  api
-    .get<Album[]>("/albums")
-    .then((res) => {
-      setAlbums(res.data);
+  useEffect(() => {
+    api
+      .get<Album[]>("/albums")
+      .then((res) => {
+        setAlbums(res.data);
 
-      const byKey = new Map<string, ArtistOption>();
+        // Build sorted artist options (letter, then normalized name)
+        const byKey = new Map<string, ArtistOption>();
 
-      res.data.forEach((a) => {
-        const name = a.artist?.artistName?.trim();
-        if (!name) return;
+        res.data.forEach((a) => {
+          const name = a.artist?.artistName?.trim();
+          if (!name) return;
 
-        const rawLetter = a.artist?.letter ?? name.charAt(0);
-        let letter = (rawLetter || "").toUpperCase();
-        if (/^[0-9]/.test(name)) letter = "#";
+          let letter = getNormalizedLetter(name);
+          const key = name.toLowerCase();
 
-        const key = name.toLowerCase();
-        if (!byKey.has(key)) byKey.set(key, { name, letter });
+          if (!byKey.has(key)) byKey.set(key, { name, letter });
+        });
+
+        const artists = Array.from(byKey.values()).sort((x, y) => {
+          const l = x.letter.localeCompare(y.letter);
+          if (l !== 0) return l;
+          const nx = normalizeArtistName(x.name);
+          const ny = normalizeArtistName(y.name);
+          return nx.localeCompare(ny);
+        });
+
+        setArtistOptions(artists);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("❌ Error fetching albums:", err);
+        setLoading(false);
       });
-
-      const artists = Array.from(byKey.values()).sort(
-        (x, y) => x.letter.localeCompare(y.letter) || x.name.localeCompare(y.name)
-      );
-
-      setArtistOptions(artists);
-      setLoading(false);
-    })
-    .catch((err) => {
-      console.error("❌ Error fetching albums:", err);
-      setLoading(false);
-    });
-}, []);
+  }, []);
 
   useEffect(() => {
     let filtered = [...albums];
 
+    // search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -163,20 +173,22 @@ const AlbumList: React.FC = () => {
       );
     }
 
+    // letter filter
     if (selectedLetter) {
-      filtered = filtered.filter((a) => {
-        const name = a.artist?.artistName ?? "";
-        if (selectedLetter === "#") return /^[0-9]/.test(name);
-        return name.toUpperCase().startsWith(selectedLetter.toUpperCase());
-      });
+      const target = selectedLetter.toUpperCase();
+      filtered = filtered.filter((a) => getArtistLetter(a) === target);
     }
 
+    // artist filter
     if (selectedArtist) {
       filtered = filtered.filter(
-        (a) => a.artist?.artistName?.toLowerCase() === selectedArtist.toLowerCase()
+        (a) =>
+          a.artist?.artistName?.toLowerCase() ===
+          selectedArtist.toLowerCase()
       );
     }
 
+    // min rating
     if (minRating !== "") {
       const ratingStr = String(minRating);
       const regex = new RegExp(`^${ratingStr}(\\.|$)`);
@@ -186,45 +198,101 @@ const AlbumList: React.FC = () => {
       });
     }
 
+    // genre filter
     if (genreQuery && genreQuery.trim()) {
       const gq = genreQuery.toLowerCase();
-      filtered = filtered.filter((a) => a.genre?.toLowerCase().includes(gq));
+      filtered = filtered.filter((a) =>
+        a.genre?.toLowerCase().includes(gq)
+      );
     }
 
+    // year filter
     if (yearQuery && yearQuery.trim()) {
       filtered = filtered.filter((a) =>
         String(a.releaseYear ?? "").startsWith(yearQuery)
       );
     }
 
-    filtered.sort((a, b) => {
-      let valA: any;
-      let valB: any;
+    const dir = sortOrder === "asc" ? 1 : -1;
 
-      switch (sortBy) {
-        case "title":
-          valA = a.albumName.toLowerCase();
-          valB = b.albumName.toLowerCase();
-          break;
-        case "letter":
-          valA = a.artist.letter;
-          valB = b.artist.letter;
-          break;
-        case "artist":
-          valA = a.artist?.artistName?.toLowerCase() ?? "";
-          valB = b.artist?.artistName?.toLowerCase() ?? "";
-          break;
-        case "rating":
-          valA = a.rating ?? 0;
-          valB = b.rating ?? 0;
-          break;
-        default:
-          valA = a.releaseYear;
-          valB = b.releaseYear;
+    filtered.sort((a, b) => {
+      // 1) Sort by Letter: letter → normalized artist name → releaseYear → title
+      if (sortBy === "letter") {
+        const aLetter = getArtistLetter(a);
+        const bLetter = getArtistLetter(b);
+
+        if (aLetter < bLetter) return -1 * dir;
+        if (aLetter > bLetter) return 1 * dir;
+
+        const aName = normalizeArtistName(a.artist?.artistName);
+        const bName = normalizeArtistName(b.artist?.artistName);
+
+        if (aName < bName) return -1 * dir;
+        if (aName > bName) return 1 * dir;
+
+        // same artist: sort by year
+        const aYear = a.releaseYear ?? 9999; // missing years go last in asc
+        const bYear = b.releaseYear ?? 9999;
+
+        if (aYear < bYear) return -1 * dir;
+        if (aYear > bYear) return 1 * dir;
+
+        // final stable fallback: title
+        const aTitle = (a.albumName || "").toLowerCase();
+        const bTitle = (b.albumName || "").toLowerCase();
+
+        if (aTitle < bTitle) return -1 * dir;
+        if (aTitle > bTitle) return 1 * dir;
+
+        return 0;
       }
 
-      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
-      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      // 2) Sort by Artist: normalized artist → releaseYear → title
+      if (sortBy === "artist") {
+        const aName = normalizeArtistName(a.artist?.artistName);
+        const bName = normalizeArtistName(b.artist?.artistName);
+
+        if (aName < bName) return -1 * dir;
+        if (aName > bName) return 1 * dir;
+
+        const aYear = a.releaseYear ?? 9999;
+        const bYear = b.releaseYear ?? 9999;
+
+        if (aYear < bYear) return -1 * dir;
+        if (aYear > bYear) return 1 * dir;
+
+        const aTitle = (a.albumName || "").toLowerCase();
+        const bTitle = (b.albumName || "").toLowerCase();
+
+        if (aTitle < bTitle) return -1 * dir;
+        if (aTitle > bTitle) return 1 * dir;
+
+        return 0;
+      }
+
+      // 3) Sort by Title
+      if (sortBy === "title") {
+        const aTitle = (a.albumName || "").toLowerCase();
+        const bTitle = (b.albumName || "").toLowerCase();
+        if (aTitle < bTitle) return -1 * dir;
+        if (aTitle > bTitle) return 1 * dir;
+        return 0;
+      }
+
+      // 4) Sort by Rating
+      if (sortBy === "rating") {
+        const aR = a.rating ?? -Infinity;
+        const bR = b.rating ?? -Infinity;
+        if (aR < bR) return -1 * dir;
+        if (aR > bR) return 1 * dir;
+        return 0;
+      }
+
+      // 5) Default: Year
+      const aY = a.releaseYear ?? 0;
+      const bY = b.releaseYear ?? 0;
+      if (aY < bY) return -1 * dir;
+      if (aY > bY) return 1 * dir;
       return 0;
     });
 
@@ -242,14 +310,20 @@ const AlbumList: React.FC = () => {
   ]);
 
   const totalCardWidth = CARD_WIDTH + GAP;
-  const itemsPerRow = Math.max(1, Math.floor((containerWidth - GAP) / totalCardWidth));
+  const itemsPerRow = Math.max(
+    1,
+    Math.floor((containerWidth - GAP) / totalCardWidth)
+  );
   const rowCount = Math.ceil(filteredAlbums.length / itemsPerRow);
 
   const Row = useMemo(
     () =>
       ({ index, style }: { index: number; style: React.CSSProperties }) => {
         const startIndex = index * itemsPerRow;
-        const rowItems = filteredAlbums.slice(startIndex, startIndex + itemsPerRow);
+        const rowItems = filteredAlbums.slice(
+          startIndex,
+          startIndex + itemsPerRow
+        );
 
         return (
           <Box
@@ -280,8 +354,12 @@ const AlbumList: React.FC = () => {
                   releaseYear={album.releaseYear}
                   genre={album.genre ?? ""}
                   rating={album.rating ?? undefined}
-                  coverURL={album.coverURL ?? "/images/default-cover.png"}
-                  artistName={album.artist?.artistName ?? "Unknown Artist"}
+                  coverURL={
+                    album.coverURL ?? "/images/default-cover.png"
+                  }
+                  artistName={
+                    album.artist?.artistName ?? "Unknown Artist"
+                  }
                   fromSearch={location.search}
                 />
               </Box>
@@ -328,7 +406,9 @@ const AlbumList: React.FC = () => {
       <AlbumSummaryBar
         totalAlbums={filteredAlbums.length}
         uniqueArtists={
-          new Set(filteredAlbums.map((a) => a.artist?.artistName)).size
+          new Set(
+            filteredAlbums.map((a) => a.artist?.artistName)
+          ).size
         }
       />
 
