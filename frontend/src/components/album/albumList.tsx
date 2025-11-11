@@ -10,7 +10,7 @@ import { Album } from "../../models/models";
 import { getNormalizedLetter, normalizeArtistName } from "../album/albumFilters";
 
 const CARD_WIDTH = 280;
-const CARD_HEIGHT = 370;
+const CARD_HEIGHT = 340;
 const GAP = 15;
 
 type SortOrder = "asc" | "desc";

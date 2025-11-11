@@ -64,6 +64,7 @@ public class AlbumController {
             existingAlbum.setGenre(album.getGenre());
             existingAlbum.setReleaseYear(album.getReleaseYear());
             existingAlbum.setRating(album.getRating());
+            existingAlbum.setCoverURL(album.getCoverURL());
             existingAlbum.setArtist(album.getArtist());
             return albumRepository.save(existingAlbum);
         }).orElseGet(() -> {

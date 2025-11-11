@@ -2,12 +2,8 @@ package com.example.AlbumRepo.Service;
 
 import com.example.AlbumRepo.Entity.Album;
 import com.example.AlbumRepo.Repository.IAlbumRepository;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -15,13 +11,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class CoverArtService {
@@ -30,22 +25,12 @@ public class CoverArtService {
     private final IAlbumRepository albumRepository;
     private static final Logger logger = LoggerFactory.getLogger(CoverArtService.class);
 
-    @Value("${discogs.api.token}")
-    private String discogsToken;
+    // MusicBrainz requires a proper identifying UA
+    private static final String USER_AGENT = "AlbumRepo/1.0 ( jack.graul@example.com )";
+    private static final String DEFAULT_COVER = "/images/default-cover.png";
 
-    // --- MusicBrainz Rate Limiting ---
-    private static long lastMusicBrainzCall = 0;
-
-    private synchronized void waitMusicBrainzWindow() {
-        long now = System.currentTimeMillis();
-        long elapsed = now - lastMusicBrainzCall;
-        if (elapsed < 1200) {
-            try {
-                Thread.sleep(1200 - elapsed);
-            } catch (InterruptedException ignored) {}
-        }
-        lastMusicBrainzCall = System.currentTimeMillis();
-    }
+    // MusicBrainz rate limiting (>= 1.2s between calls)
+    private static long lastMusicBrainzCall = 0L;
 
     public CoverArtService(IAlbumRepository albumRepository) {
         this.restTemplate = new RestTemplate();
@@ -53,253 +38,305 @@ public class CoverArtService {
     }
 
     // --------------------------------------------------
-    // Main Fetch Logic (Unicode + ASCII fallback)
+    // Public API
     // --------------------------------------------------
+
+    public void fetchCoversForAllAlbums() {
+        List<Album> albums = albumRepository.findAllWithoutCovers();
+        logger.info("Albums found without covers: {}", albums.size());
+
+        for (Album album : albums) {
+            if (isMissingCover(album.getCoverURL())) {
+                logger.info("Fetching cover for album '{}' (no valid cover set).",
+                        album.getAlbumName());
+                fetchAndSaveCover(album);
+            }
+        }
+    }
+
     public void fetchAndSaveCover(Album album) {
-        String artist = album.getArtist().getArtistName();
-        String title = album.getAlbumName();
-        String coverUrl = null;
+        String originalArtist = album.getArtist().getArtistName();
+        String originalTitle = album.getAlbumName();
 
         try {
-            logger.info("Fetching cover for {} - {}", artist, title);
+            logger.info("Fetching cover for {} - {}", originalArtist, originalTitle);
 
-            // Clean but preserve punctuation
-            artist = cleanForSearch(artist);
-            title = cleanForSearch(title);
+            String artist = cleanForSearch(originalArtist);
+            String title = cleanForSearch(originalTitle);
 
-            // Try full Unicode search
-            coverUrl = tryAllSources(artist, title);
+            // Try with original text
+            String coverUrl = fetchFromMusicBrainz(artist, title);
 
-            // Retry with ASCII-normalized fallback
-            if (coverUrl == null) {
+            // Retry with ASCII-normalized if nothing
+            if (!isValidCover(coverUrl)) {
                 String artistAscii = normalizeAscii(artist);
                 String titleAscii = normalizeAscii(title);
-                logger.info("Retrying with ASCII-normalized search for {} - {}", artistAscii, titleAscii);
-                coverUrl = tryAllSources(artistAscii, titleAscii);
+                logger.info("Retrying MusicBrainz with ASCII-normalized search for {} - {}",
+                        artistAscii, titleAscii);
+                coverUrl = fetchFromMusicBrainz(artistAscii, titleAscii);
             }
 
-            // Fallback to default
-            if (coverUrl == null) {
-                coverUrl = "/images/default-cover.png";
-                logger.warn("No cover found for {} - {}, using default.", artist, title);
+            if (!isValidCover(coverUrl)) {
+                coverUrl = DEFAULT_COVER;
+                logger.warn("No MusicBrainz cover found for {} - {}, using default.",
+                        originalArtist, originalTitle);
             }
 
-            // Identify which source worked
-            logger.info("Selected cover source for {} - {}: {}",
-                    artist, title,
-                    coverUrl.contains("coverartarchive") ? "MusicBrainz" :
-                            coverUrl.contains("metal-archives") ? "Metal Archives" :
-                                    coverUrl.contains("discogs") ? "Discogs" :
-                                            coverUrl.contains("snmc.io") ? "RateYourMusic" : "Default");
+            logSelectedSource(originalArtist, originalTitle, coverUrl);
 
             album.setCoverURL(coverUrl);
             albumRepository.save(album);
-            logger.info("Saved cover for {} - {}: {}", artist, title, coverUrl);
+            logger.info("Saved cover for {} - {}: {}", originalArtist, originalTitle, coverUrl);
 
         } catch (Exception e) {
-            logger.error("Error saving cover for {} - {}: {}", artist, title, e.getMessage());
-            album.setCoverURL("/images/default-cover.png");
+            logger.error("Error saving cover for {} - {}: {}", originalArtist, originalTitle, e.getMessage());
+            album.setCoverURL(DEFAULT_COVER);
             albumRepository.save(album);
         } finally {
             try { Thread.sleep(1100); } catch (InterruptedException ignored) {}
         }
     }
 
-    private String tryAllSources(String artist, String title) {
-        String coverUrl = fetchFromMusicBrainz(artist, title);
-        if (coverUrl != null) return coverUrl;
-
-        coverUrl = fetchFromMetalArchives(artist, title);
-        if (coverUrl != null) return coverUrl;
-
-        coverUrl = fetchFromRateYourMusic(artist, title);
-        if (coverUrl != null) return coverUrl;
-
-        return fetchFromDiscogs(artist, title);
-    }
-
-    public void fetchCoversForAllAlbums() {
-        List<Album> albums = albumRepository.findAllWithoutCovers();
-        logger.info("Albums found: {}", albums.size());
-        for (Album album : albums) {
-            String coverUrl = album.getCoverURL();
-            if (coverUrl == null || coverUrl.trim().isEmpty()
-                    || coverUrl.equals("/images/default-cover.png")
-                    || coverUrl.contains("spacer.gif")) {
-                logger.info("Fetching cover for album '{}' as cover URL is missing.", album.getAlbumName());
-                fetchAndSaveCover(album);
-            }
-        }
-    }
-
     // --------------------------------------------------
-    // MusicBrainz
+    // MusicBrainz + CoverArtArchive
     // --------------------------------------------------
+
     private String fetchFromMusicBrainz(String artist, String albumTitle) {
         try {
+            waitMusicBrainzWindow();
+
             String encodedArtist = URLEncoder.encode(artist, StandardCharsets.UTF_8);
             String encodedTitle = URLEncoder.encode(albumTitle, StandardCharsets.UTF_8);
 
-            String searchUrl = "https://musicbrainz.org/ws/2/release/?query=artist:" + encodedArtist +
-                    "%20AND%20release:" + encodedTitle + "&fmt=json";
+            String searchUrl = "https://musicbrainz.org/ws/2/release/?query="
+                    + "artist:" + encodedArtist
+                    + "%20AND%20release:" + encodedTitle
+                    + "&fmt=json";
 
             HttpHeaders headers = new HttpHeaders();
-            headers.add("User-Agent", "AlbumRepo/1.0 ( jack.graul@example.com )");
+            headers.add("User-Agent", USER_AGENT);
             headers.add("Accept-Charset", "UTF-8");
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
             logger.info("Calling MusicBrainz for {} - {}", artist, albumTitle);
 
-            ResponseEntity<Map> responseEntity = restTemplate.exchange(searchUrl, HttpMethod.GET, entity, Map.class);
+            ResponseEntity<Map> responseEntity =
+                    restTemplate.exchange(searchUrl, HttpMethod.GET, entity, Map.class);
+
+            if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+                logger.warn("MusicBrainz search non-2xx for {} - {}: {}",
+                        artist, albumTitle, responseEntity.getStatusCode());
+                return null;
+            }
+
             Map body = responseEntity.getBody();
             if (body == null) return null;
 
-            List<Map> releases = (List<Map>) body.get("releases");
-            if (releases == null || releases.isEmpty()) return null;
-
-            for (Map release : releases) {
-                String releaseId = (String) release.get("id");
-                Map releaseGroup = (Map) release.get("release-group");
-
-                String coverUrl = (releaseGroup != null && releaseGroup.get("id") != null)
-                        ? "https://coverartarchive.org/release-group/" + releaseGroup.get("id") + "/front-500"
-                        : "https://coverartarchive.org/release/" + releaseId + "/front-500";
-
-                try {
-                    ResponseEntity<byte[]> resp = restTemplate.exchange(coverUrl, HttpMethod.GET, entity, byte[].class);
-                    int status = resp.getStatusCode().value();
-
-                    if (status >= 200 && status < 400) { // Accept redirects too
-                        logger.info("Found valid MusicBrainz cover for {} - {}: {}", artist, albumTitle, coverUrl);
-                        return coverUrl;
-                    }
-                } catch (HttpClientErrorException.NotFound e) {
-                    // skip this release
-                } catch (Exception e) {
-                    logger.debug("MusicBrainz cover check failed for release {}: {}", releaseId, e.getMessage());
-                }
-
-                Thread.sleep(500); // gentle rate limiting
+            List<Map<String, Object>> releases = (List<Map<String, Object>>) body.get("releases");
+            if (releases == null || releases.isEmpty()) {
+                logger.warn("No MusicBrainz releases found for {} - {}", artist, albumTitle);
+                return null;
             }
 
-            logger.warn("No MusicBrainz covers found for {} - {}", artist, albumTitle);
+            String targetTitle = norm(albumTitle);
+            String targetArtist = norm(artist);
 
-        } catch (Exception e) {
-            logger.warn("MusicBrainz lookup failed for {} - {}: {}", artist, albumTitle, e.getMessage());
-        }
+            Map<String, Object> best = null;
+            int bestQuality = -1;
 
-        // Fallback directly to Discogs if MusicBrainz failed completely
-        try {
-            String discogsCover = fetchFromDiscogs(artist, albumTitle);
-            if (discogsCover != null) {
-                logger.info("Using Discogs fallback for {} - {}: {}", artist, albumTitle, discogsCover);
-                return discogsCover;
-            }
-        } catch (Exception ignored) {}
+            for (Map<String, Object> release : releases) {
+                String releaseTitleRaw = (String) release.get("title");
+                if (releaseTitleRaw == null) continue;
 
-        return null;
-    }
+                String releaseTitle = norm(releaseTitleRaw);
 
-    // --------------------------------------------------
-    // Metal Archives
-    // --------------------------------------------------
-    private String fetchFromMetalArchives(String artist, String albumTitle) {
-        try {
-            String searchUrl = "https://www.metal-archives.com/search/ajax-advanced/searching/albums/?bandName="
-                    + URLEncoder.encode(artist, StandardCharsets.UTF_8)
-                    + "&releaseTitle=" + URLEncoder.encode(albumTitle, StandardCharsets.UTF_8)
-                    + "&iDisplayStart=0&iDisplayLength=1";
+                List<Map<String, Object>> acList =
+                        (List<Map<String, Object>>) release.get("artist-credit");
 
-            Map response = restTemplate.getForObject(searchUrl, Map.class);
-            List<List<String>> aaData = (List<List<String>>) response.get("aaData");
-            if (aaData != null && !aaData.isEmpty()) {
-                String html = aaData.get(0).get(0);
-                Matcher m = Pattern.compile("href=\"(.*?)\"").matcher(html);
-                if (m.find()) {
-                    String albumUrl = m.group(1);
-                    String htmlPage = restTemplate.getForObject(albumUrl, String.class);
-                    Matcher imgMatch = Pattern.compile("<img src=\"(https://www\\.metal-archives\\.com/images/\\d+/\\d+/\\d+/\\d+/.*?)\"")
-                            .matcher(htmlPage);
-                    if (imgMatch.find()) {
-                        return imgMatch.group(1);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("Metal Archives lookup failed for {} - {}", artist, albumTitle);
-        }
-        return null;
-    }
+                boolean anyArtistExact = false;
+                boolean anyArtistLoose = false;
 
-    // --------------------------------------------------
-    // RateYourMusic
-    // --------------------------------------------------
-    private String fetchFromRateYourMusic(String artist, String albumTitle) {
-        try {
-            String searchUrl = "https://rateyourmusic.com/search?searchterm="
-                    + URLEncoder.encode(artist + " " + albumTitle, StandardCharsets.UTF_8)
-                    + "&type=l";
+                if (acList != null) {
+                    for (Map<String, Object> ac : acList) {
+                        String creditName = ac.get("name") instanceof String
+                                ? norm((String) ac.get("name"))
+                                : null;
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-            headers.add("Accept-Language", "en-US,en;q=0.9");
-            headers.add("Accept-Charset", "UTF-8");
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
+                        Map artistObj = (Map) ac.get("artist");
+                        String artistName = null;
+                        if (artistObj != null) {
+                            Object n = artistObj.get("name");
+                            if (n instanceof String) {
+                                artistName = norm((String) n);
+                            }
+                        }
 
-            ResponseEntity<String> response = restTemplate.exchange(searchUrl, HttpMethod.GET, entity, String.class);
-            String html = response.getBody();
-            if (html == null) return null;
+                        String candidate = creditName != null ? creditName : artistName;
+                        if (candidate == null) continue;
 
-            Document doc = Jsoup.parse(html);
-            Element img = doc.selectFirst("img[src^=https://e.snmc.io/i/], img[src*=/cover/], img[src*=/i/]");
-            if (img != null) {
-                return img.attr("src");
-            }
-        } catch (Exception e) {
-            logger.warn("RateYourMusic lookup failed for {} - {}", artist, albumTitle);
-        }
-        return null;
-    }
-
-    // --------------------------------------------------
-    // Discogs
-    // --------------------------------------------------
-    private String fetchFromDiscogs(String artist, String albumTitle) {
-        try {
-            String url = "https://api.discogs.com/database/search?artist="
-                    + URLEncoder.encode(artist, StandardCharsets.UTF_8)
-                    + "&release_title=" + URLEncoder.encode(albumTitle, StandardCharsets.UTF_8)
-                    + "&type=release"
-                    + "&per_page=3"
-                    + "&token=" + discogsToken;
-
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-            Map body = response.getBody();
-            if (body == null) return null;
-
-            List<Map> results = (List<Map>) body.get("results");
-            for (Map result : results) {
-                Object thumb = result.get("cover_image");
-                if (thumb != null) {
-                    String imgUrl = thumb.toString();
-                    if (imgUrl.endsWith(".jpg") || imgUrl.endsWith(".png")) {
-                        if (!imgUrl.contains("spacer.gif")) {
-                            return imgUrl;
+                        if (candidate.equals(targetArtist)) {
+                            anyArtistExact = true;
+                        } else if (candidate.contains(targetArtist) || targetArtist.contains(candidate)) {
+                            anyArtistLoose = true;
                         }
                     }
                 }
+
+                int q = 0;
+
+                // Title relevance
+                if (releaseTitle.equals(targetTitle)) {
+                    q += 60;
+                } else if (releaseTitle.contains(targetTitle) || targetTitle.contains(releaseTitle)) {
+                    q += 30;
+                }
+
+                // Artist relevance
+                if (anyArtistExact) {
+                    q += 40;
+                } else if (anyArtistLoose) {
+                    q += 20;
+                }
+
+                // Official releases get a bump
+                String status = (String) release.get("status");
+                if (status != null && "Official".equalsIgnoreCase(status)) {
+                    q += 10;
+                }
+
+                // Use MB "score" if present
+                Object scoreObj = release.get("score");
+                if (scoreObj instanceof Number) {
+                    int mbScore = ((Number) scoreObj).intValue(); // 0-100
+                    q += mbScore / 5;
+                }
+
+                if (q > bestQuality) {
+                    bestQuality = q;
+                    best = release;
+                }
             }
 
+            final int QUALITY_THRESHOLD = 50;
+            if (best == null || bestQuality < QUALITY_THRESHOLD) {
+                logger.warn("No strong MusicBrainz match for {} - {} (bestQuality={})",
+                        artist, albumTitle, bestQuality);
+                return null;
+            }
+
+            logger.info("Chosen MusicBrainz release for {} - {} with quality {}",
+                    artist, albumTitle, bestQuality);
+
+            // Try CAA: release-group first, then release
+            return resolveCoverArtUrl(best, entity);
+
         } catch (Exception e) {
-            logger.warn("Discogs lookup failed for {} - {}", artist, albumTitle);
+            logger.warn("MusicBrainz lookup failed for {} - {}: {}", artist, albumTitle, e.getMessage());
+            return null;
         }
+    }
+
+    /**
+     * Use Cover Art Archive:
+     *  1) Try release-group front-500
+     *  2) If 404/Not Found, try release front-500
+     *  3) If both fail, return null
+     */
+    private String resolveCoverArtUrl(Map<String, Object> best, HttpEntity<Void> entity) {
+        Map<String, Object> bestRg = (Map<String, Object>) best.get("release-group");
+        String rgid = (bestRg != null && bestRg.get("id") instanceof String)
+                ? (String) bestRg.get("id")
+                : null;
+        String rid = (best.get("id") instanceof String)
+                ? (String) best.get("id")
+                : null;
+
+        // Build candidate URLs in order
+        String[] candidates;
+        if (rgid != null && rid != null) {
+            candidates = new String[] {
+                    "https://coverartarchive.org/release-group/" + rgid + "/front-500",
+                    "https://coverartarchive.org/release/" + rid + "/front-500"
+            };
+        } else if (rgid != null) {
+            candidates = new String[] {
+                    "https://coverartarchive.org/release-group/" + rgid + "/front-500"
+            };
+        } else if (rid != null) {
+            candidates = new String[] {
+                    "https://coverartarchive.org/release/" + rid + "/front-500"
+            };
+        } else {
+            logger.warn("Best candidate missing IDs for CoverArtArchive.");
+            return null;
+        }
+
+        for (String url : candidates) {
+            try {
+                ResponseEntity<byte[]> resp =
+                        restTemplate.exchange(url, HttpMethod.GET, entity, byte[].class);
+                int status = resp.getStatusCode().value();
+
+                if (status >= 200 && status < 300) {
+                    logger.info("Using CoverArtArchive URL: {}", url);
+                    return url;
+                } else if (status == 404) {
+                    logger.debug("CoverArtArchive 404 for {}", url);
+                } else {
+                    logger.warn("CoverArtArchive {} for {}", status, url);
+                }
+            } catch (HttpClientErrorException.NotFound e) {
+                logger.debug("CoverArtArchive 404 for {}", url);
+            } catch (Exception e) {
+                logger.warn("Error calling CoverArtArchive {}: {}", url, e.getMessage());
+            }
+        }
+
+        logger.warn("No cover art found in CoverArtArchive for chosen MusicBrainz release.");
         return null;
     }
 
     // --------------------------------------------------
-    // Utility: Cleaning and Normalization
+    // Helpers
     // --------------------------------------------------
+
+    private synchronized void waitMusicBrainzWindow() {
+        long now = System.currentTimeMillis();
+        long elapsed = now - lastMusicBrainzCall;
+        if (elapsed < 1200) {
+            try { Thread.sleep(1200 - elapsed); } catch (InterruptedException ignored) {}
+        }
+        lastMusicBrainzCall = System.currentTimeMillis();
+    }
+
+    private boolean isMissingCover(String coverUrl) {
+        if (coverUrl == null) return true;
+        String u = coverUrl.trim();
+        if (u.isEmpty()) return true;
+        if (u.equals(DEFAULT_COVER)) return true;
+        if (u.contains("spacer.gif")) return true;
+        return false;
+    }
+
+    private boolean isValidCover(String coverUrl) {
+        if (coverUrl == null) return false;
+        String u = coverUrl.trim();
+        if (u.isEmpty()) return false;
+        if (u.contains("spacer.gif")) return false;
+        return true;
+    }
+
+    private void logSelectedSource(String artist, String title, String coverUrl) {
+        String source =
+                coverUrl == null ? "None" :
+                        coverUrl.contains("coverartarchive") ? "MusicBrainz" :
+                                coverUrl.equals(DEFAULT_COVER) ? "Default" :
+                                        "Unknown";
+        logger.info("Selected cover source for {} - {}: {}", artist, title, source);
+    }
+
     private String cleanForSearch(String text) {
+        if (text == null) return "";
         return text
                 .replaceAll("[^\\p{L}\\p{N}\\s:'&.,()\\-]", "")
                 .replaceAll("\\s+", " ")
@@ -307,7 +344,12 @@ public class CoverArtService {
     }
 
     private String normalizeAscii(String text) {
+        if (text == null) return "";
         String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{M}", ""); // remove diacritics
+        return normalized.replaceAll("\\p{M}", ""); // strip diacritics
+    }
+
+    private String norm(String text) {
+        return normalizeAscii(cleanForSearch(text)).toLowerCase();
     }
 }

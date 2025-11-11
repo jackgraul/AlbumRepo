@@ -216,35 +216,40 @@ const ArtistDetails: React.FC = () => {
                     }}
                   >
                     <CardActionArea onClick={() => navigate(`/albums/${a.id}`, {state: {fromArtistPath: `/artists/${artist.id}`}})}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 2, py: 1.25 }}>
-                        <LazyLoadImage
-                          src={a.coverURL ?? ""}
-                          alt={a.albumName ?? "Album cover"}
-                          effect="blur"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/images/default-cover.png";
-                          }}
-                          style={{
-                            width: 80,
-                            height: 80,
-                            borderRadius: 8,
-                            objectFit: "cover",
-                            objectPosition: "center",
-                            flexShrink: 0,
-                          }}
-                        />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 1, py: 0 }}>
+                        <Box sx={{width: 80, height: 80, overflow: "hidden", flexShrink: 0}}>
+                          <LazyLoadImage
+                            src={a.coverURL ?? ""}
+                            alt={a.albumName ?? "Album cover"}
+                            effect="blur"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/images/default-cover.png";
+                            }}
+                            style={{
+                              width: 80,
+                              height: 80,
+                              borderRadius: 8,
+                              objectFit: "cover",
+                              objectPosition: "center",
+                              flexShrink: 0,
+                            }}
+                          />
+                        </Box>
 
-                        <CardContent sx={{ flexGrow: 1, p: 0 }}>
+                        <CardContent sx={{height: 100, flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center", px: 0, pt: 2}}>
                           <Typography variant="subtitle1" fontWeight={600}>
                             {a.albumName}
                           </Typography>
+
                           <Typography variant="body2" color="text.secondary">
                             {a.releaseYear ?? ""}
                           </Typography>
+
                           <Typography variant="body2" color="text.secondary">
                             {a.rating != null ? `★ ${a.rating}` : ""}
                           </Typography>
+
                           <Typography variant="body2" color="text.secondary">
                             {a.genre ?? ""}
                           </Typography>
