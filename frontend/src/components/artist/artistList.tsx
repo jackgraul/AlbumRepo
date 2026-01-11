@@ -56,7 +56,7 @@ const ArtistList: React.FC = () => {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("❌ Error fetching artists:", err);
+        console.error("Error fetching artists:", err);
         setLoading(false);
       });
   }, []);
@@ -72,7 +72,7 @@ const ArtistList: React.FC = () => {
       );
     }
 
-    // letter filter (use same logic as options)
+    // letter filter
     if (selectedLetter) {
       const target = selectedLetter.toUpperCase();
       filtered =
@@ -101,6 +101,17 @@ const ArtistList: React.FC = () => {
       const aLetter = getNormalizedLetter(a.artistName);
       const bLetter = getNormalizedLetter(b.artistName);
 
+      if (sortBy === "albumCount") {
+        const aCount = a.albums?.length ?? 0;
+        const bCount = b.albums?.length ?? 0;
+
+        // Sort by album count first
+        if (aCount !== bCount) return (aCount - bCount) * dir;
+
+        // Tie-breaker: artist name
+        return aNorm.localeCompare(bNorm) * dir;
+      }
+
       if (sortBy === "letter") {
         if (aLetter < bLetter) return -1 * dir;
         if (aLetter > bLetter) return 1 * dir;
@@ -112,9 +123,7 @@ const ArtistList: React.FC = () => {
       }
 
       // sortBy === "artist"
-      if (aNorm < bNorm) return -1 * dir;
-      if (aNorm > bNorm) return 1 * dir;
-      return 0;
+      return aNorm.localeCompare(bNorm) * dir;
     });
 
     setFilteredArtists(filtered);
@@ -124,6 +133,9 @@ const ArtistList: React.FC = () => {
     return (
       <Box textAlign="center" mt={5}>
         <CircularProgress />
+        <Typography variant="body2" mt={2}>
+          Loading artists...
+        </Typography>
       </Box>
     );
   }

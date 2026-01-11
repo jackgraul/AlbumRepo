@@ -9,10 +9,12 @@ import {
   Select,
   Autocomplete,
 } from "@mui/material";
+import { Album } from "../../models/models";
 
 export interface ArtistOption {
   name: string;
   letter: string;
+  albums?: Album[];
 }
 
 interface AlbumFiltersProps {

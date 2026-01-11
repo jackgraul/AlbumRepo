@@ -155,7 +155,7 @@ const AlbumList: React.FC = () => {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("❌ Error fetching albums:", err);
+        console.error("Error fetching albums:", err);
         setLoading(false);
       });
   }, []);
@@ -375,7 +375,7 @@ const AlbumList: React.FC = () => {
       <Box textAlign="center" mt={5}>
         <CircularProgress />
         <Typography variant="body2" mt={2}>
-          Loading albums…
+          Loading albums...
         </Typography>
       </Box>
     );
@@ -405,6 +405,7 @@ const AlbumList: React.FC = () => {
 
       <AlbumSummaryBar
         totalAlbums={filteredAlbums.length}
+        listenedAlbums={filteredAlbums.filter(a => a.rating !== null).length}
         uniqueArtists={
           new Set(
             filteredAlbums.map((a) => a.artist?.artistName)

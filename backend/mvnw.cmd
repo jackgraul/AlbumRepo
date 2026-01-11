@@ -1,3 +1,6 @@
+set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.9.10-hotspot
+set PATH=%JAVA_HOME%\bin;%PATH%
+
 <# : batch portion
 @REM ----------------------------------------------------------------------------
 @REM Licensed to the Apache Software Foundation (ASF) under one

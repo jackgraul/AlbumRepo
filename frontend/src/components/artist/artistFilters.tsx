@@ -108,8 +108,16 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
           : list.filter((a) => a.letterNorm === target);
     }
 
-    // sort
     const sorted = [...list].sort((a, b) => {
+      if (sortBy === "albums") {
+        const diff = (a.albums?.length ?? 0) - (b.albums?.length ?? 0);
+        if (diff !== 0) return diff * dir;
+
+        if (a.norm < b.norm) return -1 * dir;
+        if (a.norm > b.norm) return 1 * dir;
+        return 0;
+      }
+
       if (sortBy === "letter") {
         if (a.letterNorm < b.letterNorm) return -1 * dir;
         if (a.letterNorm > b.letterNorm) return 1 * dir;
@@ -189,6 +197,7 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
         >
           <MenuItem value="letter">Letter</MenuItem>
           <MenuItem value="artist">Artist</MenuItem>
+          <MenuItem value="albumCount">Album Count</MenuItem>
         </Select>
       </FormControl>
 

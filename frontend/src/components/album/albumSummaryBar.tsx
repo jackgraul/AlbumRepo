@@ -4,11 +4,13 @@ import { useNavigate } from "react-router-dom";
 
 interface AlbumSummaryBarProps {
   totalAlbums: number;
+  listenedAlbums?: number;
   uniqueArtists: number;
 }
 
 const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
   totalAlbums,
+  listenedAlbums,
   uniqueArtists,
 }) => {
   const navigate = useNavigate();
@@ -32,6 +34,9 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
       <Stack direction="row" spacing={3} alignItems="center">
         <Typography variant="subtitle1" fontWeight={600}>
           Total Albums: {totalAlbums}
+        </Typography>
+        <Typography variant="subtitle1" fontWeight={600}>
+          Listened Albums: {listenedAlbums ?? 0}
         </Typography>
         <Typography variant="subtitle1" fontWeight={600}>
           Artists: {uniqueArtists}
