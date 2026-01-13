@@ -20,6 +20,10 @@ public class Album {
 
     @Column(name = "release_year")
     private Integer releaseYear;
+
+    @Column(name = "release_order")
+    private Integer releaseOrder;
+
     private String genre;
     private Double rating;
 
@@ -37,6 +41,9 @@ public class Album {
 
     public Integer getReleaseYear() { return releaseYear; }
     public void setReleaseYear(Integer releaseYear) { this.releaseYear = releaseYear; }
+
+    public Integer getReleaseOrder() { return releaseOrder;}
+    public void setReleaseOrder(Integer releaseOrder) { this.releaseOrder = releaseOrder; }
 
     public String getGenre() { return genre; }
     public void setGenre(String genre) { this.genre = genre; }

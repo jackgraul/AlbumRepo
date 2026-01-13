@@ -13,8 +13,6 @@ const CARD_WIDTH = 280;
 const CARD_HEIGHT = 340;
 const GAP = 15;
 
-type SortOrder = "asc" | "desc";
-
 interface ParsedSearch {
   q: string;
   letter: string;
@@ -216,61 +214,81 @@ const AlbumList: React.FC = () => {
     const dir = sortOrder === "asc" ? 1 : -1;
 
     filtered.sort((a, b) => {
-      // 1) Sort by Letter: letter → normalized artist name → releaseYear → title
+      // Sort by letter
       if (sortBy === "letter") {
+        // Letter
         const aLetter = getArtistLetter(a);
         const bLetter = getArtistLetter(b);
-
         if (aLetter < bLetter) return -1 * dir;
         if (aLetter > bLetter) return 1 * dir;
 
+        // Artist
         const aName = normalizeArtistName(a.artist?.artistName);
         const bName = normalizeArtistName(b.artist?.artistName);
-
         if (aName < bName) return -1 * dir;
         if (aName > bName) return 1 * dir;
 
-        // same artist: sort by year
-        const aYear = a.releaseYear ?? 9999; // missing years go last in asc
-        const bYear = b.releaseYear ?? 9999;
+        // Year
+        const aY = a.releaseYear ?? 9999;
+        const bY = b.releaseYear ?? 9999;
+        if (aY < bY) return -1 * dir;
+        if (aY > bY) return 1 * dir;
 
-        if (aYear < bYear) return -1 * dir;
-        if (aYear > bYear) return 1 * dir;
+        // Release order
+        const aOrder = a.releaseOrder;
+        const bOrder = b.releaseOrder;
 
-        // final stable fallback: title
+        if (aOrder != null || bOrder != null) {
+          if (aOrder == null) return 1;
+          if (bOrder == null) return -1;
+          if (aOrder < bOrder) return -1 * dir;
+          if (aOrder > bOrder) return 1 * dir;
+        }
+
+        // Title fallback
         const aTitle = (a.albumName || "").toLowerCase();
         const bTitle = (b.albumName || "").toLowerCase();
-
         if (aTitle < bTitle) return -1 * dir;
         if (aTitle > bTitle) return 1 * dir;
 
         return 0;
       }
 
-      // 2) Sort by Artist: normalized artist → releaseYear → title
+      // Sort by artist
       if (sortBy === "artist") {
+        // Artist
         const aName = normalizeArtistName(a.artist?.artistName);
         const bName = normalizeArtistName(b.artist?.artistName);
-
         if (aName < bName) return -1 * dir;
         if (aName > bName) return 1 * dir;
 
-        const aYear = a.releaseYear ?? 9999;
-        const bYear = b.releaseYear ?? 9999;
+        // Year
+        const aY = a.releaseYear ?? 9999;
+        const bY = b.releaseYear ?? 9999;
+        if (aY < bY) return -1 * dir;
+        if (aY > bY) return 1 * dir;
 
-        if (aYear < bYear) return -1 * dir;
-        if (aYear > bYear) return 1 * dir;
+        // Release order
+        const aOrder = a.releaseOrder;
+        const bOrder = b.releaseOrder;
 
+        if (aOrder != null || bOrder != null) {
+          if (aOrder == null) return 1;
+          if (bOrder == null) return -1;
+          if (aOrder < bOrder) return -1 * dir;
+          if (aOrder > bOrder) return 1 * dir;
+        }
+
+        // Title fallback
         const aTitle = (a.albumName || "").toLowerCase();
         const bTitle = (b.albumName || "").toLowerCase();
-
         if (aTitle < bTitle) return -1 * dir;
         if (aTitle > bTitle) return 1 * dir;
 
         return 0;
       }
 
-      // 3) Sort by Title
+      // Title
       if (sortBy === "title") {
         const aTitle = (a.albumName || "").toLowerCase();
         const bTitle = (b.albumName || "").toLowerCase();
@@ -279,20 +297,23 @@ const AlbumList: React.FC = () => {
         return 0;
       }
 
-      // 4) Sort by Rating
-      if (sortBy === "rating") {
-        const aR = a.rating ?? -Infinity;
-        const bR = b.rating ?? -Infinity;
-        if (aR < bR) return -1 * dir;
-        if (aR > bR) return 1 * dir;
-        return 0;
-      }
-
-      // 5) Default: Year
-      const aY = a.releaseYear ?? 0;
-      const bY = b.releaseYear ?? 0;
+      // Year
+      const aY = a.releaseYear ?? 9999;
+      const bY = b.releaseYear ?? 9999;
       if (aY < bY) return -1 * dir;
       if (aY > bY) return 1 * dir;
+
+      // Release order
+      const aOrder = a.releaseOrder;
+      const bOrder = b.releaseOrder;
+
+      if (aOrder != null || bOrder != null) {
+        if (aOrder == null) return 1;
+        if (bOrder == null) return -1;
+        if (aOrder < bOrder) return -1 * dir;
+        if (aOrder > bOrder) return 1 * dir;
+      }
+
       return 0;
     });
 
@@ -352,6 +373,7 @@ const AlbumList: React.FC = () => {
                   id={album.id}
                   albumName={album.albumName}
                   releaseYear={album.releaseYear}
+                  releaseOrder={album.releaseOrder ?? undefined}
                   genre={album.genre ?? ""}
                   rating={album.rating ?? undefined}
                   coverURL={

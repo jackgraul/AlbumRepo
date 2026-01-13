@@ -8,6 +8,7 @@ interface AlbumCardProps {
   id: number;
   albumName: string;
   releaseYear: number;
+  releaseOrder?: number;
   rating?: number;
   genre?: string;
   coverURL?: string;
