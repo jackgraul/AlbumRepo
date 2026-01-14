@@ -261,6 +261,15 @@ const ArtistDetails: React.FC = () => {
               ) : (
                 <Typography color="text.secondary">No albums for this artist.</Typography>
               )}
+
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate("/albums/new")}
+                sx={{ mt: { xs: 1, sm: 0 } }}
+              >
+                + Add Album
+              </Button>
             </Stack>
           )}
         </Grid>
