@@ -18,6 +18,7 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import api from "../api/apiClient";
 import { Artist } from "../models/models";
+import DeleteConfirmationDialog from "../components/common/deleteConfirmation";
 
 const ArtistDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +36,7 @@ const ArtistDetails: React.FC = () => {
   );
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const [toast, setToast] = useState({
     open: false,
@@ -109,6 +111,7 @@ const ArtistDetails: React.FC = () => {
 
   const handleDelete = () => {
     if (!artist) return;
+    
     api
       .delete(`/artists/delete-artist/${artist.id}`)
       .then(() => {
@@ -185,10 +188,30 @@ const ArtistDetails: React.FC = () => {
             </Button>
 
             {!isNew && (
-              <Button variant="outlined" color="error" onClick={handleDelete}>
+              <Button variant="outlined" color="error" onClick={() => setDeleteDialogOpen(true)}>
                 Delete Artist
               </Button>
             )}
+
+            <DeleteConfirmationDialog
+              open={deleteDialogOpen}
+              message={
+                <>
+                  <Typography>Are you sure you want to delete:</Typography>
+                  <Typography fontWeight="bold" mt={1}>
+                    {artist.artistName}
+                  </Typography>
+                  <Typography mt={2} color="text.secondary">
+                    This action cannot be undone.
+                  </Typography>
+                </>
+              }
+              onCancel={() => setDeleteDialogOpen(false)}
+              onConfirm={() => {
+                setDeleteDialogOpen(false);
+                handleDelete();
+              }}
+            />
 
             <Button variant="text" onClick={() => navigate("/artists")}>
               Cancel

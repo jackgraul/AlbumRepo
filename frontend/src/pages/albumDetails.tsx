@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import api from "../api/apiClient";
 import { Album } from "../models/models";
+import DeleteConfirmationDialog from "../components/common/deleteConfirmation";
 
 const AlbumDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +37,7 @@ const AlbumDetails: React.FC = () => {
 
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
   const [artistLoading, setArtistLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     setArtistLoading(true);
@@ -148,6 +150,7 @@ const AlbumDetails: React.FC = () => {
 
   const handleDelete = () => {
     if (!album) return;
+    
     api
       .delete(`/albums/delete-album/${album.id}`)
       .then(() => {
@@ -286,10 +289,30 @@ const AlbumDetails: React.FC = () => {
             </Button>
 
             {!isNew && (
-              <Button variant="outlined" color="error" onClick={handleDelete}>
+              <Button variant="outlined" color="error" onClick={() => setDeleteDialogOpen(true)}>
                 Delete Album
               </Button>
             )}
+
+            <DeleteConfirmationDialog
+              open={deleteDialogOpen}
+              message={
+                <>
+                  <Typography>Are you sure you want to delete:</Typography>
+                  <Typography fontWeight="bold" mt={1}>
+                    {album?.artist?.artistName} - {album?.albumName}
+                  </Typography>
+                  <Typography mt={2} color="text.secondary">
+                    This action cannot be undone.
+                  </Typography>
+                </>
+              }
+              onCancel={() => setDeleteDialogOpen(false)}
+              onConfirm={() => {
+                setDeleteDialogOpen(false);
+                handleDelete();
+              }}
+            />
 
             <Button variant="text" onClick={goBack}>
               Cancel
