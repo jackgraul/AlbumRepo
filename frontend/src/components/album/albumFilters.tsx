@@ -179,7 +179,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
       />
 
       <TextField
-        label="Search genre"
+        label="Genre"
         variant="outlined"
         size="small"
         value={genreQuery ?? ""}
@@ -188,7 +188,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
       />
 
       <TextField
-        label="Search year"
+        label="Year"
         variant="outlined"
         size="small"
         value={yearQuery ?? ""}

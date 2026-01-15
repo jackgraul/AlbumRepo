@@ -26,10 +26,20 @@ const Navbar: React.FC = () => {
         >
           AlbumRepo
         </Typography>
-        <Button color="inherit" component={Link} to="/" sx={{color: "inherit", "&:hover": {color: "primary.main"}}}>
+
+        <Button 
+          color="inherit" 
+          component={Link} to="/" 
+          sx={{color: "inherit", fontSize: "1.1rem", "&:hover": {color: "primary.main"}, mr: 2}}
+        >
           Albums
         </Button>
-        <Button color="inherit" component={Link} to="/artists" sx={{color: "inherit", "&:hover": {color: "primary.main"}}}>
+
+        <Button 
+          color="inherit" 
+          component={Link} to="/artists" 
+          sx={{color: "inherit", fontSize: "1.1rem", "&:hover": {color: "primary.main"}}}
+        >
           Artists
         </Button>
       </Toolbar>
