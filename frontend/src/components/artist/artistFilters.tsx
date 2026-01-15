@@ -16,11 +16,11 @@ interface ArtistFilterProps {
   setSelectedLetter: (value: string) => void;
   selectedArtist: string | null;
   setSelectedArtist: (value: string | null) => void;
-  artistOptions: ArtistOption[];
   sortBy: string;
   setSortBy: (value: string) => void;
   sortOrder: "asc" | "desc";
   setSortOrder: (value: "asc" | "desc") => void;
+  artistOptions: ArtistOption[];
 }
 
 const ARTIST_SORT_ALIASES: Record<string, string> = {
@@ -62,11 +62,11 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
   setSelectedLetter,
   selectedArtist,
   setSelectedArtist,
-  artistOptions,
   sortBy,
   setSortBy,
   sortOrder,
   setSortOrder,
+  artistOptions
 }) => {
   const handleLetterChange = (value: string) => {
     setSelectedLetter(value);
@@ -75,7 +75,6 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
 
   const handleArtistChange = (value: string | null) => {
     setSelectedArtist(value);
-    if (value) setSelectedLetter("");
   };
 
   const handleResetFilters = () => {
@@ -103,7 +102,6 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
       };
     });
 
-    // letter filter
     if (selectedLetter) {
       const target = selectedLetter.toUpperCase();
       list =
@@ -135,7 +133,6 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
           const ar = a.avgRating;
           const br = b.avgRating;
 
-          // push unrated artists to the bottom
           if (ar == null && br == null) {
             return compareStrings(a.norm, b.norm) * dir;
           }

@@ -430,7 +430,10 @@ const AlbumList: React.FC = () => {
           ).size
         }
         wrongCoverAlbums={filteredAlbums.filter(a => a.coverURL === "/images/default-cover.png" || a.coverURL === '').length}
-        avgRating={filteredAlbums.length > 0 ? Number((filteredAlbums.reduce((sum, a) => sum + (a.rating ?? 0), 0) / filteredAlbums.filter(a => a.rating != null).length).toFixed(2)) : undefined}
+        avgRating={filteredAlbums.filter(a => a.rating !== null).length > 0 
+          ? Number((filteredAlbums.reduce((sum, a) => sum + (a.rating ?? 0), 0) / filteredAlbums.filter(a => a.rating != null).length).toFixed(2)) 
+          : undefined
+        }
       />
 
       {filteredAlbums.length === 0 ? (

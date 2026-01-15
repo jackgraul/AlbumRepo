@@ -7,8 +7,7 @@ import {
   MenuItem,
   FormControl,
   Select,
-  Autocomplete,
-  Menu,
+  Autocomplete
 } from "@mui/material";
 import { Album } from "../../models/models";
 
@@ -96,7 +95,6 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
 
   const handleArtistChange = (value: string | null) => {
     setSelectedArtist(value);
-    if (value) setSelectedLetter("");
   };
 
   const handleResetFilters = () => {

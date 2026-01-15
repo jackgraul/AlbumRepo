@@ -61,7 +61,6 @@ const ArtistList: React.FC = () => {
   useEffect(() => {
     let filtered = [...artists];
 
-    // letter filter
     if (selectedLetter) {
       const target = selectedLetter.toUpperCase();
       filtered =
@@ -70,7 +69,6 @@ const ArtistList: React.FC = () => {
           : filtered.filter((a) => getNormalizedLetter(a.artistName) === target);
     }
 
-    // specific artist
     if (selectedArtist) {
       const target = selectedArtist.toLowerCase();
       filtered = filtered.filter(
@@ -78,9 +76,9 @@ const ArtistList: React.FC = () => {
       );
     }
 
-    const dir = sortOrder === "asc" ? 1 : -1;
-
     filtered.sort((a, b) => {
+      const dir = sortOrder === "asc" ? 1 : -1;
+
       const aNorm = normalizeArtistName(a.artistName);
       const bNorm = normalizeArtistName(b.artistName);
 
@@ -90,15 +88,16 @@ const ArtistList: React.FC = () => {
       const aAlbums = a.albums ?? [];
       const bAlbums = b.albums ?? [];
 
-      const aAvg =
-        aAlbums.length > 0
-          ? aAlbums.reduce((s, x) => s + (x.rating ?? 0), 0) / aAlbums.length
-          : null;
+      const aRated = aAlbums.filter((x) => x.rating != null);
+      const bRated = bAlbums.filter((x) => x.rating != null);
 
-      const bAvg =
-        bAlbums.length > 0
-          ? bAlbums.reduce((s, x) => s + (x.rating ?? 0), 0) / bAlbums.length
-          : null;
+      const aAvg = aRated.length
+        ? aRated.reduce((sum, x) => sum + (x.rating ?? 0), 0) / aRated.length
+        : null;
+
+      const bAvg = bRated.length
+        ? bRated.reduce((sum, x) => sum + (x.rating ?? 0), 0) / bRated.length
+        : null;
 
       switch (sortBy) {
         case "albumCount": {
@@ -108,13 +107,15 @@ const ArtistList: React.FC = () => {
         }
 
         case "avgRating": {
-          if (aAvg == null && bAvg == null)
-            return aNorm.localeCompare(bNorm) * dir;
+          if (aAvg == null && bAvg == null) return aNorm.localeCompare(bNorm) * dir;
           if (aAvg == null) return 1;
           if (bAvg == null) return -1;
 
           const diff = aAvg - bAvg;
           if (diff !== 0) return diff * dir;
+
+          const ratedDiff = aRated.length - bRated.length;
+          if (ratedDiff !== 0) return ratedDiff * -dir;
 
           return aNorm.localeCompare(bNorm) * dir;
         }
@@ -165,11 +166,8 @@ const ArtistList: React.FC = () => {
         {filteredArtists.map((artist) => {
           const albums = artist.albums ?? [];
           const avgRating =
-            albums.length > 0
-              ? (
-                  albums.reduce((sum, a) => sum + (a.rating ?? 0), 0) /
-                  albums.length
-                ).toFixed(2)
+            albums.filter(a => a.rating != null).length > 0
+              ? (albums.reduce((sum, a) => sum + (a.rating ?? 0), 0) / albums.filter(a => a.rating != null).length).toFixed(2)
               : undefined;
 
           return (

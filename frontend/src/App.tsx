@@ -4,20 +4,33 @@ import AlbumList from "./components/album/albumList";
 import ArtistList from "./components/artist/artistList";
 import AlbumDetailsPage from "./pages/albumDetails";
 import ArtistDetailsPage from "./pages/artistDetails";
-import Navbar from "./components/nav/navbar";
+import Navbar from "./components/common/navbar";
+import Footer from "./components/common/footer";
+import { Box } from "@mui/material";
 
 const App: React.FC = () => {
   return (
-    <>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column"
+      }}
+    >
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Navigate to="/albums" replace />} />
-        <Route path="/albums" element={<AlbumList />} />
-        <Route path="/artists" element={<ArtistList />} />
-        <Route path="/albums/:id" element={<AlbumDetailsPage />} />
-        <Route path="/artists/:id" element={<ArtistDetailsPage />} />
-      </Routes>
-    </>
+
+      <Box component="main" sx={{ flexGrow: 1 }}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/albums" replace />} />
+          <Route path="/albums" element={<AlbumList />} />
+          <Route path="/artists" element={<ArtistList />} />
+          <Route path="/albums/:id" element={<AlbumDetailsPage />} />
+          <Route path="/artists/:id" element={<ArtistDetailsPage />} />
+        </Routes>
+      </Box>
+
+      <Footer />
+    </Box>
   );
 };
 
