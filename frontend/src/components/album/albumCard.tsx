@@ -14,6 +14,7 @@ interface AlbumCardProps {
   coverURL?: string;
   artistName: string;
   fromSearch: string;
+  eager: boolean;
 }
 
 const IMAGE_SIZE = 280; // slightly reduced
@@ -27,13 +28,15 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
   genre,
   coverURL,
   artistName,
-  fromSearch
+  fromSearch,
+  eager
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const searchToCarry = fromSearch || location.search;
 
-  const proxiedUrl = coverURL
+  const proxiedUrl =
+  coverURL && coverURL.startsWith("http")
     ? `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(coverURL)}`
     : "/images/default-cover.png";
 
@@ -72,6 +75,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
           <LazyLoadImage
             src={proxiedUrl}
             alt={albumName}
+            loading={eager ? "eager" : "lazy"}
             effect="blur"
             referrerPolicy="no-referrer"
             onError={(e) => {

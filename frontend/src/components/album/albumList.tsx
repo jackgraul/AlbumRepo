@@ -379,6 +379,7 @@ const AlbumList: React.FC = () => {
                     album.artist?.artistName ?? "Unknown Artist"
                   }
                   fromSearch={location.search}
+                  eager={index <= 2}
                 />
               </Box>
             ))}
