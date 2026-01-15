@@ -12,8 +12,6 @@ import {
 import { ArtistOption } from "../album/albumFilters";
 
 interface ArtistFilterProps {
-  searchQuery: string;
-  setSearchQuery: (value: string) => void;
   selectedLetter: string;
   setSelectedLetter: (value: string) => void;
   selectedArtist: string | null;
@@ -60,8 +58,6 @@ export const getNormalizedLetter = (name?: string | null): string => {
 const letters = ["#", ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
 
 const ArtistFilters: React.FC<ArtistFilterProps> = ({
-  searchQuery,
-  setSearchQuery,
   selectedLetter,
   setSelectedLetter,
   selectedArtist,
@@ -83,7 +79,6 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
   };
 
   const handleResetFilters = () => {
-    setSearchQuery("");
     setSelectedLetter("");
     setSelectedArtist(null);
     setSortBy("letter");
@@ -93,11 +88,20 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
   const filteredArtistOptions = useMemo(() => {
     const dir = sortOrder === "asc" ? 1 : -1;
 
-    let list = artistOptions.map((o) => ({
-      ...o,
-      norm: normalizeArtistName(o.name),
-      letterNorm: (o.letter || "#").toUpperCase(),
-    }));
+    let list = artistOptions.map((o) => {
+      const albums = o.albums ?? [];
+      const avgRating =
+        albums.length > 0
+          ? albums.reduce((sum, a) => sum + (a.rating ?? 0), 0) / albums.length
+          : null;
+
+      return {
+        ...o,
+        norm: normalizeArtistName(o.name),
+        letterNorm: (o.letter || "#").toUpperCase(),
+        avgRating,
+      };
+    });
 
     // letter filter
     if (selectedLetter) {
@@ -108,29 +112,46 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
           : list.filter((a) => a.letterNorm === target);
     }
 
+    const compareStrings = (a: string, b: string) =>
+      a < b ? -1 : a > b ? 1 : 0;
+
     const sorted = [...list].sort((a, b) => {
-      if (sortBy === "albums") {
-        const diff = (a.albums?.length ?? 0) - (b.albums?.length ?? 0);
-        if (diff !== 0) return diff * dir;
+      switch (sortBy) {
+        case "albums": {
+          const diff = (a.albums?.length ?? 0) - (b.albums?.length ?? 0);
+          if (diff !== 0) return diff * dir;
 
-        if (a.norm < b.norm) return -1 * dir;
-        if (a.norm > b.norm) return 1 * dir;
-        return 0;
+          return compareStrings(a.norm, b.norm) * dir;
+        }
+
+        case "letter": {
+          const letterDiff = compareStrings(a.letterNorm, b.letterNorm);
+          if (letterDiff !== 0) return letterDiff * dir;
+
+          return compareStrings(a.norm, b.norm) * dir;
+        }
+
+        case "avgRating": {
+          const ar = a.avgRating;
+          const br = b.avgRating;
+
+          // push unrated artists to the bottom
+          if (ar == null && br == null) {
+            return compareStrings(a.norm, b.norm) * dir;
+          }
+          if (ar == null) return 1;
+          if (br == null) return -1;
+
+          const diff = ar - br;
+          if (diff !== 0) return diff * dir;
+
+          return compareStrings(a.norm, b.norm) * dir;
+        }
+
+        case "artist":
+        default:
+          return compareStrings(a.norm, b.norm) * dir;
       }
-
-      if (sortBy === "letter") {
-        if (a.letterNorm < b.letterNorm) return -1 * dir;
-        if (a.letterNorm > b.letterNorm) return 1 * dir;
-
-        if (a.norm < b.norm) return -1 * dir;
-        if (a.norm > b.norm) return 1 * dir;
-        return 0;
-      }
-
-      // sortBy === "artist"
-      if (a.norm < b.norm) return -1 * dir;
-      if (a.norm > b.norm) return 1 * dir;
-      return 0;
     });
 
     return sorted;
@@ -150,16 +171,7 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
       justifyContent="space-between"
       mb={3}
     >
-      <TextField
-        label="Search artists"
-        variant="outlined"
-        size="small"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        sx={{ flex: 1, minWidth: "250px" }}
-      />
-
-      <FormControl size="small" sx={{ width: 120 }}>
+      <FormControl size="small" sx={{ width: 125 }}>
         <InputLabel>Letter</InputLabel>
         <Select
           value={selectedLetter}
@@ -185,10 +197,10 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
         renderInput={(params) => (
           <TextField {...params} label="Artist" variant="outlined" />
         )}
-        sx={{ width: 220 }}
+        sx={{ width: 400 }}
       />
 
-      <FormControl size="small" sx={{ width: 160 }}>
+      <FormControl size="small" sx={{ width: 200 }}>
         <InputLabel>Sort By</InputLabel>
         <Select
           value={sortBy}
@@ -198,10 +210,11 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
           <MenuItem value="letter">Letter</MenuItem>
           <MenuItem value="artist">Artist</MenuItem>
           <MenuItem value="albumCount">Album Count</MenuItem>
+          <MenuItem value="avgRating">Average Rating</MenuItem>
         </Select>
       </FormControl>
 
-      <FormControl size="small" sx={{ width: 120 }}>
+      <FormControl size="small" sx={{ width: 200 }}>
         <InputLabel>Order</InputLabel>
         <Select
           value={sortOrder}

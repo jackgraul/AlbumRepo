@@ -8,6 +8,7 @@ import {
   FormControl,
   Select,
   Autocomplete,
+  Menu,
 } from "@mui/material";
 import { Album } from "../../models/models";
 
@@ -72,8 +73,6 @@ export const getNormalizedLetter = (name?: string | null): string => {
 };
 
 const AlbumFilters: React.FC<AlbumFiltersProps> = ({
-  searchQuery,
-  setSearchQuery,
   selectedLetter,
   setSelectedLetter,
   selectedArtist,
@@ -101,7 +100,6 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
   };
 
   const handleResetFilters = () => {
-    setSearchQuery("");
     setSelectedLetter("");
     setSelectedArtist(null);
     setGenreQuery("");
@@ -111,10 +109,6 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
     setSortOrder("asc");
   };
 
-  // Filter + sort artist options:
-  // - filter by selectedLetter (if any)
-  // - sort by letter
-  // - then by normalized name (ignoring The/A/An)
   const filteredArtistOptions = useMemo(() => {
     let base =
       !selectedLetter
@@ -157,16 +151,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
       mb={3}
       mt={1}
     >
-      <TextField
-        label="Search albums or artists"
-        variant="outlined"
-        size="small"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        sx={{ flex: 1, minWidth: "200px" }}
-      />
-
-      <FormControl size="small" sx={{ width: 90 }}>
+      <FormControl size="small" sx={{ width: 125 }}>
         <InputLabel>Letter</InputLabel>
         <Select
           value={selectedLetter}
@@ -192,7 +177,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         renderInput={(params) => (
           <TextField {...params} label="Artist" variant="outlined" />
         )}
-        sx={{ width: 220 }}
+        sx={{ width: 400 }}
       />
 
       <TextField
@@ -210,7 +195,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         size="small"
         value={yearQuery ?? ""}
         onChange={(e) => setYearQuery(e.target.value)}
-        sx={{ flex: 1, minWidth: "100px" }}
+        sx={{ width: 150 }}
       />
 
       <FormControl size="small" sx={{ width: 125 }}>
@@ -229,7 +214,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         </Select>
       </FormControl>
 
-      <FormControl size="small" sx={{ width: 125 }}>
+      <FormControl size="small" sx={{ width: 200 }}>
         <InputLabel>Sort By</InputLabel>
         <Select
           value={sortBy}
@@ -244,7 +229,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         </Select>
       </FormControl>
 
-      <FormControl size="small" sx={{ width: 120 }}>
+      <FormControl size="small" sx={{ width: 200 }}>
         <InputLabel>Order</InputLabel>
         <Select
           value={sortOrder}

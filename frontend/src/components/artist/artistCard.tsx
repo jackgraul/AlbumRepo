@@ -8,9 +8,10 @@ interface ArtistCardProps {
   letter: string;
   artistName: string;
   albums: Album[];
+  avgRating?: string;
 }
 
-const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums }) => {
+const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums, avgRating }) => {
   const navigate = useNavigate();
 
   return (
@@ -39,6 +40,10 @@ const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums 
 
           <Typography variant="body2" color="text.secondary" noWrap>
             {albums.length} {albums.length === 1 ? "album" : "albums"}
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary" noWrap>
+            Avg. Rating: {avgRating !== undefined ? avgRating : "N/A"}
           </Typography>
         </CardContent>
       </CardActionArea>

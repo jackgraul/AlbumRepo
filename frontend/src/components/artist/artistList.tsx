@@ -12,13 +12,10 @@ const ArtistList: React.FC = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [filteredArtists, setFilteredArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedLetter, setSelectedLetter] = useState<string>("");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>("letter");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
 
   useEffect(() => {
@@ -64,14 +61,6 @@ const ArtistList: React.FC = () => {
   useEffect(() => {
     let filtered = [...artists];
 
-    // search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (a) => a.artistName && a.artistName.toLowerCase().includes(q)
-      );
-    }
-
     // letter filter
     if (selectedLetter) {
       const target = selectedLetter.toUpperCase();
@@ -92,42 +81,58 @@ const ArtistList: React.FC = () => {
     const dir = sortOrder === "asc" ? 1 : -1;
 
     filtered.sort((a, b) => {
-      const aName = a.artistName || "";
-      const bName = b.artistName || "";
-
-      const aNorm = normalizeArtistName(aName);
-      const bNorm = normalizeArtistName(bName);
+      const aNorm = normalizeArtistName(a.artistName);
+      const bNorm = normalizeArtistName(b.artistName);
 
       const aLetter = getNormalizedLetter(a.artistName);
       const bLetter = getNormalizedLetter(b.artistName);
 
-      if (sortBy === "albumCount") {
-        const aCount = a.albums?.length ?? 0;
-        const bCount = b.albums?.length ?? 0;
+      const aAlbums = a.albums ?? [];
+      const bAlbums = b.albums ?? [];
 
-        // Sort by album count first
-        if (aCount !== bCount) return (aCount - bCount) * dir;
+      const aAvg =
+        aAlbums.length > 0
+          ? aAlbums.reduce((s, x) => s + (x.rating ?? 0), 0) / aAlbums.length
+          : null;
 
-        // Tie-breaker: artist name
-        return aNorm.localeCompare(bNorm) * dir;
+      const bAvg =
+        bAlbums.length > 0
+          ? bAlbums.reduce((s, x) => s + (x.rating ?? 0), 0) / bAlbums.length
+          : null;
+
+      switch (sortBy) {
+        case "albumCount": {
+          const diff = aAlbums.length - bAlbums.length;
+          if (diff !== 0) return diff * dir;
+          return aNorm.localeCompare(bNorm) * dir;
+        }
+
+        case "avgRating": {
+          if (aAvg == null && bAvg == null)
+            return aNorm.localeCompare(bNorm) * dir;
+          if (aAvg == null) return 1;
+          if (bAvg == null) return -1;
+
+          const diff = aAvg - bAvg;
+          if (diff !== 0) return diff * dir;
+
+          return aNorm.localeCompare(bNorm) * dir;
+        }
+
+        case "letter": {
+          if (aLetter < bLetter) return -1 * dir;
+          if (aLetter > bLetter) return 1 * dir;
+          return aNorm.localeCompare(bNorm) * dir;
+        }
+
+        case "artist":
+        default:
+          return aNorm.localeCompare(bNorm) * dir;
       }
-
-      if (sortBy === "letter") {
-        if (aLetter < bLetter) return -1 * dir;
-        if (aLetter > bLetter) return 1 * dir;
-
-        if (aNorm < bNorm) return -1 * dir;
-        if (aNorm > bNorm) return 1 * dir;
-
-        return 0;
-      }
-
-      // sortBy === "artist"
-      return aNorm.localeCompare(bNorm) * dir;
     });
 
     setFilteredArtists(filtered);
-  }, [artists, searchQuery, selectedLetter, selectedArtist, sortBy, sortOrder]);
+  }, [artists, selectedLetter, selectedArtist, sortBy, sortOrder]);
 
   if (loading) {
     return (
@@ -143,8 +148,6 @@ const ArtistList: React.FC = () => {
   return (
     <Box sx={{ padding: 3 }}>
       <ArtistFilters
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
         selectedLetter={selectedLetter}
         setSelectedLetter={setSelectedLetter}
         selectedArtist={selectedArtist}
@@ -159,16 +162,28 @@ const ArtistList: React.FC = () => {
       <ArtistSummaryBar totalArtists={filteredArtists.length} />
 
       <Grid container spacing={2}>
-        {filteredArtists.map((artist) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={artist.id}>
-            <ArtistCard
-              id={artist.id}
-              letter={getNormalizedLetter(artist.artistName)}
-              artistName={artist.artistName}
-              albums={artist.albums ?? []}
-            />
-          </Grid>
-        ))}
+        {filteredArtists.map((artist) => {
+          const albums = artist.albums ?? [];
+          const avgRating =
+            albums.length > 0
+              ? (
+                  albums.reduce((sum, a) => sum + (a.rating ?? 0), 0) /
+                  albums.length
+                ).toFixed(2)
+              : undefined;
+
+          return (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={artist.id}>
+              <ArtistCard
+                id={artist.id}
+                letter={getNormalizedLetter(artist.artistName)}
+                artistName={artist.artistName}
+                albums={albums}
+                avgRating={avgRating}
+              />
+            </Grid>
+          );
+        })}
       </Grid>
 
       {filteredArtists.length === 0 && (

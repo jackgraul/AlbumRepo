@@ -4,10 +4,9 @@ import { FixedSizeList as List } from "react-window";
 import { useSearchParams, useLocation } from "react-router-dom";
 import api from "../../api/apiClient";
 import AlbumCard from "./albumCard";
-import AlbumFilters, { ArtistOption } from "./albumFilters";
+import AlbumFilters, { ArtistOption, getNormalizedLetter, normalizeArtistName } from "./albumFilters";
 import AlbumSummaryBar from "./albumSummaryBar";
 import { Album } from "../../models/models";
-import { getNormalizedLetter, normalizeArtistName } from "../album/albumFilters";
 
 const CARD_WIDTH = 280;
 const CARD_HEIGHT = 340;
@@ -49,7 +48,6 @@ const AlbumList: React.FC = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const initial = useRef<ParsedSearch>(parseSearch(location.search)).current;
-
   const [searchQuery, setSearchQuery] = useState<string>(initial.q);
   const [selectedLetter, setSelectedLetter] = useState<string>(initial.letter);
   const [selectedArtist, setSelectedArtist] = useState<string | null>(initial.artist);
@@ -58,13 +56,11 @@ const AlbumList: React.FC = () => {
   const [minRating, setMinRating] = useState<number | "">(initial.min);
   const [sortBy, setSortBy] = useState<string>(initial.sortBy);
   const [sortOrder, setSortOrder] = useState<string>(initial.order);
-
   const [albums, setAlbums] = useState<Album[]>([]);
   const [filteredAlbums, setFilteredAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [containerWidth, setContainerWidth] = useState(window.innerWidth);
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
-
   const isHydratingRef = useRef(false);
 
   useEffect(() => {
@@ -433,6 +429,8 @@ const AlbumList: React.FC = () => {
             filteredAlbums.map((a) => a.artist?.artistName)
           ).size
         }
+        wrongCoverAlbums={filteredAlbums.filter(a => a.coverURL === "/images/default-cover.png" || a.coverURL === '').length}
+        avgRating={filteredAlbums.length > 0 ? Number((filteredAlbums.reduce((sum, a) => sum + (a.rating ?? 0), 0) / filteredAlbums.filter(a => a.rating != null).length).toFixed(2)) : undefined}
       />
 
       {filteredAlbums.length === 0 ? (
