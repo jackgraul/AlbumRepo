@@ -71,20 +71,16 @@ const ArtistDetails: React.FC = () => {
     if (!artist) return;
     setSaving(true);
 
-    console.log("Updating artist:", {
-  id,
-  artistName: artist.artistName,
-  letter: artist.letter,
-  albums: artist.albums ?? []
-});
-
     const request = isNew
-      ? api.post("/artists/add-artist", {artistName: artist.artistName, letter: artist.letter})
+      ? api.post("/artists/add-artist", {
+          artistName: artist.artistName,
+          letter: artist.letter,
+        })
       : api.put(`/artists/update-artist/${artist.id}`, {
-    artistName: artist.artistName,
-    letter: artist.letter,
-    albums: artist.albums ? artist.albums : [],
-  });
+          artistName: artist.artistName,
+          letter: artist.letter,
+          albums: artist.albums ?? [],
+        });
 
     request
       .then(() => {
@@ -101,8 +97,8 @@ const ArtistDetails: React.FC = () => {
       .catch((err) => {
         setToast({
           open: true,
-          message: err?.response?.data?.message ||
-          "Failed to save artist.",
+          message:
+            err?.response?.data?.message || "Failed to save artist.",
           severity: "error",
         });
         setSaving(false);
@@ -111,7 +107,7 @@ const ArtistDetails: React.FC = () => {
 
   const handleDelete = () => {
     if (!artist) return;
-    
+
     api
       .delete(`/artists/delete-artist/${artist.id}`)
       .then(() => {
@@ -131,7 +127,8 @@ const ArtistDetails: React.FC = () => {
       });
   };
 
-  const handleToastClose = () => setToast((prev) => ({ ...prev, open: false }));
+  const handleToastClose = () =>
+    setToast((prev) => ({ ...prev, open: false }));
 
   if (loading)
     return (
@@ -143,124 +140,181 @@ const ArtistDetails: React.FC = () => {
   if (!artist) return null;
 
   return (
-    <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center", mt: 5 }}>
-      <Grid
-        container
-        spacing={4}
-        sx={{
-          maxWidth: 600,
-          alignItems: "flex-start",
-          justifyContent: "center",
-        }}
-      >
-        <Grid item xs={12}>
-          <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-            {isNew ? "Add New Artist" : "Edit Artist"}
-          </Typography>
+    <Box sx={{flexGrow: 1, px: 4, mt: 5}}>
+      <Box sx={{maxWidth: 600, mx: "auto"}}>
+        <Typography variant="h4" gutterBottom sx={{mb: 3}}>
+          {isNew ? "Add New Artist" : "Edit Artist"}
+        </Typography>
 
-          <Stack spacing={2}>
-            <TextField
-              label="Artist Name"
-              value={artist.artistName}
-              onChange={(e) => handleChange("artistName", e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label="Letter"
-              value={artist.letter}
-              onChange={(e) => handleChange("letter", e.target.value.toUpperCase())}
-              fullWidth
-            />
-          </Stack>
+        <Stack spacing={2}>
+          <TextField
+            label="Artist Name"
+            value={artist.artistName}
+            onChange={(e) =>
+              handleChange("artistName", e.target.value)
+            }
+            fullWidth
+          />
+          <TextField
+            label="Letter"
+            value={artist.letter}
+            onChange={(e) =>
+              handleChange("letter", e.target.value.toUpperCase())
+            }
+            fullWidth
+          />
+        </Stack>
 
-          <Stack direction="row" spacing={2} mt={4}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving
-                ? "Saving..."
-                : isNew
-                ? "Create Artist"
-                : "Save Changes"}
-            </Button>
-
-            {!isNew && (
-              <Button variant="outlined" color="error" onClick={() => setDeleteDialogOpen(true)}>
-                Delete Artist
-              </Button>
-            )}
-
-            <DeleteConfirmationDialog
-              open={deleteDialogOpen}
-              message={
-                <>
-                  <Typography>Are you sure you want to delete:</Typography>
-                  <Typography fontWeight="bold" mt={1}>
-                    {artist.artistName}
-                  </Typography>
-                  <Typography mt={2} color="text.secondary">
-                    This action cannot be undone.
-                  </Typography>
-                </>
-              }
-              onCancel={() => setDeleteDialogOpen(false)}
-              onConfirm={() => {
-                setDeleteDialogOpen(false);
-                handleDelete();
-              }}
-            />
-
-            <Button variant="text" onClick={() => navigate("/artists")}>
-              Cancel
-            </Button>
-          </Stack>
+        <Stack direction="row" spacing={2} mt={4}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving
+              ? "Saving..."
+              : isNew
+              ? "Create Artist"
+              : "Save Changes"
+            }
+          </Button>
 
           {!isNew && (
-            <Stack spacing={2} sx={{ mt: 4 }}>
-              <Typography variant="h6">Albums</Typography>
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              Delete Artist
+            </Button>
+          )}
 
-              {artist.albums?.length ? (
-                artist.albums.map((a) => (
-                  <Card
-                    key={a.id}
-                    sx={{
-                      borderRadius: 1.5,
-                      border: "1px solid",
-                      borderColor: "divider",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                      "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: 6,
-                        borderColor: "primary.main",
-                      },
-                    }}
+          <DeleteConfirmationDialog
+            open={deleteDialogOpen}
+            message={
+              <>
+                <Typography>
+                  Are you sure you want to delete:
+                </Typography>
+                <Typography fontWeight="bold" mt={1}>
+                  {artist.artistName}
+                </Typography>
+                <Typography mt={2} color="text.secondary">
+                  This action cannot be undone.
+                </Typography>
+              </>
+            }
+            onCancel={() => setDeleteDialogOpen(false)}
+            onConfirm={() => {
+              setDeleteDialogOpen(false);
+              handleDelete();
+            }}
+          />
+
+          <Button
+            variant="text"
+            onClick={() => navigate("/artists")}
+          >
+            Cancel
+          </Button>
+        </Stack>
+      </Box>
+
+      {!isNew && (
+        <Grid
+          container
+          spacing={3}
+          justifyContent={artist.albums && artist.albums.length <= 1 ? "center" : "flex-start"}
+          sx={{
+            mt: 6,
+            maxWidth: artist.albums && artist.albums.length <= 1 ? "33vw" : "66vw",
+            mx: "auto",
+          }}
+        >
+          <Grid
+            item
+            xs={12}
+            sx={{textAlign: "left"}}
+          >
+            <Typography variant="h6">Albums</Typography>
+          </Grid>
+
+          {artist.albums?.length ? (
+            artist.albums.map((a) => (
+              <Grid
+                item
+                key={a.id}
+                xs={12}
+                md={artist.albums && artist.albums.length <= 1 ? 12 : 6}
+              >
+                <Card
+                  sx={{
+                    height: 125,
+                    borderRadius: 1.5,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: 6,
+                      borderColor: "primary.main",
+                    },
+                  }}
+                >
+                  <CardActionArea
+                    onClick={() =>
+                      navigate(`/albums/${a.id}`, {
+                        state: { fromArtistPath: `/artists/${artist.id}` },
+                      })
+                    }
                   >
-                    <CardActionArea onClick={() => navigate(`/albums/${a.id}`, {state: {fromArtistPath: `/artists/${artist.id}`}})}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 1, py: 0 }}>
-                        <Box sx={{width: 80, height: 80, overflow: "hidden", flexShrink: 0}}>
-                          <LazyLoadImage
-                            src={a.coverURL ?? ""}
-                            alt={a.albumName ?? "Album cover"}
-                            effect="blur"
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/images/default-cover.png";
-                            }}
-                            style={{
-                              width: 80,
-                              height: 80,
-                              borderRadius: 8,
-                              objectFit: "cover",
-                              objectPosition: "center",
-                              flexShrink: 0,
-                            }}
-                          />
-                        </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        px: 1.5,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 100,
+                          height: 100,
+                          overflow: "hidden",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <LazyLoadImage
+                          src={a.coverURL ?? ""}
+                          alt={a.albumName ?? "Album cover"}
+                          effect="blur"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "/images/default-cover.png";
+                          }}
+                          style={{
+                            width: 100,
+                            height: 100,
+                            borderRadius: 8,
+                            objectFit: "cover",
+                            objectPosition: "center",
+                          }}
+                        />
+                      </Box>
 
-                        <CardContent sx={{height: 100, flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center", px: 0, pt: 2}}>
+                      <CardContent
+                        sx={{
+                          height: 120,
+                          flexGrow: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          px: 0,
+                        }}
+                      >
+                        <Stack spacing={0.75} mt={1}>
                           <Typography variant="subtitle1" fontWeight={600}>
                             {a.albumName}
                           </Typography>
@@ -269,34 +323,45 @@ const ArtistDetails: React.FC = () => {
                             {a.releaseYear ?? ""}
                           </Typography>
 
-                          <Typography variant="body2" color="text.secondary">
-                            {a.rating != null ? `★ ${a.rating}` : ""}
-                          </Typography>
+                          {a.rating != null && (
+                            <Typography variant="body2" color="text.secondary">
+                              ★ {a.rating}
+                            </Typography>
+                          )}
 
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{lineHeight: 1.4}}
+                          >
                             {a.genre ?? ""}
                           </Typography>
-                        </CardContent>
-                      </Box>
-                    </CardActionArea>
-                  </Card>
-                ))
-              ) : (
-                <Typography color="text.secondary">No albums for this artist.</Typography>
-              )}
-
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => navigate("/albums/new")}
-                sx={{ mt: { xs: 1, sm: 0 } }}
-              >
-                + Add Album
-              </Button>
-            </Stack>
+                        </Stack>
+                      </CardContent>
+                    </Box>
+                  </CardActionArea>
+                </Card>
+              </Grid>
+            ))
+          ) : (
+            <Grid item xs={12}>
+              <Typography color="text.secondary" textAlign="left">
+                No albums for this artist.
+              </Typography>
+            </Grid>
           )}
+
+          <Grid item xs={12} sx={{mt: 2, textAlign: "left"}}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate("/albums/new")}
+            >
+              + Add Album
+            </Button>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
 
       <Snackbar
         open={toast.open}

@@ -17,16 +17,22 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   onCancel,
 }) => {
   return (
-    <Dialog open={open} onClose={onCancel}>
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      fullWidth
+      maxWidth="sm"
+      sx={{ "& .MuiDialog-paper": { minWidth: 500 } }}
+    >
       <DialogTitle>{title}</DialogTitle>
+
       <DialogContent>
         <Typography>{message}</Typography>
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button color="error" onClick={onConfirm}>
-          Delete
-        </Button>
+        <Button color="error" onClick={onConfirm}>Delete</Button>
       </DialogActions>
     </Dialog>
   );

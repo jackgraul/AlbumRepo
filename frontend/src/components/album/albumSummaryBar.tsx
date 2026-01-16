@@ -7,6 +7,7 @@ interface AlbumSummaryBarProps {
   listenedAlbums: number;
   uniqueArtists: number;
   wrongCoverAlbums?: number;
+  noGenre?: number;
   avgRating?: number;
 }
 
@@ -15,6 +16,7 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
   listenedAlbums,
   uniqueArtists,
   wrongCoverAlbums,
+  noGenre,
   avgRating
 }) => {
   const navigate = useNavigate();
@@ -47,6 +49,10 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
 
         <Typography variant="subtitle1" fontWeight={600}>
           Wrong / No Cover: {wrongCoverAlbums ?? 0}
+        </Typography>
+
+        <Typography variant="subtitle1" fontWeight={600}>
+          No Genre: {noGenre ?? 0}
         </Typography>
       </Stack>
 
