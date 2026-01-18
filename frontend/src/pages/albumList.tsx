@@ -2,11 +2,11 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { FixedSizeList as List } from "react-window";
 import { useSearchParams, useLocation } from "react-router-dom";
-import api from "../../api/apiClient";
-import AlbumCard from "./albumCard";
-import AlbumFilters, { ArtistOption, getNormalizedLetter, normalizeArtistName } from "./albumFilters";
-import AlbumSummaryBar from "./albumSummaryBar";
-import { Album } from "../../models/models";
+import api from "../api/apiClient";
+import AlbumCard from "../components/album/albumCard";
+import AlbumFilters, { ArtistOption, getNormalizedLetter, normalizeArtistName } from "../components/album/albumFilters";
+import AlbumSummaryBar from "../components/album/albumSummaryBar";
+import { Album } from "../models/models";
 
 const CARD_WIDTH = 280;
 const CARD_HEIGHT = 340;
@@ -210,104 +210,50 @@ const AlbumList: React.FC = () => {
     const dir = sortOrder === "asc" ? 1 : -1;
 
     filtered.sort((a, b) => {
-      // Sort by letter
-      if (sortBy === "letter") {
-        // Letter
-        const aLetter = getArtistLetter(a);
-        const bLetter = getArtistLetter(b);
-        if (aLetter < bLetter) return -1 * dir;
-        if (aLetter > bLetter) return 1 * dir;
-
-        // Artist
-        const aName = normalizeArtistName(a.artist?.artistName);
-        const bName = normalizeArtistName(b.artist?.artistName);
-        if (aName < bName) return -1 * dir;
-        if (aName > bName) return 1 * dir;
-
-        // Year
-        const aY = a.releaseYear ?? 9999;
-        const bY = b.releaseYear ?? 9999;
-        if (aY < bY) return -1 * dir;
-        if (aY > bY) return 1 * dir;
-
-        // Release order
-        const aOrder = a.releaseOrder;
-        const bOrder = b.releaseOrder;
-
-        if (aOrder != null || bOrder != null) {
-          if (aOrder == null) return 1;
-          if (bOrder == null) return -1;
-          if (aOrder < bOrder) return -1 * dir;
-          if (aOrder > bOrder) return 1 * dir;
+      const getValue = (album: Album) => {
+        switch (sortBy) {
+          case "letter":
+            // Letter + artist + year fallback
+            return [
+              getArtistLetter(album),
+              normalizeArtistName(album.artist?.artistName),
+              album.releaseYear ?? 9999,
+              album.releaseOrder ?? 9999,
+              (album.albumName || "").toLowerCase()
+            ];
+          case "artist":
+            return [
+              normalizeArtistName(album.artist?.artistName),
+              album.releaseYear ?? 9999,
+              album.releaseOrder ?? 9999,
+              (album.albumName || "").toLowerCase()
+            ];
+          case "title":
+            return [(album.albumName || "").toLowerCase()];
+          case "year":
+            return [album.releaseYear ?? 9999, album.releaseOrder ?? 9999, (album.albumName || "").toLowerCase()];
+          case "genre":
+            return [(album.genre || "").toLowerCase(), normalizeArtistName(album.artist?.artistName)];
+          case "rating":
+            return [album.rating ?? -1, normalizeArtistName(album.artist?.artistName)];
+          default:
+            return [(album.albumName || "").toLowerCase()];
         }
+      };
 
-        // Title fallback
-        const aTitle = (a.albumName || "").toLowerCase();
-        const bTitle = (b.albumName || "").toLowerCase();
-        if (aTitle < bTitle) return -1 * dir;
-        if (aTitle > bTitle) return 1 * dir;
+      const aValues = getValue(a);
+      const bValues = getValue(b);
 
-        return 0;
-      }
+      for (let i = 0; i < Math.max(aValues.length, bValues.length); i++) {
+        const aVal = aValues[i];
+        const bVal = bValues[i];
 
-      // Sort by artist
-      if (sortBy === "artist") {
-        // Artist
-        const aName = normalizeArtistName(a.artist?.artistName);
-        const bName = normalizeArtistName(b.artist?.artistName);
-        if (aName < bName) return -1 * dir;
-        if (aName > bName) return 1 * dir;
+        if (aVal == null && bVal == null) continue;
+        if (aVal == null) return 1 * dir;
+        if (bVal == null) return -1 * dir;
 
-        // Year
-        const aY = a.releaseYear ?? 9999;
-        const bY = b.releaseYear ?? 9999;
-        if (aY < bY) return -1 * dir;
-        if (aY > bY) return 1 * dir;
-
-        // Release order
-        const aOrder = a.releaseOrder;
-        const bOrder = b.releaseOrder;
-
-        if (aOrder != null || bOrder != null) {
-          if (aOrder == null) return 1;
-          if (bOrder == null) return -1;
-          if (aOrder < bOrder) return -1 * dir;
-          if (aOrder > bOrder) return 1 * dir;
-        }
-
-        // Title fallback
-        const aTitle = (a.albumName || "").toLowerCase();
-        const bTitle = (b.albumName || "").toLowerCase();
-        if (aTitle < bTitle) return -1 * dir;
-        if (aTitle > bTitle) return 1 * dir;
-
-        return 0;
-      }
-
-      // Title
-      if (sortBy === "title") {
-        const aTitle = (a.albumName || "").toLowerCase();
-        const bTitle = (b.albumName || "").toLowerCase();
-        if (aTitle < bTitle) return -1 * dir;
-        if (aTitle > bTitle) return 1 * dir;
-        return 0;
-      }
-
-      // Year
-      const aY = a.releaseYear ?? 9999;
-      const bY = b.releaseYear ?? 9999;
-      if (aY < bY) return -1 * dir;
-      if (aY > bY) return 1 * dir;
-
-      // Release order
-      const aOrder = a.releaseOrder;
-      const bOrder = b.releaseOrder;
-
-      if (aOrder != null || bOrder != null) {
-        if (aOrder == null) return 1;
-        if (bOrder == null) return -1;
-        if (aOrder < bOrder) return -1 * dir;
-        if (aOrder > bOrder) return 1 * dir;
+        if (aVal < bVal) return -1 * dir;
+        if (aVal > bVal) return 1 * dir;
       }
 
       return 0;

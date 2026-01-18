@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import AlbumList from "./components/album/albumList";
-import ArtistList from "./components/artist/artistList";
+import AlbumList from "./pages/albumList";
+import ArtistList from "./pages/artistList";
 import AlbumDetailsPage from "./pages/albumDetails";
 import ArtistDetailsPage from "./pages/artistDetails";
 import Navbar from "./components/common/navbar";

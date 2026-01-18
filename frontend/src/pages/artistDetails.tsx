@@ -18,7 +18,7 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import api from "../api/apiClient";
 import { Artist } from "../models/models";
-import DeleteConfirmationDialog from "../components/common/deleteConfirmation";
+import DeleteConfirmationDialog from "../components/deleteConfirmation";
 
 const ArtistDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();

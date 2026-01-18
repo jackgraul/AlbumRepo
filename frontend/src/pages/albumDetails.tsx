@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import api from "../api/apiClient";
 import { Album } from "../models/models";
-import DeleteConfirmationDialog from "../components/common/deleteConfirmation";
+import DeleteConfirmationDialog from "../components/deleteConfirmation";
 
 const AlbumDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();

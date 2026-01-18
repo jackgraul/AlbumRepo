@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Artist } from "../../models/models";
+import { Artist } from "../models/models";
 import { Grid, Box, CircularProgress, Typography } from "@mui/material";
-import api from "../../api/apiClient";
-import ArtistCard from "../artist/artistCard";
-import ArtistFilters from "../artist/artistFilters";
-import ArtistSummaryBar from "./artistSummaryBar";
-import { ArtistOption } from "../album/albumFilters";
-import { normalizeArtistName, getNormalizedLetter } from "../artist/artistFilters";
+import api from "../api/apiClient";
+import ArtistCard from "../components/artist/artistCard";
+import ArtistFilters, { normalizeArtistName, getNormalizedLetter } from "../components/artist/artistFilters";
+import ArtistSummaryBar from "../components/artist/artistSummaryBar";
+import { ArtistOption } from "../components/album/albumFilters";
 
 const ArtistList: React.FC = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
