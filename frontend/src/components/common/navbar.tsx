@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Toolbar, Typography, Button } from "@mui/material";
+import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
 import { Link } from "react-router-dom";
 
 const Navbar: React.FC = () => {
@@ -19,13 +19,14 @@ const Navbar: React.FC = () => {
           sx={{
             color: "white",
             textDecoration: "none",
-            flexGrow: 1,
             "&:hover": { color: "#1976d2" },
-            transition: "color 0.2s ease",
+            transition: "color 0.2s ease"
           }}
         >
           AlbumRepo
         </Typography>
+
+        <Box sx={{ flexGrow: 1 }} />
 
         <Button 
           color="inherit" 

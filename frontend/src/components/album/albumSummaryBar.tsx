@@ -46,14 +46,6 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
         <Typography variant="subtitle1" fontWeight={600}>
           Avg. Rating: {avgRating !== undefined ? avgRating.toFixed(2) : "N/A"}
         </Typography>
-
-        <Typography variant="subtitle1" fontWeight={600}>
-          Wrong / No Cover: {wrongCoverAlbums ?? 0}
-        </Typography>
-
-        <Typography variant="subtitle1" fontWeight={600}>
-          No Genre: {noGenre ?? 0}
-        </Typography>
       </Stack>
 
       {totalAlbums > 0 && (
@@ -88,6 +80,10 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
             }}
           >
             ({Math.round((listenedAlbums / totalAlbums) * 100)}%)
+          </Typography>
+
+          <Typography variant="subtitle1" fontWeight={600}>
+            No Genre: {noGenre ?? 0}
           </Typography>
         </Box>
       )}

@@ -340,7 +340,7 @@ const AlbumDetails: React.FC = () => {
                 alt={album.albumName}
                 sx={{ objectFit: "cover" }}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/images/default-cover.png";
+                  (e.target as HTMLImageElement).src = "/default-cover.png";
                 }}
               />
             </Card>

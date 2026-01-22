@@ -4,37 +4,44 @@ import com.example.AlbumRepo.Entity.Album;
 import com.example.AlbumRepo.Repository.IAlbumRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class CoverArtService {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate restTemplate = new RestTemplate();
     private final IAlbumRepository albumRepository;
     private static final Logger logger = LoggerFactory.getLogger(CoverArtService.class);
-
-    // MusicBrainz requires a proper identifying UA
-    private static final String USER_AGENT = "AlbumRepo/1.0 ( jack.graul@example.com )";
-    private static final String DEFAULT_COVER = "/images/default-cover.png";
-
-    // MusicBrainz rate limiting (>= 1.2s between calls)
+    private static final String USER_AGENT = "AlbumRepo/1.0 ( jack.graul99@gmail.com )";
+    private static final String DEFAULT_COVER = "/default-cover.png";
     private static long lastMusicBrainzCall = 0L;
+    private final String SPOTIFY_CLIENT_ID;
+    private final String SPOTIFY_CLIENT_SECRET;
+    private static final String SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
+    private String spotifyAccessToken;
+    private long spotifyTokenExpiry = 0L;
 
-    public CoverArtService(IAlbumRepository albumRepository) {
-        this.restTemplate = new RestTemplate();
+    public CoverArtService(
+            IAlbumRepository albumRepository,
+            @Value("${SPOTIFY_CLIENT_ID}") String spotifyClientId,
+            @Value("${SPOTIFY_CLIENT_SECRET}") String spotifyClientSecret) {
         this.albumRepository = albumRepository;
+        this.SPOTIFY_CLIENT_ID = spotifyClientId;
+        this.SPOTIFY_CLIENT_SECRET = spotifyClientSecret;
     }
 
     // --------------------------------------------------
@@ -46,9 +53,7 @@ public class CoverArtService {
         logger.info("Albums found without covers: {}", albums.size());
 
         for (Album album : albums) {
-            if (isMissingCover(album.getCoverURL())) {
-                logger.info("Fetching cover for album '{}' (no valid cover set).",
-                        album.getAlbumName());
+            if (shouldUpdateCover(album.getCoverURL())) {
                 fetchAndSaveCover(album);
             }
         }
@@ -61,244 +66,246 @@ public class CoverArtService {
         try {
             logger.info("Fetching cover for {} - {}", originalArtist, originalTitle);
 
-            String artist = cleanForSearch(originalArtist);
-            String title = cleanForSearch(originalTitle);
+            String artist = norm(originalArtist);
+            String title = norm(originalTitle);
 
-            // Try with original text
-            String coverUrl = fetchFromMusicBrainz(artist, title);
+            String coverUrl = fetchFromSpotify(artist, title);
 
-            // Retry with ASCII-normalized if nothing
             if (!isValidCover(coverUrl)) {
-                String artistAscii = normalizeAscii(artist);
-                String titleAscii = normalizeAscii(title);
-                logger.info("Retrying MusicBrainz with ASCII-normalized search for {} - {}",
-                        artistAscii, titleAscii);
-                coverUrl = fetchFromMusicBrainz(artistAscii, titleAscii);
+                coverUrl = fetchFromMusicBrainz(artist, title);
             }
 
             if (!isValidCover(coverUrl)) {
                 coverUrl = DEFAULT_COVER;
-                logger.warn("No MusicBrainz cover found for {} - {}, using default.",
-                        originalArtist, originalTitle);
+                logger.warn("No cover found for {} - {}", originalArtist, originalTitle);
             }
-
-            logSelectedSource(originalArtist, originalTitle, coverUrl);
 
             album.setCoverURL(coverUrl);
             albumRepository.save(album);
-            logger.info("Saved cover for {} - {}: {}", originalArtist, originalTitle, coverUrl);
+
+            String source =
+                    coverUrl.contains("spotify") ? "Spotify" :
+                            coverUrl.contains("coverartarchive") ? "MusicBrainz" :
+                                    coverUrl.equals(DEFAULT_COVER) ? "Default" : "Unknown";
+
+            logCoverUpdate(album, source);
+            logger.info("Saved cover for {} - {} ({})",
+                    originalArtist, originalTitle, source);
 
         } catch (Exception e) {
-            logger.error("Error saving cover for {} - {}: {}", originalArtist, originalTitle, e.getMessage());
-            album.setCoverURL(DEFAULT_COVER);
-            albumRepository.save(album);
+            logger.error("Cover fetch failed for {} - {}: {}",
+                    originalArtist, originalTitle, e.getMessage());
         } finally {
             try { Thread.sleep(1100); } catch (InterruptedException ignored) {}
         }
     }
 
     // --------------------------------------------------
-    // MusicBrainz + CoverArtArchive
+    // Spotify
     // --------------------------------------------------
 
-    private String fetchFromMusicBrainz(String artist, String albumTitle) {
+    private synchronized void ensureSpotifyToken() {
+        if (spotifyAccessToken != null &&
+                System.currentTimeMillis() < spotifyTokenExpiry) return;
+
         try {
-            waitMusicBrainzWindow();
-
-            String encodedArtist = URLEncoder.encode(artist, StandardCharsets.UTF_8);
-            String encodedTitle = URLEncoder.encode(albumTitle, StandardCharsets.UTF_8);
-
-            String searchUrl = "https://musicbrainz.org/ws/2/release/?query="
-                    + "artist:" + encodedArtist
-                    + "%20AND%20release:" + encodedTitle
-                    + "&fmt=json";
-
             HttpHeaders headers = new HttpHeaders();
-            headers.add("User-Agent", USER_AGENT);
-            headers.add("Accept-Charset", "UTF-8");
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            String creds = SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET;
+            headers.set("Authorization", "Basic " +
+                    java.util.Base64.getEncoder()
+                            .encodeToString(creds.getBytes(StandardCharsets.UTF_8)));
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-            logger.info("Calling MusicBrainz for {} - {}", artist, albumTitle);
+            HttpEntity<String> req =
+                    new HttpEntity<>("grant_type=client_credentials", headers);
 
-            ResponseEntity<Map> responseEntity =
-                    restTemplate.exchange(searchUrl, HttpMethod.GET, entity, Map.class);
+            ResponseEntity<Map> resp =
+                    restTemplate.postForEntity(SPOTIFY_TOKEN_URL, req, Map.class);
 
-            if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-                logger.warn("MusicBrainz search non-2xx for {} - {}: {}",
-                        artist, albumTitle, responseEntity.getStatusCode());
-                return null;
-            }
+            spotifyAccessToken = (String) resp.getBody().get("access_token");
+            Integer expiresIn = (Integer) resp.getBody().get("expires_in");
+            spotifyTokenExpiry =
+                    System.currentTimeMillis() + (expiresIn - 60) * 1000L;
 
-            Map body = responseEntity.getBody();
-            if (body == null) return null;
-
-            List<Map<String, Object>> releases = (List<Map<String, Object>>) body.get("releases");
-            if (releases == null || releases.isEmpty()) {
-                logger.warn("No MusicBrainz releases found for {} - {}", artist, albumTitle);
-                return null;
-            }
-
-            String targetTitle = norm(albumTitle);
-            String targetArtist = norm(artist);
-
-            Map<String, Object> best = null;
-            int bestQuality = -1;
-
-            for (Map<String, Object> release : releases) {
-                String releaseTitleRaw = (String) release.get("title");
-                if (releaseTitleRaw == null) continue;
-
-                String releaseTitle = norm(releaseTitleRaw);
-
-                List<Map<String, Object>> acList =
-                        (List<Map<String, Object>>) release.get("artist-credit");
-
-                boolean anyArtistExact = false;
-                boolean anyArtistLoose = false;
-
-                if (acList != null) {
-                    for (Map<String, Object> ac : acList) {
-                        String creditName = ac.get("name") instanceof String
-                                ? norm((String) ac.get("name"))
-                                : null;
-
-                        Map artistObj = (Map) ac.get("artist");
-                        String artistName = null;
-                        if (artistObj != null) {
-                            Object n = artistObj.get("name");
-                            if (n instanceof String) {
-                                artistName = norm((String) n);
-                            }
-                        }
-
-                        String candidate = creditName != null ? creditName : artistName;
-                        if (candidate == null) continue;
-
-                        if (candidate.equals(targetArtist)) {
-                            anyArtistExact = true;
-                        } else if (candidate.contains(targetArtist) || targetArtist.contains(candidate)) {
-                            anyArtistLoose = true;
-                        }
-                    }
-                }
-
-                int q = 0;
-
-                // Title relevance
-                if (releaseTitle.equals(targetTitle)) {
-                    q += 60;
-                } else if (releaseTitle.contains(targetTitle) || targetTitle.contains(releaseTitle)) {
-                    q += 30;
-                }
-
-                // Artist relevance
-                if (anyArtistExact) {
-                    q += 40;
-                } else if (anyArtistLoose) {
-                    q += 20;
-                }
-
-                // Official releases get a bump
-                String status = (String) release.get("status");
-                if (status != null && "Official".equalsIgnoreCase(status)) {
-                    q += 10;
-                }
-
-                // Use MB "score" if present
-                Object scoreObj = release.get("score");
-                if (scoreObj instanceof Number) {
-                    int mbScore = ((Number) scoreObj).intValue(); // 0-100
-                    q += mbScore / 5;
-                }
-
-                if (q > bestQuality) {
-                    bestQuality = q;
-                    best = release;
-                }
-            }
-
-            final int QUALITY_THRESHOLD = 50;
-            if (best == null || bestQuality < QUALITY_THRESHOLD) {
-                logger.warn("No strong MusicBrainz match for {} - {} (bestQuality={})",
-                        artist, albumTitle, bestQuality);
-                return null;
-            }
-
-            logger.info("Chosen MusicBrainz release for {} - {} with quality {}",
-                    artist, albumTitle, bestQuality);
-
-            // Try CAA: release-group first, then release
-            return resolveCoverArtUrl(best, entity);
+            logger.info("Spotify token refreshed");
 
         } catch (Exception e) {
-            logger.warn("MusicBrainz lookup failed for {} - {}: {}", artist, albumTitle, e.getMessage());
+            logger.warn("Spotify token error: {}", e.getMessage());
+        }
+    }
+
+    private String fetchFromSpotify(String artist, String album) {
+        ensureSpotifyToken();
+        if (spotifyAccessToken == null) return null;
+
+        try {
+            String q = URLEncoder.encode(
+                    "album:" + album + " artist:" + artist,
+                    StandardCharsets.UTF_8);
+
+            String url =
+                    "https://api.spotify.com/v1/search?q=" +
+                            q + "&type=album&limit=10";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(spotifyAccessToken);
+
+            ResponseEntity<Map> resp =
+                    restTemplate.exchange(
+                            url, HttpMethod.GET,
+                            new HttpEntity<>(headers), Map.class);
+
+            Map albums = (Map) resp.getBody().get("albums");
+            List<Map<String, Object>> items =
+                    (List<Map<String, Object>>) albums.get("items");
+
+            if (items == null || items.isEmpty()) return null;
+
+            Map<String, Object> best = null;
+            int bestScore = -1;
+
+            for (Map<String, Object> item : items) {
+                String spTitle = norm((String) item.get("name"));
+                List<Map<String, Object>> artists =
+                        (List<Map<String, Object>>) item.get("artists");
+
+                boolean artistMatch = artists.stream()
+                        .anyMatch(a -> norm((String) a.get("name"))
+                                .equals(artist));
+
+                int score = 0;
+                if (spTitle.equals(album)) score += 60;
+                else if (spTitle.contains(album)) score += 30;
+                if (artistMatch) score += 40;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = item;
+                }
+            }
+
+            if (bestScore < 50) {
+                logger.info("Strict Spotify search failed, retrying fuzzy search");
+                return fetchFromSpotifyFuzzy(artist, album);
+            }
+
+            List<Map<String, Object>> images =
+                    (List<Map<String, Object>>) best.get("images");
+
+            return images.get(0).get("url").toString();
+
+        } catch (Exception e) {
+            logger.warn("Spotify search failed: {}", e.getMessage());
             return null;
         }
     }
 
-    /**
-     * Use Cover Art Archive:
-     *  1) Try release-group front-500
-     *  2) If 404/Not Found, try release front-500
-     *  3) If both fail, return null
-     */
-    private String resolveCoverArtUrl(Map<String, Object> best, HttpEntity<Void> entity) {
-        Map<String, Object> bestRg = (Map<String, Object>) best.get("release-group");
-        String rgid = (bestRg != null && bestRg.get("id") instanceof String)
-                ? (String) bestRg.get("id")
-                : null;
-        String rid = (best.get("id") instanceof String)
-                ? (String) best.get("id")
-                : null;
+    private String fetchFromSpotifyFuzzy(String artist, String album) {
+        try {
+            String q = URLEncoder.encode(
+                    artist + " " + album,
+                    StandardCharsets.UTF_8);
 
-        // Build candidate URLs in order
-        String[] candidates;
-        if (rgid != null && rid != null) {
-            candidates = new String[] {
-                    "https://coverartarchive.org/release-group/" + rgid + "/front-500",
-                    "https://coverartarchive.org/release/" + rid + "/front-500"
-            };
-        } else if (rgid != null) {
-            candidates = new String[] {
-                    "https://coverartarchive.org/release-group/" + rgid + "/front-500"
-            };
-        } else if (rid != null) {
-            candidates = new String[] {
-                    "https://coverartarchive.org/release/" + rid + "/front-500"
-            };
-        } else {
-            logger.warn("Best candidate missing IDs for CoverArtArchive.");
+            String url =
+                    "https://api.spotify.com/v1/search?q=" +
+                            q + "&type=album&limit=1";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(spotifyAccessToken);
+
+            ResponseEntity<Map> resp =
+                    restTemplate.exchange(
+                            url, HttpMethod.GET,
+                            new HttpEntity<>(headers), Map.class);
+
+            Map albums = (Map) resp.getBody().get("albums");
+            List<Map<String, Object>> items =
+                    (List<Map<String, Object>>) albums.get("items");
+
+            if (items == null || items.isEmpty()) return null;
+
+            List<Map<String, Object>> images =
+                    (List<Map<String, Object>>) items.get(0).get("images");
+
+            return images.get(0).get("url").toString();
+
+        } catch (Exception e) {
             return null;
         }
+    }
 
-        for (String url : candidates) {
-            try {
-                ResponseEntity<byte[]> resp =
-                        restTemplate.exchange(url, HttpMethod.GET, entity, byte[].class);
-                int status = resp.getStatusCode().value();
+    // --------------------------------------------------
+    // MusicBrainz
+    // --------------------------------------------------
 
-                if (status >= 200 && status < 300) {
-                    logger.info("Using CoverArtArchive URL: {}", url);
-                    return url;
-                } else if (status == 404) {
-                    logger.debug("CoverArtArchive 404 for {}", url);
-                } else {
-                    logger.warn("CoverArtArchive {} for {}", status, url);
-                }
-            } catch (HttpClientErrorException.NotFound e) {
-                logger.debug("CoverArtArchive 404 for {}", url);
-            } catch (Exception e) {
-                logger.warn("Error calling CoverArtArchive {}: {}", url, e.getMessage());
-            }
+    private String fetchFromMusicBrainz(String artist, String album) {
+        try {
+            waitMusicBrainzWindow();
+
+            String url =
+                    "https://musicbrainz.org/ws/2/release/?query=artist:" +
+                            URLEncoder.encode(artist, StandardCharsets.UTF_8) +
+                            "%20AND%20release:" +
+                            URLEncoder.encode(album, StandardCharsets.UTF_8) +
+                            "&fmt=json";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", USER_AGENT);
+
+            ResponseEntity<Map> resp =
+                    restTemplate.exchange(
+                            url, HttpMethod.GET,
+                            new HttpEntity<>(headers), Map.class);
+
+            List<Map<String, Object>> releases =
+                    (List<Map<String, Object>>) resp.getBody().get("releases");
+
+            if (releases == null || releases.isEmpty()) return null;
+
+            Map<String, Object> best = releases.get(0);
+            return resolveCoverArtUrl(best);
+
+        } catch (Exception e) {
+            logger.warn("MusicBrainz failed: {}", e.getMessage());
+            return null;
         }
+    }
 
-        logger.warn("No cover art found in CoverArtArchive for chosen MusicBrainz release.");
-        return null;
+    private String resolveCoverArtUrl(Map<String, Object> release) {
+        try {
+            String id = (String) release.get("id");
+            String url =
+                    "https://coverartarchive.org/release/" + id + "/front-500";
+
+            restTemplate.getForEntity(url, byte[].class);
+            return url;
+
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
+        }
     }
 
     // --------------------------------------------------
     // Helpers
     // --------------------------------------------------
+
+    private void logCoverUpdate(Album album, String source) {
+        String line = String.format(
+                "%s | %s - %s (%s) | %s%n",
+                LocalDateTime.now(),
+                album.getArtist().getArtistName(),
+                album.getAlbumName(),
+                album.getReleaseYear(),
+                source
+        );
+
+        try (BufferedWriter w =
+                     new BufferedWriter(new FileWriter("cover-updates.txt", true))) {
+            w.write(line);
+        } catch (IOException e) {
+            logger.warn("Cover log write failed: {}", e.getMessage());
+        }
+    }
 
     private synchronized void waitMusicBrainzWindow() {
         long now = System.currentTimeMillis();
@@ -309,47 +316,47 @@ public class CoverArtService {
         lastMusicBrainzCall = System.currentTimeMillis();
     }
 
-    private boolean isMissingCover(String coverUrl) {
+    private boolean shouldUpdateCover(String coverUrl) {
         if (coverUrl == null) return true;
         String u = coverUrl.trim();
-        if (u.isEmpty()) return true;
-        if (u.equals(DEFAULT_COVER)) return true;
-        if (u.contains("spacer.gif")) return true;
-        return false;
+        return u.isEmpty() || u.equals(DEFAULT_COVER);
     }
 
-    private boolean isValidCover(String coverUrl) {
-        if (coverUrl == null) return false;
-        String u = coverUrl.trim();
-        if (u.isEmpty()) return false;
-        if (u.contains("spacer.gif")) return false;
-        return true;
+    private boolean isValidCover(String url) {
+        return url != null && !url.trim().isEmpty();
     }
 
-    private void logSelectedSource(String artist, String title, String coverUrl) {
-        String source =
-                coverUrl == null ? "None" :
-                        coverUrl.contains("coverartarchive") ? "MusicBrainz" :
-                                coverUrl.equals(DEFAULT_COVER) ? "Default" :
-                                        "Unknown";
-        logger.info("Selected cover source for {} - {}: {}", artist, title, source);
-    }
-
-    private String cleanForSearch(String text) {
-        if (text == null) return "";
-        return text
-                .replaceAll("[^\\p{L}\\p{N}\\s:'&.,()\\-]", "")
-                .replaceAll("\\s+", " ")
-                .trim();
-    }
-
-    private String normalizeAscii(String text) {
-        if (text == null) return "";
-        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{M}", ""); // strip diacritics
-    }
+    // --------------------------------------------------
+    // NORMALIZATION (critical)
+    // --------------------------------------------------
 
     private String norm(String text) {
-        return normalizeAscii(cleanForSearch(text)).toLowerCase();
+        if (text == null) return "";
+
+        String s = text;
+
+        s = s.replace('’', '\'')
+                .replace('‘', '\'')
+                .replace('“', '"')
+                .replace('”', '"')
+                .replace('–', '-')
+                .replace('—', '-')
+                .replace("…", "");
+
+        s = s.replace("Æ", "AE").replace("æ", "ae")
+                .replace("Ø", "O").replace("ø", "o")
+                .replace("Å", "A").replace("å", "a")
+                .replace("Þ", "Th").replace("þ", "th")
+                .replace("Ð", "D").replace("ð", "d")
+                .replace("ß", "ss");
+
+        s = Normalizer.normalize(s, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+
+        s = s.replaceAll("[\\p{Punct}]+$", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        return s.toLowerCase();
     }
 }

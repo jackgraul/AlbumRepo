@@ -78,8 +78,7 @@ const ArtistDetails: React.FC = () => {
         })
       : api.put(`/artists/update-artist/${artist.id}`, {
           artistName: artist.artistName,
-          letter: artist.letter,
-          albums: artist.albums ?? [],
+          letter: artist.letter
         });
 
     request

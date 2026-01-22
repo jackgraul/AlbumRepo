@@ -89,7 +89,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
             effect="blur"
             referrerPolicy="no-referrer"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = "/images/default-cover.png";
+              (e.target as HTMLImageElement).src = "/default-cover.png";
             }}
             style={{
               width: "100%",
