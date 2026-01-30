@@ -81,10 +81,6 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
           >
             ({Math.round((listenedAlbums / totalAlbums) * 100)}%)
           </Typography>
-
-          <Typography variant="subtitle1" fontWeight={600}>
-            No Genre: {noGenre ?? 0}
-          </Typography>
         </Box>
       )}
 

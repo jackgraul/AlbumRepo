@@ -1,14 +1,5 @@
 import React, { useMemo } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  InputLabel,
-  MenuItem,
-  FormControl,
-  Select,
-  Autocomplete
-} from "@mui/material";
+import { Box, Button, TextField, InputLabel, MenuItem, FormControl, Select, Autocomplete } from "@mui/material";
 import { Album } from "../../models/models";
 
 export interface ArtistOption {
@@ -18,8 +9,6 @@ export interface ArtistOption {
 }
 
 interface AlbumFiltersProps {
-  searchQuery: string;
-  setSearchQuery: (value: string) => void;
   selectedLetter: string;
   setSelectedLetter: (value: string) => void;
   selectedArtist: string | null;
@@ -88,13 +77,16 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
   setSortOrder,
   artistOptions,
 }) => {
+  const toSlug = (v: string) =>
+    v.trim().toLowerCase().replace(/\s+/g, "-");
+
   const handleLetterChange = (value: string) => {
     setSelectedLetter(value);
     if (value) setSelectedArtist(null);
   };
 
   const handleArtistChange = (value: string | null) => {
-    setSelectedArtist(value);
+    setSelectedArtist(value ? toSlug(value) : null);
   };
 
   const handleResetFilters = () => {
@@ -103,7 +95,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
     setGenreQuery("");
     setYearQuery("");
     setMinRating("");
-    setSortBy("letter");
+    setSortBy("artist");
     setSortOrder("asc");
   };
 
@@ -136,7 +128,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
 
   const selectedArtistOption =
     selectedArtist
-      ? artistOptions.find((o) => o.name === selectedArtist) ?? null
+      ? artistOptions.find((o) => toSlug(o.name) === selectedArtist) ?? null
       : null;
 
   return (

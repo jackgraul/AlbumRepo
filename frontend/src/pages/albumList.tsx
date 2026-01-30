@@ -12,34 +12,20 @@ const CARD_WIDTH = 280;
 const CARD_HEIGHT = 340;
 const GAP = 15;
 
-interface ParsedSearch {
-  q: string;
-  letter: string;
-  artist: string | null;
-  genre: string | null;
-  year: string | null;
-  min: number | "";
-  sortBy: string;
-  order: string;
-}
+const toSlug = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
-function parseSearch(search: string): ParsedSearch {
-  const sp = new URLSearchParams(search);
-  const get = (k: string) => sp.get(k);
-  const minRaw = get("min");
-  const orderRaw = get("order");
-
-  return {
-    q: get("q") ?? "",
-    letter: get("letter") ?? "",
-    artist: get("artist"),
-    genre: get("genre"),
-    year: get("year"),
-    min: minRaw !== null && minRaw !== "" ? Number(minRaw) : "",
-    sortBy: get("sortBy") ?? "artist",
-    order: orderRaw === "desc" ? "desc" : "asc",
-  };
-}
+const collator = new Intl.Collator(undefined, {
+  usage: "sort",
+  sensitivity: "base",
+  numeric: true,
+  ignorePunctuation: true,
+});
 
 const getArtistLetter = (album: Album): string =>
   getNormalizedLetter(album.artist?.artistName);
@@ -47,66 +33,47 @@ const getArtistLetter = (album: Album): string =>
 const AlbumList: React.FC = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initial = useRef<ParsedSearch>(parseSearch(location.search)).current;
-  const [searchQuery, setSearchQuery] = useState<string>(initial.q);
-  const [selectedLetter, setSelectedLetter] = useState<string>(initial.letter);
-  const [selectedArtist, setSelectedArtist] = useState<string | null>(initial.artist);
-  const [genreQuery, setGenreQuery] = useState<string | null>(initial.genre);
-  const [yearQuery, setYearQuery] = useState<string | null>(initial.year);
-  const [minRating, setMinRating] = useState<number | "">(initial.min);
-  const [sortBy, setSortBy] = useState<string>(initial.sortBy);
-  const [sortOrder, setSortOrder] = useState<string>(initial.order);
+  const [selectedLetter, setSelectedLetter] = useState<string>(searchParams.get("letter") ?? "");
+  const [selectedArtist, setSelectedArtist] = useState<string | null>(searchParams.get("artist") ?? "");
+  const [genreQuery, setGenreQuery] = useState<string | null>(searchParams.get("genre")?.replace(/-/g, " ") ?? "");
+  const [yearQuery, setYearQuery] = useState<string | null>(searchParams.get("year") ?? "");
+  const [minRating, setMinRating] = useState<number | "">(searchParams.get("min") ? Number(searchParams.get("min")) : "");
+  const [sortBy, setSortBy] = useState<string>(searchParams.get("sortby") ?? "artist");
+  const [sortOrder, setSortOrder] = useState<string>(searchParams.get("order") ?? "asc");
   const [albums, setAlbums] = useState<Album[]>([]);
-  const [filteredAlbums, setFilteredAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [containerWidth, setContainerWidth] = useState(window.innerWidth);
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
   const isHydratingRef = useRef(false);
 
+  // handle window resize
   useEffect(() => {
     const handleResize = () => setContainerWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    isHydratingRef.current = true;
-    const next = parseSearch(location.search);
+  const buildSearchParams = () => {
+    const params = new URLSearchParams();
+    if (selectedLetter) params.set("letter", selectedLetter);
+    if (selectedArtist) params.set("artist", selectedArtist);
+    if (genreQuery) params.set("genre", toSlug(genreQuery));
+    if (yearQuery) params.set("year", yearQuery);
+    if (minRating !== "") params.set("min", String(minRating));
+    if (sortBy !== "artist") params.set("sortby", sortBy);
+    if (sortOrder !== "asc") params.set("order", sortOrder);
+    return params;
+  };
 
-    if (searchQuery !== next.q) setSearchQuery(next.q);
-    if (selectedLetter !== next.letter) setSelectedLetter(next.letter);
-    if (selectedArtist !== next.artist) setSelectedArtist(next.artist);
-    if (genreQuery !== next.genre) setGenreQuery(next.genre);
-    if (yearQuery !== next.year) setYearQuery(next.year);
-    if (minRating !== next.min) setMinRating(next.min);
-    if (sortBy !== next.sortBy) setSortBy(next.sortBy);
-    if (sortOrder !== next.order) setSortOrder(next.order);
-
-    setTimeout(() => {
-      isHydratingRef.current = false;
-    }, 0);
-  }, [location.search]);
-
+  // sync state to URL
   useEffect(() => {
     if (isHydratingRef.current) return;
 
-    const params = new URLSearchParams();
-    if (searchQuery) params.set("q", searchQuery);
-    if (selectedLetter) params.set("letter", selectedLetter);
-    if (selectedArtist) params.set("artist", selectedArtist);
-    if (genreQuery) params.set("genre", genreQuery);
-    if (yearQuery) params.set("year", yearQuery);
-    if (minRating !== "") params.set("min", String(minRating));
-    if (sortBy && sortBy !== "letter") params.set("sortBy", sortBy);
-    if (sortOrder && sortOrder !== "asc") params.set("order", sortOrder);
-
+    const params = buildSearchParams();
     const next = params.toString();
     const curr = location.search.replace(/^\?/, "");
-    if (next !== curr) {
-      setSearchParams(params, { replace: true });
-    }
+    if (next !== curr) setSearchParams(params, { replace: true });
   }, [
-    searchQuery,
     selectedLetter,
     selectedArtist,
     genreQuery,
@@ -118,13 +85,13 @@ const AlbumList: React.FC = () => {
     setSearchParams,
   ]);
 
+  // initial data fetch
   useEffect(() => {
     api
       .get<Album[]>("/albums")
       .then((res) => {
         setAlbums(res.data);
 
-        // Build sorted artist options (letter, then normalized name)
         const byKey = new Map<string, ArtistOption>();
 
         res.data.forEach((a) => {
@@ -154,18 +121,8 @@ const AlbumList: React.FC = () => {
       });
   }, []);
 
-  useEffect(() => {
+  const filteredAlbums = useMemo(() => {
     let filtered = [...albums];
-
-    // search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (a) =>
-          a.albumName.toLowerCase().includes(q) ||
-          a.artist?.artistName?.toLowerCase().includes(q)
-      );
-    }
 
     // letter filter
     if (selectedLetter) {
@@ -177,8 +134,7 @@ const AlbumList: React.FC = () => {
     if (selectedArtist) {
       filtered = filtered.filter(
         (a) =>
-          a.artist?.artistName?.toLowerCase() ===
-          selectedArtist.toLowerCase()
+          toSlug(a.artist?.artistName ?? "") === selectedArtist
       );
     }
 
@@ -207,62 +163,84 @@ const AlbumList: React.FC = () => {
       );
     }
 
-    const dir = sortOrder === "asc" ? 1 : -1;
+    // sorting
+    type SortKey = string | number;
 
-    filtered.sort((a, b) => {
-      const getValue = (album: Album) => {
-        switch (sortBy) {
-          case "letter":
-            // Letter + artist + year fallback
-            return [
-              getArtistLetter(album),
-              normalizeArtistName(album.artist?.artistName),
-              album.releaseYear ?? 9999,
-              album.releaseOrder ?? 9999,
-              (album.albumName || "").toLowerCase()
-            ];
-          case "artist":
-            return [
-              normalizeArtistName(album.artist?.artistName),
-              album.releaseYear ?? 9999,
-              album.releaseOrder ?? 9999,
-              (album.albumName || "").toLowerCase()
-            ];
-          case "title":
-            return [(album.albumName || "").toLowerCase()];
-          case "year":
-            return [album.releaseYear ?? 9999, album.releaseOrder ?? 9999, (album.albumName || "").toLowerCase()];
-          case "genre":
-            return [(album.genre || "").toLowerCase(), normalizeArtistName(album.artist?.artistName)];
-          case "rating":
-            return [album.rating ?? -1, normalizeArtistName(album.artist?.artistName)];
-          default:
-            return [(album.albumName || "").toLowerCase()];
+    const artistFallback = (a: Album): SortKey[] => [
+      normalizeArtistName(a.artist?.artistName),
+      a.releaseYear ?? 9999,
+      a.releaseOrder ?? 9999,
+      (a.albumName || "").toLowerCase(),
+    ];
+
+    const sortExtractors: Record<string, (a: Album) => SortKey[]> = {
+      artist: (a) => [
+        ...artistFallback(a),
+      ],
+
+      title: (a) => [
+        (a.albumName || "").toLowerCase(),
+        ...artistFallback(a),
+      ],
+
+      year: (a) => [
+        a.releaseYear ?? 9999,
+        a.releaseOrder ?? 9999,
+        ...artistFallback(a),
+      ],
+
+      genre: (a) => [
+        (a.genre || "").toLowerCase(),
+        ...artistFallback(a),
+      ],
+
+      rating: (a) => [
+        a.rating ?? -1,
+        ...artistFallback(a),
+      ],
+    };
+
+    const compareTuples = (
+      a: SortKey[],
+      b: SortKey[],
+      dir: 1 | -1
+    ) => {
+      const len = Math.max(a.length, b.length);
+
+      for (let i = 0; i < len; i++) {
+        const av = a[i];
+        const bv = b[i];
+
+        if (av == null && bv == null) continue;
+        if (av == null) return 1 * dir;
+        if (bv == null) return -1 * dir;
+
+        if (typeof av === "string" && typeof bv === "string") {
+          const cmp = collator.compare(av, bv);
+          if (cmp !== 0) return cmp * dir;
+          continue;
         }
-      };
 
-      const aValues = getValue(a);
-      const bValues = getValue(b);
-
-      for (let i = 0; i < Math.max(aValues.length, bValues.length); i++) {
-        const aVal = aValues[i];
-        const bVal = bValues[i];
-
-        if (aVal == null && bVal == null) continue;
-        if (aVal == null) return 1 * dir;
-        if (bVal == null) return -1 * dir;
-
-        if (aVal < bVal) return -1 * dir;
-        if (aVal > bVal) return 1 * dir;
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
       }
 
       return 0;
-    });
+    };
 
-    setFilteredAlbums(filtered);
+    const dir: 1 | -1 = sortOrder === "asc" ? 1 : -1;
+
+    filtered.sort((a, b) =>
+      compareTuples(
+        sortExtractors[sortBy](a),
+        sortExtractors[sortBy](b),
+        dir
+      )
+    );
+
+    return filtered;
   }, [
     albums,
-    searchQuery,
     selectedLetter,
     selectedArtist,
     genreQuery,
@@ -273,12 +251,11 @@ const AlbumList: React.FC = () => {
   ]);
 
   const totalCardWidth = CARD_WIDTH + GAP;
-  const itemsPerRow = Math.max(
-    1,
-    Math.floor((containerWidth - GAP) / totalCardWidth)
-  );
+  const itemsPerRow = Math.max(1, Math.floor((containerWidth - GAP) / totalCardWidth));
   const rowCount = Math.ceil(filteredAlbums.length / itemsPerRow);
+  const ratedAlbums = filteredAlbums.filter(a => a.rating !== null);
 
+  // render contents
   const Row = useMemo(
     () =>
       ({ index, style }: { index: number; style: React.CSSProperties }) => {
@@ -349,8 +326,6 @@ const AlbumList: React.FC = () => {
   return (
     <Box sx={{ p: 2, overflowX: "hidden" }}>
       <AlbumFilters
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
         selectedLetter={selectedLetter}
         setSelectedLetter={setSelectedLetter}
         selectedArtist={selectedArtist}
@@ -370,16 +345,14 @@ const AlbumList: React.FC = () => {
 
       <AlbumSummaryBar
         totalAlbums={filteredAlbums.length}
-        listenedAlbums={filteredAlbums.filter(a => a.rating !== null).length}
+        listenedAlbums={ratedAlbums.length}
         uniqueArtists={
           new Set(
             filteredAlbums.map((a) => a.artist?.artistName)
           ).size
         }
-        wrongCoverAlbums={filteredAlbums.filter(a => a.coverURL === "/images/default-cover.png" || a.coverURL === '').length}
-        noGenre={filteredAlbums.filter(a => !a.genre).length}
-        avgRating={filteredAlbums.filter(a => a.rating !== null).length > 0 
-          ? Number((filteredAlbums.reduce((sum, a) => sum + (a.rating ?? 0), 0) / filteredAlbums.filter(a => a.rating != null).length).toFixed(2)) 
+        avgRating={ratedAlbums.length > 0 
+          ? Number((ratedAlbums.reduce((sum, a) => sum + (a.rating ?? 0), 0) / ratedAlbums.length).toFixed(2)) 
           : undefined
         }
       />

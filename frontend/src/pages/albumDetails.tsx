@@ -1,19 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import {
-  Box,
-  Button,
-  TextField,
-  Autocomplete,
-  Typography,
-  CircularProgress,
-  Stack,
-  Snackbar,
-  Alert,
-  Grid,
-  Card,
-  CardMedia,
-} from "@mui/material";
+import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia } from "@mui/material";
 import api from "../api/apiClient";
 import { Album } from "../models/models";
 import DeleteConfirmationDialog from "../components/deleteConfirmation";
@@ -22,6 +9,11 @@ const AlbumDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const normalizeSearch = (search: string) =>
+    search
+      .replace(/\+/g, "-")
+      .toLowerCase();
 
   const preservedSearch =
     location.search || ((location.state as { fromSearch?: string } | null)?.fromSearch ?? "");
@@ -114,7 +106,7 @@ const AlbumDetails: React.FC = () => {
     if (fromArtistPath) {
       navigate(fromArtistPath, {replace: true});
     } else {
-      navigate({ pathname: "/albums", search: preservedSearch });
+      navigate({ pathname: "/albums", search: normalizeSearch(preservedSearch) });
     }
   };
 
