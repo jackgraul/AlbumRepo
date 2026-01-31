@@ -9,7 +9,7 @@ import { ArtistOption } from "../components/album/albumFilters";
 
 const ArtistList: React.FC = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [filteredArtists, setFilteredArtists] = useState<Artist[]>([]);
+  //const [filteredArtists, setFilteredArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLetter, setSelectedLetter] = useState<string>("");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
@@ -57,82 +57,86 @@ const ArtistList: React.FC = () => {
       });
   }, []);
 
-  useEffect(() => {
-    let filtered = [...artists];
+  const enrichedArtists = React.useMemo(() => {
+    return artists.map((a) => {
+      const albums = a.albums ?? [];
+      const rated = albums.filter(x => x.rating != null);
+
+      const avgRating =
+        rated.length > 0
+          ? rated.reduce((sum, x) => sum + (x.rating ?? 0), 0) / rated.length
+          : null;
+
+      return {
+        ...a,
+        _normName: normalizeArtistName(a.artistName),
+        _letter: getNormalizedLetter(a.artistName),
+        _albumCount: albums.length,
+        _ratedCount: rated.length,
+        _avgRating: avgRating,
+      };
+    });
+  }, [artists]);
+
+  const filteredArtists = React.useMemo(() => {
+    let filtered = [...enrichedArtists];
 
     if (selectedLetter) {
       const target = selectedLetter.toUpperCase();
-      filtered =
-        target === "#"
-          ? filtered.filter((a) => getNormalizedLetter(a.artistName) === "#")
-          : filtered.filter((a) => getNormalizedLetter(a.artistName) === target);
+      filtered = filtered.filter(a => a._letter === target);
     }
 
     if (selectedArtist) {
       const target = selectedArtist.toLowerCase();
       filtered = filtered.filter(
-        (a) => a.artistName?.toLowerCase() === target
+        a => a.artistName?.toLowerCase() === target
       );
     }
 
+    const dir = sortOrder === "asc" ? 1 : -1;
+
     filtered.sort((a, b) => {
-      const dir = sortOrder === "asc" ? 1 : -1;
-
-      const aNorm = normalizeArtistName(a.artistName);
-      const bNorm = normalizeArtistName(b.artistName);
-
-      const aLetter = getNormalizedLetter(a.artistName);
-      const bLetter = getNormalizedLetter(b.artistName);
-
-      const aAlbums = a.albums ?? [];
-      const bAlbums = b.albums ?? [];
-
-      const aRated = aAlbums.filter((x) => x.rating != null);
-      const bRated = bAlbums.filter((x) => x.rating != null);
-
-      const aAvg = aRated.length
-        ? aRated.reduce((sum, x) => sum + (x.rating ?? 0), 0) / aRated.length
-        : null;
-
-      const bAvg = bRated.length
-        ? bRated.reduce((sum, x) => sum + (x.rating ?? 0), 0) / bRated.length
-        : null;
-
       switch (sortBy) {
         case "albumCount": {
-          const diff = aAlbums.length - bAlbums.length;
+          const diff = a._albumCount - b._albumCount;
           if (diff !== 0) return diff * dir;
-          return aNorm.localeCompare(bNorm) * dir;
+          return a._normName.localeCompare(b._normName) * dir;
         }
 
         case "avgRating": {
-          if (aAvg == null && bAvg == null) return aNorm.localeCompare(bNorm) * dir;
-          if (aAvg == null) return 1;
-          if (bAvg == null) return -1;
+          if (a._avgRating == null && b._avgRating == null)
+            return a._normName.localeCompare(b._normName) * dir;
+          if (a._avgRating == null) return 1;
+          if (b._avgRating == null) return -1;
 
-          const diff = aAvg - bAvg;
+          const diff = a._avgRating - b._avgRating;
           if (diff !== 0) return diff * dir;
 
-          const ratedDiff = aRated.length - bRated.length;
+          const ratedDiff = a._ratedCount - b._ratedCount;
           if (ratedDiff !== 0) return ratedDiff * -dir;
 
-          return aNorm.localeCompare(bNorm) * dir;
+          return a._normName.localeCompare(b._normName) * dir;
         }
 
-        case "letter": {
-          if (aLetter < bLetter) return -1 * dir;
-          if (aLetter > bLetter) return 1 * dir;
-          return aNorm.localeCompare(bNorm) * dir;
-        }
+        case "letter":
+          if (a._letter < b._letter) return -1 * dir;
+          if (a._letter > b._letter) return 1 * dir;
+          return a._normName.localeCompare(b._normName) * dir;
 
         case "artist":
         default:
-          return aNorm.localeCompare(bNorm) * dir;
+          return a._normName.localeCompare(b._normName) * dir;
       }
     });
 
-    setFilteredArtists(filtered);
-  }, [artists, selectedLetter, selectedArtist, sortBy, sortOrder]);
+    return filtered;
+  }, [
+    enrichedArtists,
+    selectedLetter,
+    selectedArtist,
+    sortBy,
+    sortOrder,
+  ]);
 
   if (loading) {
     return (
