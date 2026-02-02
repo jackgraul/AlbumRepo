@@ -23,8 +23,7 @@ const toSlug = (value: string) =>
 const collator = new Intl.Collator(undefined, {
   usage: "sort",
   sensitivity: "base",
-  numeric: true,
-  ignorePunctuation: true,
+  numeric: true
 });
 
 const getArtistLetter = (album: Album): string =>
@@ -33,7 +32,7 @@ const getArtistLetter = (album: Album): string =>
 const AlbumList: React.FC = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedLetter, setSelectedLetter] = useState<string>(searchParams.get("letter") ?? "");
+  const [selectedLetter, setSelectedLetter] = useState<string>(searchParams.get("letter")?.toUpperCase() ?? "");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(searchParams.get("artist") ?? "");
   const [genreQuery, setGenreQuery] = useState<string | null>(searchParams.get("genre")?.replace(/-/g, " ") ?? "");
   const [yearQuery, setYearQuery] = useState<string | null>(searchParams.get("year") ?? "");
@@ -55,7 +54,7 @@ const AlbumList: React.FC = () => {
 
   const buildSearchParams = () => {
     const params = new URLSearchParams();
-    if (selectedLetter) params.set("letter", selectedLetter);
+    if (selectedLetter) params.set("letter", selectedLetter.toLowerCase());
     if (selectedArtist) params.set("artist", selectedArtist);
     if (genreQuery) params.set("genre", toSlug(genreQuery));
     if (yearQuery) params.set("year", yearQuery);
