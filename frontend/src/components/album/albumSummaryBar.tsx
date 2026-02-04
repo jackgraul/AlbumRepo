@@ -79,7 +79,7 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
                   : "#d32f2f"
             }}
           >
-            ({Math.round((listenedAlbums / totalAlbums) * 100)}%)
+            {((listenedAlbums / totalAlbums) * 100).toFixed(2)}%
           </Typography>
         </Box>
       )}
