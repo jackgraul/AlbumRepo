@@ -16,8 +16,7 @@ const toSlug = (value: string) =>
   value
     .trim()
     .toLowerCase()
-    .replace(/['’]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/\s+/g, "-") 
     .replace(/^-+|-+$/g, "");
 
 const collator = new Intl.Collator(undefined, {

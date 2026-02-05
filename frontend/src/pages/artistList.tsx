@@ -9,7 +9,6 @@ import { ArtistOption } from "../components/album/albumFilters";
 
 const ArtistList: React.FC = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
-  //const [filteredArtists, setFilteredArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLetter, setSelectedLetter] = useState<string>("");
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
