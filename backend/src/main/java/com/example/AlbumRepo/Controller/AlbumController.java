@@ -5,19 +5,9 @@ import com.example.AlbumRepo.Repository.IAlbumRepository;
 import com.example.AlbumRepo.Service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
-
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -59,7 +49,7 @@ public class AlbumController {
     @PostMapping("/add-album")
     public Album createAlbum(@RequestBody Album album) {
         Album saved = albumRepository.save(album);
-        coverArtService.fetchAndSaveCover(saved);
+        coverArtService.fetchCoverArt(saved.getArtist().getArtistName(), saved.getAlbumName());
         return saved;
     }
 

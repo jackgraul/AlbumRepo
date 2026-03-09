@@ -10,6 +10,14 @@ public interface IAlbumRepository extends JpaRepository<Album,Integer> {
     @Query("SELECT a FROM Album a JOIN FETCH a.artist")
     List<Album> findAllWithArtists();
 
-    @Query("SELECT a FROM Album a JOIN FETCH a.artist WHERE a.coverURL IS NULL OR a.coverURL = '' OR a.coverURL LIKE CONCAT('%', '/images/default-cover.png', '%')")
+    @Query("""
+    SELECT a
+    FROM Album a
+    JOIN FETCH a.artist
+    WHERE a.coverURL IS NULL
+       OR TRIM(a.coverURL) = ''
+       OR a.coverURL LIKE '%default-cover%'
+    """)
     List<Album> findAllWithoutCovers();
+
 }
