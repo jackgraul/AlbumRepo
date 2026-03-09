@@ -18,7 +18,7 @@ Note that this is configured as a single user application (not individual rating
 - Filter and sort albums / artists
 - Input validation to prevent incomplete or incorrect data
 
-Screenshots:
+## Screenshots:
 
 ![Albums page](images/album_list.png)
 ![Artists page](images/artist_list.png)
