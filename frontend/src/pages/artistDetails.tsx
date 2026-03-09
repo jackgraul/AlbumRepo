@@ -67,8 +67,26 @@ const ArtistDetails: React.FC = () => {
     setArtist((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
+  const isValid = () => {
+    if (!artist) return false;
+
+    if (!artist.artistName.trim()) {
+      setToast({ open: true, message: "Artist name is required.", severity: "error" });
+      return false;
+    }
+
+    if (!artist.letter.trim()) {
+      setToast({ open: true, message: "Letter is required.", severity: "error" });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = () => {
     if (!artist) return;
+    if (!isValid()) return;
+
     setSaving(true);
 
     const request = isNew

@@ -110,8 +110,26 @@ const AlbumDetails: React.FC = () => {
     }
   };
 
+  const isValid = () => {
+    if (!album) return false;
+
+    if (!album.albumName.trim()) {
+      setToast({ open: true, message: "Album name is required.", severity: "error" });
+      return false;
+    }
+
+    if (!album.artist || album.artist.id === 0) {
+      setToast({ open: true, message: "Artist must be selected.", severity: "error" });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSave = () => {
     if (!album) return;
+    if (!isValid()) return;
+    
     setSaving(true);
 
     const request = isNew
