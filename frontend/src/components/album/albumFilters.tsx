@@ -17,8 +17,8 @@ interface AlbumFiltersProps {
   setGenreQuery: (value: string | null) => void;
   yearQuery: string | null;
   setYearQuery: (value: string | null) => void;
-  minRating: number | "";
-  setMinRating: (value: number | "") => void;
+  minRating: number | string;
+  setMinRating: (value: number | string) => void;
   sortBy: string;
   setSortBy: (value: string) => void;
   sortOrder: string;
@@ -193,9 +193,10 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         <Select
           value={minRating}
           label="Min Rating"
-          onChange={(e) => setMinRating(e.target.value as number | "")}
+          onChange={(e) => setMinRating(e.target.value as number | string)}
         >
           <MenuItem value="">All</MenuItem>
+          <MenuItem value="null">No Rating</MenuItem>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((r) => (
             <MenuItem key={r} value={r}>
               {r}

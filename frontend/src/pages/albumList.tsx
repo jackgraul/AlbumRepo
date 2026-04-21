@@ -35,7 +35,12 @@ const AlbumList: React.FC = () => {
   const [selectedArtist, setSelectedArtist] = useState<string | null>(searchParams.get("artist") ?? "");
   const [genreQuery, setGenreQuery] = useState<string | null>(searchParams.get("genre")?.replace(/-/g, " ") ?? "");
   const [yearQuery, setYearQuery] = useState<string | null>(searchParams.get("year") ?? "");
-  const [minRating, setMinRating] = useState<number | "">(searchParams.get("min") ? Number(searchParams.get("min")) : "");
+  const [minRating, setMinRating] = useState<number | string>(() => {
+    const val = searchParams.get("min");
+    if (!val) return "";
+    if (val === "null") return "null";
+    return Number(val);
+  });
   const [sortBy, setSortBy] = useState<string>(searchParams.get("sortby") ?? "artist");
   const [sortOrder, setSortOrder] = useState<string>(searchParams.get("order") ?? "asc");
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -137,7 +142,9 @@ const AlbumList: React.FC = () => {
     }
 
     // min rating
-    if (minRating !== "") {
+    if (minRating === "null") {
+      filtered = filtered.filter((a) => a.rating == null);
+    } else if (minRating !== "") {
       const ratingStr = String(minRating);
       const regex = new RegExp(`^${ratingStr}(\\.|$)`);
       filtered = filtered.filter((a) => {
