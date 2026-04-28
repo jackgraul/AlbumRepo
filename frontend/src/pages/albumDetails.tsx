@@ -76,7 +76,7 @@ const AlbumDetails: React.FC = () => {
         album.coverURL
       )}`;
     }
-    return "/images/default-cover.png";
+    return "/default-cover.png";
   }, [album?.coverURL]);
 
   useEffect(() => {

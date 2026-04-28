@@ -301,7 +301,7 @@ const AlbumList: React.FC = () => {
                   genre={album.genre ?? ""}
                   rating={album.rating ?? undefined}
                   coverURL={
-                    album.coverURL ?? "/images/default-cover.png"
+                    album.coverURL ?? "/default-cover.png"
                   }
                   artistName={
                     album.artist?.artistName ?? "Unknown Artist"

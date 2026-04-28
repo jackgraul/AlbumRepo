@@ -15,7 +15,6 @@ import {
   Grid,
 } from "@mui/material";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
 import api from "../api/apiClient";
 import { Artist } from "../models/models";
 import DeleteConfirmationDialog from "../components/deleteConfirmation";
@@ -309,7 +308,7 @@ const ArtistDetails: React.FC = () => {
                           referrerPolicy="no-referrer"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
-                              "/images/default-cover.png";
+                              "/default-cover.png";
                           }}
                           style={{
                             width: 100,

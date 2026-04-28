@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, Typography, Box, CardActionArea } from "@mui/material";
 import MarqueeOnOverflow from "../marqueeOverflow";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
 
 interface AlbumCardProps {
   id: number;
@@ -38,7 +37,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
   const proxiedUrl =
     coverURL && coverURL.startsWith("http")
       ? `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(coverURL)}`
-      : "/images/default-cover.png";
+      : "/default-cover.png";
 
   return (
     <Card
