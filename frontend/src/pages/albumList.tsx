@@ -4,7 +4,8 @@ import { FixedSizeList as List } from "react-window";
 import { useSearchParams, useLocation } from "react-router-dom";
 import api from "../api/apiClient";
 import AlbumCard from "../components/album/albumCard";
-import AlbumFilters, { ArtistOption, getNormalizedLetter, normalizeArtistName } from "../components/album/albumFilters";
+import AlbumFilters, { ArtistOption } from "../components/album/albumFilters";
+import { getNormalizedLetter, normalizeArtistName } from "../utils/artistName";
 import AlbumSummaryBar from "../components/album/albumSummaryBar";
 import { Album } from "../models/models";
 

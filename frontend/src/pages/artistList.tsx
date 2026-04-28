@@ -3,9 +3,10 @@ import { Artist } from "../models/models";
 import { Grid, Box, CircularProgress, Typography } from "@mui/material";
 import api from "../api/apiClient";
 import ArtistCard from "../components/artist/artistCard";
-import ArtistFilters, { normalizeArtistName, getNormalizedLetter } from "../components/artist/artistFilters";
-import ArtistSummaryBar from "../components/artist/artistSummaryBar";
+import ArtistFilters from "../components/artist/artistFilters";
 import { ArtistOption } from "../components/album/albumFilters";
+import { getNormalizedLetter, normalizeArtistName } from "../utils/artistName";
+import ArtistSummaryBar from "../components/artist/artistSummaryBar";
 
 const ArtistList: React.FC = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
