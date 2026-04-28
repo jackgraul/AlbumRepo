@@ -367,9 +367,9 @@ const AlbumList: React.FC = () => {
           No albums found for these filters.
         </Typography>
       ) : (
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
+        <Box className="scroll" sx={{ display: "flex", justifyContent: "center" }}>
           <List
-            height={window.innerHeight - 180}
+            height={window.innerHeight - 300}
             itemCount={rowCount}
             itemSize={CARD_HEIGHT + GAP * 3}
             width={containerWidth}

@@ -13,6 +13,7 @@ Thumbs.db
 # =========================================
 # Maven / Java (Spring Boot backend)
 # =========================================
+backend/.env
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
 !backend/**/src/main/**/target/

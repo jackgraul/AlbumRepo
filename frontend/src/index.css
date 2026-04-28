@@ -11,3 +11,9 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.scroll {
+  scrollbar-width: auto;
+  scrollbar-color: rgba(200, 200, 200, 0.4) #1a1a1a;
+  padding-right: 10px;
+}

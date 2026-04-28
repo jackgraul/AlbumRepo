@@ -149,7 +149,7 @@ const ArtistList: React.FC = () => {
   }
 
   return (
-    <Box sx={{ padding: 3 }}>
+    <Box sx={{ height: "88vh", display: "flex", flexDirection: "column", p: 2 }}>
       <ArtistFilters
         selectedLetter={selectedLetter}
         setSelectedLetter={setSelectedLetter}
@@ -164,32 +164,34 @@ const ArtistList: React.FC = () => {
 
       <ArtistSummaryBar totalArtists={filteredArtists.length} />
 
-      <Grid container spacing={2}>
-        {filteredArtists.map((artist) => {
-          const albums = artist.albums ?? [];
-          const avgRating =
-            albums.filter(a => a.rating != null).length > 0
-              ? (albums.reduce((sum, a) => sum + (a.rating ?? 0), 0) / albums.filter(a => a.rating != null).length).toFixed(2)
-              : undefined;
-
-          return (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={artist.id}>
-              <ArtistCard
-                id={artist.id}
-                letter={getNormalizedLetter(artist.artistName)}
-                artistName={artist.artistName}
-                albums={albums}
-                avgRating={avgRating}
-              />
-            </Grid>
-          );
-        })}
-      </Grid>
-
-      {filteredArtists.length === 0 && (
+      {filteredArtists.length === 0 ? (
         <Typography align="center" mt={4}>
           No artists found for these filters.
         </Typography>
+      ) : (
+        <Box className="scroll" sx={{ flex: 1, overflowY: "auto" }}>
+          <Grid container spacing={2}>
+            {filteredArtists.map((artist) => {
+              const albums = artist.albums ?? [];
+              const avgRating =
+                albums.filter(a => a.rating != null).length > 0
+                  ? (albums.reduce((sum, a) => sum + (a.rating ?? 0), 0) / albums.filter(a => a.rating != null).length).toFixed(2)
+                  : undefined;
+
+              return (
+                <Grid item xs={12} sm={6} md={4} lg={3} key={artist.id}>
+                  <ArtistCard
+                    id={artist.id}
+                    letter={getNormalizedLetter(artist.artistName)}
+                    artistName={artist.artistName}
+                    albums={albums}
+                    avgRating={avgRating}
+                  />
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Box>
       )}
     </Box>
   );

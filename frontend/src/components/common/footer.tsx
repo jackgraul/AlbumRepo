@@ -8,7 +8,6 @@ const Footer: React.FC = () => {
     <Box
       component="footer"
       sx={{
-        mt: 4,
         py: 2,
         px: 3,
         backgroundColor: "background.paper",
