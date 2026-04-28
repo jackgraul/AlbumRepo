@@ -15,8 +15,6 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
   totalAlbums,
   listenedAlbums,
   uniqueArtists,
-  wrongCoverAlbums,
-  noGenre,
   avgRating
 }) => {
   const navigate = useNavigate();

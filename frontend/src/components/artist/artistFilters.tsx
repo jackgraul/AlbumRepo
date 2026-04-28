@@ -166,7 +166,8 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
       gap={2}
       alignItems="center"
       justifyContent="space-between"
-      mb={3}
+      mb={1}
+      mt={1}
     >
       <FormControl size="small" sx={{ width: 125 }}>
         <InputLabel>Letter</InputLabel>

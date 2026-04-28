@@ -19,6 +19,7 @@ const ArtistSummaryBar: React.FC<ArtistSummaryBarProps> = ({ totalArtists }) => 
         borderRadius: 2,
         backgroundColor: "background.paper",
         boxShadow: 2,
+        position: "relative",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
