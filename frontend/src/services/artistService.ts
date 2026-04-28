@@ -1,5 +1,7 @@
 import api from "../api/apiClient";
-import { Album, Artist } from "./albumService";
+import { Artist } from "../models/models";
+
+type ArtistPayload = Pick<Artist, "artistName" | "letter">;
 
 class ArtistService {
   static async getAll(): Promise<Artist[]> {
@@ -7,35 +9,26 @@ class ArtistService {
     return data;
   }
 
-  static async getById(id: number): Promise<Artist> {
+  static async getById(id: number | string): Promise<Artist> {
     const { data } = await api.get<Artist>(`/artists/${id}`);
     return data;
   }
 
-  static async getAlbumsByArtist(id: number): Promise<Album[]> {
-    const { data } = await api.get<Album[]>(`/artists/${id}/albums`);
+  static async create(artist: ArtistPayload): Promise<Artist> {
+    const { data } = await api.post<Artist>("/artists/add-artist", artist);
     return data;
   }
 
-  static async search(name: string): Promise<Artist[]> {
-    const { data } = await api.get<Artist[]>(
-      `/artists/search?name=${encodeURIComponent(name)}`
+  static async update(id: number, artist: ArtistPayload): Promise<Artist> {
+    const { data } = await api.put<Artist>(
+      `/artists/update-artist/${id}`,
+      artist
     );
     return data;
   }
 
-  static async create(artist: Partial<Artist>): Promise<Artist> {
-    const { data } = await api.post<Artist>("/artists", artist);
-    return data;
-  }
-
-  static async update(id: number, artist: Partial<Artist>): Promise<Artist> {
-    const { data } = await api.put<Artist>(`/artists/${id}`, artist);
-    return data;
-  }
-
   static async delete(id: number): Promise<void> {
-    await api.delete(`/artists/${id}`);
+    await api.delete(`/artists/delete-artist/${id}`);
   }
 }
 

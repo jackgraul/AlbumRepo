@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, Typography, Box, CardActionArea } from "@mui/material";
 import MarqueeOnOverflow from "../marqueeOverflow";
 import { LazyLoadImage } from "react-lazy-load-image-component";
+import { buildApiUrl } from "../../api/apiClient";
 
 interface AlbumCardProps {
   id: number;
@@ -36,7 +37,9 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
   const searchToCarry = fromSearch || location.search;
   const proxiedUrl =
     coverURL && coverURL.startsWith("http")
-      ? `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(coverURL)}`
+      ? buildApiUrl(
+          `/albums/proxy-cover?url=${encodeURIComponent(coverURL)}`
+        )
       : "/default-cover.png";
 
   return (

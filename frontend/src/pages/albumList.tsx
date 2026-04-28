@@ -2,12 +2,12 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { FixedSizeList as List } from "react-window";
 import { useSearchParams, useLocation } from "react-router-dom";
-import api from "../api/apiClient";
 import AlbumCard from "../components/album/albumCard";
 import AlbumFilters, { ArtistOption } from "../components/album/albumFilters";
 import { getNormalizedLetter, normalizeArtistName } from "../utils/artistName";
 import AlbumSummaryBar from "../components/album/albumSummaryBar";
 import { Album } from "../models/models";
+import AlbumService from "../services/albumService";
 
 const CARD_WIDTH = 280;
 const CARD_HEIGHT = 340;
@@ -91,18 +91,17 @@ const AlbumList: React.FC = () => {
 
   // initial data fetch
   useEffect(() => {
-    api
-      .get<Album[]>("/albums")
-      .then((res) => {
-        setAlbums(res.data);
+    AlbumService.getAll()
+      .then((data) => {
+        setAlbums(data);
 
         const byKey = new Map<string, ArtistOption>();
 
-        res.data.forEach((a) => {
+        data.forEach((a) => {
           const name = a.artist?.artistName?.trim();
           if (!name) return;
 
-          let letter = getNormalizedLetter(name);
+          const letter = getNormalizedLetter(name);
           const key = name.toLowerCase();
 
           if (!byKey.has(key)) byKey.set(key, { name, letter });

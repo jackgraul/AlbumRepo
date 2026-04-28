@@ -1,19 +1,12 @@
 import api from "../api/apiClient";
+import { Album } from "../models/models";
 
-export interface Artist {
-  id?: number;
-  artistName: string;
-}
+type AlbumPayload = Omit<Album, "id">;
 
-export interface Album {
-  id: number;
-  albumName: string;
-  releaseYear: number;
-  rating?: number;
-  genre?: string;
-  coverURL: string;
-  artist: Artist;
-}
+const toAlbumPayload = (album: Album | AlbumPayload): AlbumPayload => {
+  const { id, ...payload } = album as Album;
+  return payload;
+};
 
 class AlbumService {
   static async getAll(): Promise<Album[]> {
@@ -21,27 +14,20 @@ class AlbumService {
     return data;
   }
 
-  static async getById(id: number): Promise<Album> {
+  static async getById(id: number | string): Promise<Album> {
     const { data } = await api.get<Album>(`/albums/${id}`);
     return data;
   }
 
-  static async getByArtist(artistId: number): Promise<Album[]> {
-    const { data } = await api.get<Album[]>(`/artists/${artistId}/albums`);
+  static async create(album: Album | AlbumPayload): Promise<Album> {
+    const { data } = await api.post<Album>(
+      "/albums/add-album",
+      toAlbumPayload(album)
+    );
     return data;
   }
 
-  static async search(query: string): Promise<Album[]> {
-    const { data } = await api.get<Album[]>(`/albums/search?query=${encodeURIComponent(query)}`);
-    return data;
-  }
-
-  static async create(album: Partial<Album>): Promise<Album> {
-    const { data } = await api.post<Album>("/albums/add-album", album);
-    return data;
-  }
-
-  static async update(id: number, album: Partial<Album>): Promise<Album> {
+  static async update(id: number, album: Album): Promise<Album> {
     const { data } = await api.put<Album>(`/albums/update-album/${id}`, album);
     return data;
   }

@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia } from "@mui/material";
-import api from "../api/apiClient";
+import { buildApiUrl } from "../api/apiClient";
 import { Album } from "../models/models";
 import DeleteConfirmationDialog from "../components/deleteConfirmation";
+import AlbumService from "../services/albumService";
+import ArtistService from "../services/artistService";
 
 const AlbumDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,9 +35,13 @@ const AlbumDetails: React.FC = () => {
 
   useEffect(() => {
     setArtistLoading(true);
-    api.get<ArtistOption[]>("/artists")
-      .then(res => {
-        const opts = res.data.map(a => ({ id: a.id, artistName: a.artistName, letter: a.letter }));
+    ArtistService.getAll()
+      .then((artists) => {
+        const opts = artists.map((a) => ({
+          id: a.id,
+          artistName: a.artistName,
+          letter: a.letter,
+        }));
         setArtistOptions(opts);
       })
       .finally(() => setArtistLoading(false));
@@ -72,9 +78,9 @@ const AlbumDetails: React.FC = () => {
 
   const previewUrl = useMemo(() => {
     if (album?.coverURL) {
-      return `http://localhost:7373/api/albums/proxy-cover?url=${encodeURIComponent(
-        album.coverURL
-      )}`;
+      return buildApiUrl(
+        `/albums/proxy-cover?url=${encodeURIComponent(album.coverURL)}`
+      );
     }
     return "/default-cover.png";
   }, [album?.coverURL]);
@@ -82,10 +88,9 @@ const AlbumDetails: React.FC = () => {
   useEffect(() => {
     if (isNew) return;
 
-    api
-      .get<Album>(`/albums/${id}`)
-      .then((res) => {
-        setAlbum(res.data);
+    AlbumService.getById(id ?? "")
+      .then((data) => {
+        setAlbum(data);
         setLoading(false);
       })
       .catch(() => {
@@ -133,8 +138,8 @@ const AlbumDetails: React.FC = () => {
     setSaving(true);
 
     const request = isNew
-      ? api.post("/albums/add-album", (({ id, ...rest }) => rest)(album as any))
-      : api.put(`/albums/update-album/${album.id}`, album);
+      ? AlbumService.create(album)
+      : AlbumService.update(album.id, album);
 
     request
       .then(() => {
@@ -161,8 +166,8 @@ const AlbumDetails: React.FC = () => {
   const handleDelete = () => {
     if (!album) return;
     
-    api
-      .delete(`/albums/delete-album/${album.id}`)
+    AlbumService
+      .delete(album.id)
       .then(() => {
         setToast({
           open: true,

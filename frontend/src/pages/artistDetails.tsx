@@ -15,9 +15,9 @@ import {
   Grid,
 } from "@mui/material";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-import api from "../api/apiClient";
 import { Artist } from "../models/models";
 import DeleteConfirmationDialog from "../components/deleteConfirmation";
+import ArtistService from "../services/artistService";
 
 const ArtistDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,10 +46,9 @@ const ArtistDetails: React.FC = () => {
   useEffect(() => {
     if (isNew) return;
 
-    api
-      .get<Artist>(`/artists/${id}`)
-      .then((res) => {
-        setArtist(res.data);
+    ArtistService.getById(id ?? "")
+      .then((data) => {
+        setArtist(data);
         setLoading(false);
       })
       .catch(() => {
@@ -89,11 +88,11 @@ const ArtistDetails: React.FC = () => {
     setSaving(true);
 
     const request = isNew
-      ? api.post("/artists/add-artist", {
+      ? ArtistService.create({
           artistName: artist.artistName,
           letter: artist.letter,
         })
-      : api.put(`/artists/update-artist/${artist.id}`, {
+      : ArtistService.update(artist.id, {
           artistName: artist.artistName,
           letter: artist.letter
         });
@@ -124,8 +123,8 @@ const ArtistDetails: React.FC = () => {
   const handleDelete = () => {
     if (!artist) return;
 
-    api
-      .delete(`/artists/delete-artist/${artist.id}`)
+    ArtistService
+      .delete(artist.id)
       .then(() => {
         setToast({
           open: true,

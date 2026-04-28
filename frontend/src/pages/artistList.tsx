@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Artist } from "../models/models";
 import { Grid, Box, CircularProgress, Typography } from "@mui/material";
-import api from "../api/apiClient";
 import ArtistCard from "../components/artist/artistCard";
 import ArtistFilters from "../components/artist/artistFilters";
 import { ArtistOption } from "../components/album/albumFilters";
 import { getNormalizedLetter, normalizeArtistName } from "../utils/artistName";
 import ArtistSummaryBar from "../components/artist/artistSummaryBar";
+import ArtistService from "../services/artistService";
 
 const ArtistList: React.FC = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -18,14 +18,13 @@ const ArtistList: React.FC = () => {
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
 
   useEffect(() => {
-    api
-      .get<Artist[]>("/artists")
-      .then((res) => {
-        setArtists(res.data);
+    ArtistService.getAll()
+      .then((data) => {
+        setArtists(data);
 
         const byKey = new Map<string, ArtistOption>();
 
-        res.data.forEach((a) => {
+        data.forEach((a) => {
           const name = a.artistName?.trim();
           if (!name) return;
 
