@@ -8,14 +8,13 @@ const Footer: React.FC = () => {
     <Box
       component="footer"
       sx={{
-        py: 2,
-        px: 3,
+        py: 0.5,
         backgroundColor: "background.paper",
         boxShadow: 2,
         textAlign: "center",
       }}
     >
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="caption" color="text.secondary">
         &copy; {year} AlbumRepo. All rights reserved.
       </Typography>
     </Box>

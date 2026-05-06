@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Artist } from "../models/models";
-import { Grid, Box, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import ArtistCard from "../components/artist/artistCard";
 import ArtistFilters from "../components/artist/artistFilters";
 import { ArtistOption } from "../components/album/albumFilters";
@@ -149,7 +149,16 @@ const ArtistList: React.FC = () => {
   }
 
   return (
-    <Box sx={{ height: "88vh", display: "flex", flexDirection: "column", p: 2 }}>
+    <Box
+      sx={{
+        height: "87vh",
+        display: "flex",
+        flexDirection: "column",
+        px: { xs: 1.5, sm: 2 },
+        pt: { xs: 1, sm: 1.25 },
+        pb: { xs: 1.5, sm: 2 },
+      }}
+    >
       <ArtistFilters
         selectedLetter={selectedLetter}
         setSelectedLetter={setSelectedLetter}
@@ -169,8 +178,22 @@ const ArtistList: React.FC = () => {
           No artists found for these filters.
         </Typography>
       ) : (
-        <Box className="scroll" sx={{ flex: 1, overflowY: "auto" }}>
-          <Grid container spacing={2}>
+        <Box
+          className="scroll"
+          sx={{ flex: 1, overflowY: "auto", pt: 0.5 }}
+        >
+          <Box
+            sx={{
+              display: "grid",
+              gap: 1.5,
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(auto-fill, minmax(250px, 1fr))",
+                xl: "repeat(auto-fill, minmax(275px, 1fr))",
+              },
+              alignItems: "stretch",
+            }}
+          >
             {filteredArtists.map((artist) => {
               const albums = artist.albums ?? [];
               const avgRating =
@@ -179,7 +202,7 @@ const ArtistList: React.FC = () => {
                   : undefined;
 
               return (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={artist.id}>
+                <Box key={artist.id}>
                   <ArtistCard
                     id={artist.id}
                     letter={getNormalizedLetter(artist.artistName)}
@@ -187,10 +210,10 @@ const ArtistList: React.FC = () => {
                     albums={albums}
                     avgRating={avgRating}
                   />
-                </Grid>
+                </Box>
               );
             })}
-          </Grid>
+          </Box>
         </Box>
       )}
     </Box>

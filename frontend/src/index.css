@@ -15,5 +15,7 @@ code {
 .scroll {
   scrollbar-width: auto;
   scrollbar-color: rgba(200, 200, 200, 0.4) #1a1a1a;
-  padding-right: 10px;
+  scrollbar-gutter: stable;
+  padding-right: 8px;
+  box-sizing: border-box;
 }

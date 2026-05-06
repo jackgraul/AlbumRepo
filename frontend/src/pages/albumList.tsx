@@ -9,9 +9,47 @@ import AlbumSummaryBar from "../components/album/albumSummaryBar";
 import { Album } from "../models/models";
 import AlbumService from "../services/albumService";
 
-const CARD_WIDTH = 280;
-const CARD_HEIGHT = 340;
-const GAP = 15;
+const MIN_CARD_WIDTH = 145;
+const MAX_CARD_WIDTH = 172;
+const IDEAL_CARD_WIDTH = 156;
+const GAP = 10;
+const SCROLLBAR_GUTTER = 24;
+
+const getAlbumGridMetrics = (viewportWidth: number) => {
+  const listWidth = Math.max(
+    320,
+    viewportWidth - (viewportWidth < 600 ? 32 : 64)
+  );
+  const contentWidth = Math.max(280, listWidth - SCROLLBAR_GUTTER);
+  const itemGuess = Math.max(
+    1,
+    Math.floor((contentWidth + GAP) / (IDEAL_CARD_WIDTH + GAP))
+  );
+  const rawCardWidth = Math.floor(
+    (contentWidth - GAP * (itemGuess - 1)) / itemGuess
+  );
+  const cardWidth = Math.max(
+    MIN_CARD_WIDTH,
+    Math.min(MAX_CARD_WIDTH, rawCardWidth)
+  );
+  const itemsPerRow = Math.max(
+    1,
+    Math.floor((contentWidth + GAP) / (cardWidth + GAP))
+  );
+  const imageSize = cardWidth;
+  const contentHeight = Math.max(70, Math.round(cardWidth * 0.37));
+  const rowHeight = imageSize + contentHeight + GAP * 2;
+
+  return {
+    listWidth,
+    contentWidth,
+    cardWidth,
+    imageSize,
+    contentHeight,
+    itemsPerRow,
+    rowHeight,
+  };
+};
 
 const toSlug = (value: string) =>
   value
@@ -255,10 +293,18 @@ const AlbumList: React.FC = () => {
     sortOrder,
   ]);
 
-  const totalCardWidth = CARD_WIDTH + GAP;
-  const itemsPerRow = Math.max(1, Math.floor((containerWidth - GAP) / totalCardWidth));
+  const {
+    listWidth,
+    contentWidth,
+    cardWidth,
+    imageSize,
+    contentHeight,
+    itemsPerRow,
+    rowHeight,
+  } = getAlbumGridMetrics(containerWidth);
   const rowCount = Math.ceil(filteredAlbums.length / itemsPerRow);
-  const ratedAlbums = filteredAlbums.filter(a => a.rating !== null);
+  const ratedAlbums = filteredAlbums.filter((a) => a.rating !== null);
+  const listHeight = Math.max(380, window.innerHeight - 220);
 
   // render contents
   const Row = useMemo(
@@ -274,47 +320,61 @@ const AlbumList: React.FC = () => {
           <Box
             style={style}
             sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "stretch",
-              gap: `${GAP}px`,
               width: "100%",
-              px: 1,
-              py: 0,
-              pt: 1,
-              paddingRight: 3,
+              py: 0.5,
             }}
           >
-            {rowItems.map((album) => (
-              <Box
-                key={album.id}
-                sx={{
-                  width: `${CARD_WIDTH}px`,
-                  flexShrink: 0,
-                }}
-              >
-                <AlbumCard
-                  id={album.id}
-                  albumName={album.albumName}
-                  releaseYear={album.releaseYear}
-                  releaseOrder={album.releaseOrder ?? undefined}
-                  genre={album.genre ?? ""}
-                  rating={album.rating ?? undefined}
-                  coverURL={
-                    album.coverURL ?? "/default-cover.png"
-                  }
-                  artistName={
-                    album.artist?.artistName ?? "Unknown Artist"
-                  }
-                  fromSearch={location.search}
-                  eager={index <= 5}
-                />
-              </Box>
-            ))}
+            <Box
+              sx={{
+                width: `${contentWidth}px`,
+                mr: `${SCROLLBAR_GUTTER}px`,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "stretch",
+                gap: `${GAP}px`,
+              }}
+            >
+              {rowItems.map((album) => (
+                <Box
+                  key={album.id}
+                  sx={{
+                    width: `${cardWidth}px`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <AlbumCard
+                    id={album.id}
+                    albumName={album.albumName}
+                    releaseYear={album.releaseYear}
+                    cardWidth={cardWidth}
+                    imageSize={imageSize}
+                    contentHeight={contentHeight}
+                    releaseOrder={album.releaseOrder ?? undefined}
+                    genre={album.genre ?? ""}
+                    rating={album.rating ?? undefined}
+                    coverURL={
+                      album.coverURL ?? "/default-cover.png"
+                    }
+                    artistName={
+                      album.artist?.artistName ?? "Unknown Artist"
+                    }
+                    fromSearch={location.search}
+                    eager={index <= 5}
+                  />
+                </Box>
+              ))}
+            </Box>
           </Box>
         );
       },
-    [filteredAlbums, itemsPerRow, location.search]
+    [
+      filteredAlbums,
+      itemsPerRow,
+      location.search,
+      cardWidth,
+      imageSize,
+      contentHeight,
+    ]
   );
 
   if (loading) {
@@ -329,7 +389,14 @@ const AlbumList: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 2, overflowX: "hidden" }}>
+    <Box
+      sx={{
+        px: { xs: 1.5, sm: 2 },
+        pt: { xs: 0.75, sm: 1 },
+        pb: { xs: 0.75, sm: 1 },
+        overflowX: "hidden",
+      }}
+    >
       <AlbumFilters
         selectedLetter={selectedLetter}
         setSelectedLetter={setSelectedLetter}
@@ -367,12 +434,15 @@ const AlbumList: React.FC = () => {
           No albums found for these filters.
         </Typography>
       ) : (
-        <Box className="scroll" sx={{ display: "flex", justifyContent: "center" }}>
+        <Box
+          className="scroll"
+          sx={{ display: "flex", justifyContent: "center" }}
+        >
           <List
-            height={window.innerHeight - 300}
+            height={listHeight}
             itemCount={rowCount}
-            itemSize={CARD_HEIGHT + GAP * 3}
-            width={containerWidth}
+            itemSize={rowHeight}
+            width={listWidth}
           >
             {Row}
           </List>

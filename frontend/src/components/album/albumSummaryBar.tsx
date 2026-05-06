@@ -15,33 +15,38 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
   totalAlbums,
   listenedAlbums,
   uniqueArtists,
-  avgRating
+  avgRating,
 }) => {
   const navigate = useNavigate();
 
   return (
     <Box
       sx={{
-        mt: 2,
-        mb: 2,
-        py: 1.5,
-        px: 2,
+        mt: 0.75,
+        mb: 1.25,
+        py: 1.25,
+        px: { xs: 1.25, sm: 1.5 },
         borderRadius: 2,
         backgroundColor: "background.paper",
         boxShadow: 2,
-        position: "relative",
+        position: { sm: "relative" },
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         flexWrap: "wrap",
+        gap: 1.25,
       }}
     >
-      <Stack direction="row" spacing={5} alignItems="center">
-        <Typography variant="subtitle1" fontWeight={600}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={{ xs: 0.5, sm: 3 }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+      >
+        <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.82rem" }}>
           Artists: {uniqueArtists}
         </Typography>
 
-        <Typography variant="subtitle1" fontWeight={600}>
+        <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.82rem" }}>
           Avg. Rating: {avgRating !== undefined ? avgRating.toFixed(2) : "N/A"}
         </Typography>
       </Stack>
@@ -49,22 +54,26 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
       {totalAlbums > 0 && (
         <Box
           sx={{
-            position: "absolute",
-            left: "50%",
-            transform: "translateX(-50%)",
+            position: { xs: "static", sm: "absolute" },
+            left: { sm: "50%" },
+            transform: { sm: "translateX(-50%)" },
             display: "flex",
             alignItems: "center",
-            gap: 2
+            gap: 1.25,
+            order: { xs: 3, sm: 2 },
+            width: { xs: "100%", sm: "auto" },
+            justifyContent: { xs: "flex-start", sm: "center" },
           }}
         >
-          <Typography variant="h6" fontWeight={600}>
+          <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.82rem" }}>
             Listened: {listenedAlbums} / {totalAlbums}
           </Typography>
 
           <Typography
-            variant="h6"
+            variant="subtitle2"
             fontWeight={700}
             sx={{
+              fontSize: "0.82rem",
               color:
                 listenedAlbums / totalAlbums >= 0.9
                   ? "#1976d2"
@@ -74,7 +83,7 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
                   ? "#fbc02d"
                   : listenedAlbums / totalAlbums >= 0.3
                   ? "#ef6c00"
-                  : "#d32f2f"
+                  : "#d32f2f",
             }}
           >
             {((listenedAlbums / totalAlbums) * 100).toFixed(2)}%
@@ -86,7 +95,13 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
         variant="contained"
         color="primary"
         onClick={() => navigate("/albums/new")}
-        sx={{ mt: { xs: 1, sm: 0 } }}
+        size="small"
+        sx={{
+          minWidth: 124,
+          order: { xs: 2, sm: 3 },
+          mt: { xs: 0.5, sm: 0 },
+          fontSize: "0.8rem",
+        }}
       >
         + New Album
       </Button>

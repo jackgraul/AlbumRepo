@@ -12,22 +12,22 @@ const ArtistSummaryBar: React.FC<ArtistSummaryBarProps> = ({ totalArtists }) => 
   return (
     <Box
       sx={{
-        mt: 2,
-        mb: 2,
-        py: 1.5,
-        px: 2,
+        mt: 0.75,
+        mb: 1.25,
+        py: 1.25,
+        px: { xs: 1.25, sm: 1.5 },
         borderRadius: 2,
         backgroundColor: "background.paper",
         boxShadow: 2,
-        position: "relative",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         flexWrap: "wrap",
+        gap: 1.25,
       }}
     >
-      <Stack direction="row" spacing={3} alignItems="center">
-        <Typography variant="subtitle1" fontWeight={600}>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.82rem" }}>
           Total Artists: {totalArtists}
         </Typography>
       </Stack>
@@ -36,7 +36,8 @@ const ArtistSummaryBar: React.FC<ArtistSummaryBarProps> = ({ totalArtists }) => 
         variant="contained"
         color="primary"
         onClick={() => navigate("/artists/new")}
-        sx={{ mt: { xs: 1, sm: 0 } }}
+        size="small"
+        sx={{ minWidth: 124, fontSize: "0.8rem" }}
       >
         + New Artist
       </Button>

@@ -1,6 +1,12 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Card, CardContent, Typography, Box, CardActionArea } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  CardActionArea,
+} from "@mui/material";
 import MarqueeOnOverflow from "../marqueeOverflow";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { buildApiUrl } from "../../api/apiClient";
@@ -9,6 +15,9 @@ interface AlbumCardProps {
   id: number;
   albumName: string;
   releaseYear: number;
+  cardWidth: number;
+  imageSize: number;
+  contentHeight: number;
   releaseOrder?: number;
   rating?: number;
   genre?: string;
@@ -18,13 +27,13 @@ interface AlbumCardProps {
   eager: boolean;
 }
 
-const IMAGE_SIZE = 280;
-const CONTENT_MIN_HEIGHT = 90;
-
 const AlbumCard: React.FC<AlbumCardProps> = ({
   id,
   albumName,
   releaseYear,
+  cardWidth,
+  imageSize,
+  contentHeight,
   rating,
   genre,
   coverURL,
@@ -46,12 +55,13 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
     <Card
       className="album-card"
       sx={{
-        height: IMAGE_SIZE + CONTENT_MIN_HEIGHT,
+        height: imageSize + contentHeight,
+        maxWidth: cardWidth,
         width: "100%",
         display: "flex",
         flexDirection: "column",
         backgroundColor: "background.paper",
-        borderRadius: 2,
+        borderRadius: 1.5,
         overflow: "hidden",
         transition: "box-shadow 0.2s ease, transform 0.2s ease",
         border: "2px solid transparent",
@@ -59,7 +69,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
           boxShadow: 6,
           transform: "translateY(-4px)",
           borderColor: "#1976d2",
-        }
+        },
       }}
     >
       <CardActionArea
@@ -79,7 +89,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
         <Box
           sx={{
             width: "100%",
-            height: IMAGE_SIZE,
+            height: imageSize,
             overflow: "hidden",
             flexShrink: 0,
           }}
@@ -96,7 +106,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
             style={{
               width: "100%",
               height: "100%",
-              objectFit: "cover",
+              objectFit: "contain",
               display: "block",
             }}
           />
@@ -104,56 +114,62 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
 
         <CardContent
           sx={{
-            minHeight: CONTENT_MIN_HEIGHT,
+            height: contentHeight,
+            boxSizing: "border-box",
             pt: 1,
-            px: 2,
-            pb: 2,
+            px: 1.25,
+            pb: 1,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
+            gap: 0.5,
+            "&:last-child": {
+              pb: 1,
+            },
           }}
         >
           <MarqueeOnOverflow
-            variant="h6"
+            variant="subtitle2"
             fontWeight={600}
             duration={8}
-            sx={{ lineHeight: 1, pb: 1 }}
+            sx={{ lineHeight: 1.1, fontSize: "0.85rem" }}
           >
             {albumName}
+          </MarqueeOnOverflow>
+
+          <MarqueeOnOverflow
+            variant="body2"
+            color="text.secondary"
+            duration={6}
+            sx={{ fontSize: "0.65rem", lineHeight: 0.8 }}
+          >
+            {artistName} • {releaseYear}
           </MarqueeOnOverflow>
 
           <Box
             sx={{
               display: "flex",
-              alignItems: "flex-end",
+              alignItems: "center",
               gap: 1,
+              minWidth: 0,
             }}
           >
-            <Box
-              sx={{
-                flex: 1,
-                minWidth: 0,
-                display: "flex",
-                flexDirection: "column",
-                gap: 0.25,
-              }}
+            <MarqueeOnOverflow
+              variant="body2"
+              color="text.secondary"
+              duration={8}
+              sx={{ fontSize: "0.65rem", lineHeight: 0.8 }}
             >
-              <MarqueeOnOverflow variant="body2" color="text.secondary" duration={6}>
-                {artistName} • {releaseYear}
-              </MarqueeOnOverflow>
-
-              <MarqueeOnOverflow variant="body2" color="text.secondary" duration={8}>
-                {genre}
-              </MarqueeOnOverflow>
-            </Box>
-
+              {genre}
+            </MarqueeOnOverflow>
             {rating !== undefined && (
               <Typography
                 variant="body2"
                 sx={{
                   fontWeight: 500,
-                  flexShrink: 0, 
-                  whiteSpace: "nowrap"
+                  fontSize: "0.7rem",
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
                 }}
               >
                 ★ {rating} / 10

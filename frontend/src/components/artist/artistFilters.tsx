@@ -130,15 +130,35 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
 
   return (
     <Box
-      display="flex"
-      flexWrap="wrap"
-      gap={2}
-      alignItems="center"
-      justifyContent="space-between"
-      mb={1}
-      mt={1}
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 1.25,
+        alignItems: "center",
+        justifyContent: { xs: "flex-start", lg: "space-between" },
+        mb: 1,
+        mt: 0,
+        "& .MuiInputLabel-root": {
+          fontSize: "0.82rem",
+        },
+        "& .MuiInputBase-input": {
+          fontSize: "0.82rem",
+        },
+        "& .MuiSelect-select": {
+          fontSize: "0.82rem",
+        },
+        "& .MuiAutocomplete-input": {
+          fontSize: "0.82rem !important",
+        },
+      }}
     >
-      <FormControl size="small" sx={{ width: 125 }}>
+      <FormControl
+        size="small"
+        sx={{
+          width: { xs: "100%", sm: 104 },
+          flex: { lg: "0 0 104px" },
+        }}
+      >
         <InputLabel>Letter</InputLabel>
         <Select
           value={selectedLetter}
@@ -164,10 +184,19 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
         renderInput={(params) => (
           <TextField {...params} label="Artist" variant="outlined" />
         )}
-        sx={{ width: 400 }}
+        sx={{
+          width: { xs: "100%", sm: 220, md: 240 },
+          flex: { lg: "1 1 260px" },
+        }}
       />
 
-      <FormControl size="small" sx={{ width: 200 }}>
+      <FormControl
+        size="small"
+        sx={{
+          width: { xs: "calc(50% - 5px)", sm: 148 },
+          flex: { lg: "1 1 180px" },
+        }}
+      >
         <InputLabel>Sort By</InputLabel>
         <Select
           value={sortBy}
@@ -181,7 +210,13 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
         </Select>
       </FormControl>
 
-      <FormControl size="small" sx={{ width: 200 }}>
+      <FormControl
+        size="small"
+        sx={{
+          width: { xs: "calc(50% - 5px)", sm: 152 },
+          flex: { lg: "1 1 180px" },
+        }}
+      >
         <InputLabel>Order</InputLabel>
         <Select
           value={sortOrder}
@@ -197,7 +232,13 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
         variant="outlined"
         color="primary"
         onClick={handleResetFilters}
-        sx={{ ml: "auto", height: 40 }}
+        size="small"
+        sx={{
+          minWidth: { xs: "100%", sm: 128 },
+          height: 40,
+          ml: { lg: "auto" },
+          fontSize: "0.8rem",
+        }}
       >
         Reset Filters
       </Button>
