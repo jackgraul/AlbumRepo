@@ -108,8 +108,8 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         gap: 1.25,
         alignItems: "center",
         justifyContent: { xs: "flex-start", lg: "space-between" },
-        mb: 1,
-        mt: 0,
+        mb: 1.75,
+        mt: 0.25,
         "& .MuiInputLabel-root": {
           fontSize: "0.82rem",
         },
