@@ -25,6 +25,17 @@ interface ArtistFilterProps {
 }
 
 const letters = ["#", ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
+const compactSelectMenuProps = {
+  PaperProps: {
+    sx: {
+      "& .MuiMenuItem-root": {
+        fontSize: "0.7rem",
+        minHeight: 28,
+        py: 0.3,
+      },
+    },
+  },
+};
 
 const ArtistFilters: React.FC<ArtistFilterProps> = ({
   selectedLetter,
@@ -164,6 +175,7 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
           value={selectedLetter}
           label="Letter"
           onChange={(e) => handleLetterChange(e.target.value)}
+          MenuProps={compactSelectMenuProps}
         >
           <MenuItem value="">All</MenuItem>
           {letters.map((l) => (
@@ -181,6 +193,43 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
         getOptionLabel={(o) => o.name}
         value={selectedArtistOption}
         onChange={(_, newVal) => handleArtistChange(newVal?.name ?? null)}
+        ListboxProps={{
+          sx: {
+            py: 0.25,
+          },
+        }}
+        renderOption={(props, option) => (
+          <Box
+            component="li"
+            {...props}
+            sx={{
+              fontSize: "0.7rem",
+              minHeight: 28,
+              py: 0.3,
+            }}
+          >
+            {option.name}
+          </Box>
+        )}
+        renderGroup={(params) => (
+          <li key={params.key}>
+            <Box
+              sx={{
+                px: 1.5,
+                py: 0.4,
+                fontSize: "0.65rem",
+                fontWeight: 600,
+                lineHeight: 1.2,
+                color: "primary.main",
+              }}
+            >
+              {params.group}
+            </Box>
+            <Box component="ul" sx={{ p: 0, m: 0 }}>
+              {params.children}
+            </Box>
+          </li>
+        )}
         renderInput={(params) => (
           <TextField {...params} label="Artist" variant="outlined" />
         )}
@@ -202,6 +251,7 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
           value={sortBy}
           label="Sort By"
           onChange={(e) => setSortBy(e.target.value)}
+          MenuProps={compactSelectMenuProps}
         >
           <MenuItem value="letter">Letter</MenuItem>
           <MenuItem value="artist">Artist</MenuItem>
@@ -222,6 +272,7 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
           value={sortOrder}
           label="Order"
           onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+          MenuProps={compactSelectMenuProps}
         >
           <MenuItem value="asc">Ascending</MenuItem>
           <MenuItem value="desc">Descending</MenuItem>
