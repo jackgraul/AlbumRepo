@@ -41,12 +41,13 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
         direction={{ xs: "column", sm: "row" }}
         spacing={{ xs: 0.5, sm: 3 }}
         alignItems={{ xs: "flex-start", sm: "center" }}
+        px={1}
       >
-        <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.82rem" }}>
+        <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.85rem" }}>
           Artists: {uniqueArtists}
         </Typography>
 
-        <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.82rem" }}>
+        <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.85rem" }}>
           Avg. Rating: {avgRating !== undefined ? avgRating.toFixed(2) : "N/A"}
         </Typography>
       </Stack>
@@ -65,7 +66,7 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
             justifyContent: { xs: "flex-start", sm: "center" },
           }}
         >
-          <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.82rem" }}>
+          <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: "0.85rem" }}>
             Listened: {listenedAlbums} / {totalAlbums}
           </Typography>
 
@@ -73,7 +74,7 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
             variant="subtitle2"
             fontWeight={700}
             sx={{
-              fontSize: "0.82rem",
+              fontSize: "0.85rem",
               color:
                 listenedAlbums / totalAlbums >= 0.9
                   ? "#1976d2"
@@ -100,7 +101,8 @@ const AlbumSummaryBar: React.FC<AlbumSummaryBarProps> = ({
           minWidth: 124,
           order: { xs: 2, sm: 3 },
           mt: { xs: 0.5, sm: 0 },
-          fontSize: "0.8rem",
+          fontSize: "0.75rem",
+          mr: 0.5
         }}
       >
         + New Album
