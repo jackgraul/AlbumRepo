@@ -197,30 +197,40 @@ const AlbumDetails: React.FC = () => {
   if (!album) return null;
 
   return (
-    <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center", mt: 5 }}>
+    <Box
+      sx={{
+        flexGrow: 1,
+        display: "flex",
+        justifyContent: "center",
+        px: { xs: 2, md: 3 },
+        mt: { xs: 2.5, md: 3 },
+      }}
+    >
       <Grid
         container
-        spacing={4}
+        spacing={3}
         sx={{
-          maxWidth: 900,
+          maxWidth: 780,
           alignItems: "flex-start",
           justifyContent: "center",
         }}
       >
         <Grid item xs={12} md={7}>
-          <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
+          <Typography variant="h5" gutterBottom sx={{ mt: 5, mb: 2.25, fontWeight: 600 }}>
             {isNew ? "Add New Album" : "Edit Album"}
           </Typography>
 
-          <Stack spacing={2}>
+          <Stack spacing={1.5}>
             <TextField
               label="Album Name"
               value={album.albumName}
               onChange={(e) => handleChange("albumName", e.target.value)}
               fullWidth
+              size="small"
             />
 
             <Autocomplete
+              size="small"
               options={artistOptions}
               value={selectedArtist}
               loading={artistLoading}
@@ -257,6 +267,7 @@ const AlbumDetails: React.FC = () => {
               value={album.releaseYear ?? ""}
               onChange={(e) => handleChange("releaseYear", Number(e.target.value))}
               fullWidth
+              size="small"
             />
 
             <TextField
@@ -264,6 +275,7 @@ const AlbumDetails: React.FC = () => {
               value={album.genre ?? ""}
               onChange={(e) => handleChange("genre", e.target.value)}
               fullWidth
+              size="small"
             />
 
             <TextField
@@ -277,24 +289,27 @@ const AlbumDetails: React.FC = () => {
                 )
               }
               fullWidth
+              size="small"
             />
 
             {!isNew && (
               <TextField
-              label="Cover URL"
-              value={album.coverURL ?? ""}
-              onChange={(e) => handleChange("coverURL", e.target.value)}
-              fullWidth
+                label="Cover URL"
+                value={album.coverURL ?? ""}
+                onChange={(e) => handleChange("coverURL", e.target.value)}
+                fullWidth
+                size="small"
               />
             )}
           </Stack>
 
-          <Stack direction="row" spacing={2} mt={4}>
+          <Stack direction="row" spacing={1.5} mt={3} flexWrap="wrap" useFlexGap>
             <Button
               variant="contained"
               color="primary"
               onClick={handleSave}
               disabled={saving}
+              size="medium"
             >
               {saving
                 ? "Saving..."
@@ -304,7 +319,12 @@ const AlbumDetails: React.FC = () => {
             </Button>
 
             {!isNew && (
-              <Button variant="outlined" color="error" onClick={() => setDeleteDialogOpen(true)}>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => setDeleteDialogOpen(true)}
+                size="medium"
+              >
                 Delete Album
               </Button>
             )}
@@ -329,7 +349,7 @@ const AlbumDetails: React.FC = () => {
               }}
             />
 
-            <Button variant="text" onClick={goBack}>
+            <Button variant="text" onClick={goBack} size="medium">
               Cancel
             </Button>
           </Stack>
@@ -340,17 +360,17 @@ const AlbumDetails: React.FC = () => {
             <Card
               sx={{
                 width: "100%",
-                maxWidth: 320,
+                maxWidth: 272,
                 mx: "auto",
                 borderRadius: 2,
                 overflow: "hidden",
                 boxShadow: 3,
-                mt: { xs: 4, md: 15 },
+                mt: { xs: 3, md: 10 },
               }}
             >
               <CardMedia
                 component="img"
-                height="320"
+                height="272"
                 image={previewUrl}
                 alt={album.albumName}
                 sx={{ objectFit: "cover" }}

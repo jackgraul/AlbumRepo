@@ -17,6 +17,7 @@ import {
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Artist } from "../models/models";
 import DeleteConfirmationDialog from "../components/deleteConfirmation";
+import MarqueeOnOverflow from "../components/marqueeOverflow";
 import ArtistService from "../services/artistService";
 
 const ArtistDetails: React.FC = () => {
@@ -94,7 +95,7 @@ const ArtistDetails: React.FC = () => {
         })
       : ArtistService.update(artist.id, {
           artistName: artist.artistName,
-          letter: artist.letter
+          letter: artist.letter,
         });
 
     request
@@ -155,228 +156,276 @@ const ArtistDetails: React.FC = () => {
   if (!artist) return null;
 
   return (
-    <Box sx={{flexGrow: 1, px: 4, mt: 5}}>
-      <Box sx={{maxWidth: 600, mx: "auto"}}>
-        <Typography variant="h4" gutterBottom sx={{mb: 3}}>
-          {isNew ? "Add New Artist" : "Edit Artist"}
-        </Typography>
+    <Box
+      sx={{
+        height: "87vh",
+        display: "flex",
+        flexDirection: "column",
+        px: { xs: 1.5, sm: 2 },
+        pt: { xs: 1, sm: 1.25 },
+        pb: { xs: 1.5, sm: 2 },
+      }}
+    >
+      <Box className="scroll" sx={{ flex: 1, overflowY: "auto" }}>
+        <Box sx={{ maxWidth: 520, mx: "auto" }}>
+          <Typography variant="h5" gutterBottom sx={{ mt: 5, mb: 2.25, fontWeight: 600 }}>
+            {isNew ? "Add New Artist" : "Edit Artist"}
+          </Typography>
 
-        <Stack spacing={2}>
-          <TextField
-            label="Artist Name"
-            value={artist.artistName}
-            onChange={(e) =>
-              handleChange("artistName", e.target.value)
-            }
-            fullWidth
-          />
-          <TextField
-            label="Letter"
-            value={artist.letter}
-            onChange={(e) =>
-              handleChange("letter", e.target.value.toUpperCase())
-            }
-            fullWidth
-          />
-        </Stack>
+          <Stack spacing={1.5}>
+            <TextField
+              label="Artist Name"
+              value={artist.artistName}
+              onChange={(e) =>
+                handleChange("artistName", e.target.value)
+              }
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="Letter"
+              value={artist.letter}
+              onChange={(e) =>
+                handleChange("letter", e.target.value.toUpperCase())
+              }
+              fullWidth
+              size="small"
+            />
+          </Stack>
 
-        <Stack direction="row" spacing={2} mt={4}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving
-              ? "Saving..."
-              : isNew
-              ? "Create Artist"
-              : "Save Changes"
-            }
-          </Button>
-
-          {!isNew && (
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              Delete Artist
-            </Button>
-          )}
-
-          <DeleteConfirmationDialog
-            open={deleteDialogOpen}
-            message={
-              <>
-                <Typography>
-                  Are you sure you want to delete:
-                </Typography>
-                <Typography fontWeight="bold" mt={1}>
-                  {artist.artistName}
-                </Typography>
-                <Typography mt={2} color="text.secondary">
-                  This action cannot be undone.
-                </Typography>
-              </>
-            }
-            onCancel={() => setDeleteDialogOpen(false)}
-            onConfirm={() => {
-              setDeleteDialogOpen(false);
-              handleDelete();
-            }}
-          />
-
-          <Button
-            variant="text"
-            onClick={() => navigate("/artists")}
-          >
-            Cancel
-          </Button>
-        </Stack>
-      </Box>
-
-      {!isNew && (
-        <Grid
-          container
-          spacing={3}
-          justifyContent={artist.albums && artist.albums.length <= 1 ? "center" : "flex-start"}
-          sx={{
-            mt: 6,
-            maxWidth: artist.albums && artist.albums.length <= 1 ? "33vw" : "66vw",
-            mx: "auto",
-          }}
-        >
-          <Grid
-            item
-            xs={12}
-            sx={{textAlign: "left"}}
-          >
-            <Typography variant="h6">Albums</Typography>
-          </Grid>
-
-          {artist.albums?.length ? (
-            artist.albums.map((a) => (
-              <Grid
-                item
-                key={a.id}
-                xs={12}
-                md={artist.albums && artist.albums.length <= 1 ? 12 : 6}
-              >
-                <Card
-                  sx={{
-                    height: 125,
-                    borderRadius: 1.5,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: 6,
-                      borderColor: "primary.main",
-                    },
-                  }}
-                >
-                  <CardActionArea
-                    onClick={() =>
-                      navigate(`/albums/${a.id}`, {
-                        state: { fromArtistPath: `/artists/${artist.id}` },
-                      })
-                    }
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        px: 1.5,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 100,
-                          height: 100,
-                          overflow: "hidden",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <LazyLoadImage
-                          src={a.coverURL ?? ""}
-                          alt={a.albumName ?? "Album cover"}
-                          effect="blur"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "/default-cover.png";
-                          }}
-                          style={{
-                            width: 100,
-                            height: 100,
-                            borderRadius: 8,
-                            objectFit: "cover",
-                            objectPosition: "center",
-                          }}
-                        />
-                      </Box>
-
-                      <CardContent
-                        sx={{
-                          height: 120,
-                          flexGrow: 1,
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "center",
-                          px: 0,
-                        }}
-                      >
-                        <Stack spacing={0.75} mt={1}>
-                          <Typography variant="subtitle1" fontWeight={600}>
-                            {a.albumName}
-                          </Typography>
-
-                          <Typography variant="body2" color="text.secondary">
-                            {a.releaseYear ?? ""}
-                          </Typography>
-
-                          {a.rating != null && (
-                            <Typography variant="body2" color="text.secondary">
-                              ★ {a.rating}
-                            </Typography>
-                          )}
-
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{lineHeight: 1.4}}
-                          >
-                            {a.genre ?? ""}
-                          </Typography>
-                        </Stack>
-                      </CardContent>
-                    </Box>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-            ))
-          ) : (
-            <Grid item xs={12}>
-              <Typography color="text.secondary" textAlign="left">
-                No albums for this artist.
-              </Typography>
-            </Grid>
-          )}
-
-          <Grid item xs={12} sx={{mt: 2, textAlign: "left"}}>
+          <Stack direction="row" spacing={1.5} mt={3} flexWrap="wrap" useFlexGap>
             <Button
               variant="contained"
               color="primary"
-              onClick={() => navigate("/albums/new")}
+              onClick={handleSave}
+              disabled={saving}
+              size="medium"
             >
-              + Add Album
+              {saving
+                ? "Saving..."
+                : isNew
+                ? "Create Artist"
+                : "Save Changes"
+              }
             </Button>
+
+            {!isNew && (
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => setDeleteDialogOpen(true)}
+                size="medium"
+              >
+                Delete Artist
+              </Button>
+            )}
+
+            <DeleteConfirmationDialog
+              open={deleteDialogOpen}
+              message={
+                <>
+                  <Typography>
+                    Are you sure you want to delete:
+                  </Typography>
+                  <Typography fontWeight="bold" mt={1}>
+                    {artist.artistName}
+                  </Typography>
+                  <Typography mt={2} color="text.secondary">
+                    This action cannot be undone.
+                  </Typography>
+                </>
+              }
+              onCancel={() => setDeleteDialogOpen(false)}
+              onConfirm={() => {
+                setDeleteDialogOpen(false);
+                handleDelete();
+              }}
+            />
+
+            <Button
+              variant="text"
+              onClick={() => navigate("/artists")}
+              size="medium"
+            >
+              Cancel
+            </Button>
+          </Stack>
+        </Box>
+
+        {!isNew && (
+          <Grid
+            container
+            spacing={2}
+            justifyContent={artist.albums && artist.albums.length <= 1 ? "center" : "flex-start"}
+            sx={{
+              mt: 4,
+              width: "100%",
+              maxWidth: artist.albums && artist.albums.length <= 1 ? 320 : 760,
+              mx: "auto",
+              pt: 0.5,
+            }}
+          >
+            <Grid
+              item
+              xs={12}
+              sx={{ textAlign: "left" }}
+            >
+              <Typography variant="subtitle1" fontWeight={600}>
+                Albums
+              </Typography>
+            </Grid>
+
+            {artist.albums?.length ? (
+              artist.albums.map((a) => (
+                <Grid
+                  item
+                  key={a.id}
+                  xs={12}
+                  md={artist.albums && artist.albums.length <= 1 ? 12 : 6}
+                >
+                  <Card
+                    className="artist-detail-album-card"
+                    sx={{
+                      height: 116,
+                      borderRadius: 1.5,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                      "&:hover": {
+                        transform: "translateY(-4px)",
+                        boxShadow: 6,
+                        borderColor: "primary.main",
+                      },
+                    }}
+                  >
+                    <CardActionArea
+                      sx={{ height: "100%" }}
+                      onClick={() =>
+                        navigate(`/albums/${a.id}`, {
+                          state: { fromArtistPath: `/artists/${artist.id}` },
+                        })
+                      }
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          height: "100%",
+                          alignItems: "center",
+                          gap: 1.5,
+                          px: 1.25,
+                          py: 1.25,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 88,
+                            height: 88,
+                            overflow: "hidden",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <LazyLoadImage
+                            src={a.coverURL ?? ""}
+                            alt={a.albumName ?? "Album cover"}
+                            effect="blur"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "/default-cover.png";
+                            }}
+                            style={{
+                              width: 88,
+                              height: 88,
+                              borderRadius: 6,
+                              objectFit: "cover",
+                              objectPosition: "center",
+                            }}
+                          />
+                        </Box>
+
+                        <CardContent
+                          sx={{
+                            height: 88,
+                            flexGrow: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            px: 0,
+                            py: 0,
+                            minWidth: 0,
+                            "&:last-child": {
+                              pb: 0,
+                            },
+                          }}
+                        >
+                          <Stack spacing={0.35} sx={{ width: "100%" }}>
+                            <MarqueeOnOverflow
+                              variant="subtitle2"
+                              fontWeight={600}
+                              duration={8}
+                              sx={{ lineHeight: 1.25 }}
+                            >
+                              {a.albumName}
+                            </MarqueeOnOverflow>
+
+                            <Typography variant="body2" color="text.secondary">
+                              {a.releaseYear ?? ""}
+                            </Typography>
+
+                            {a.rating != null && (
+                              <Typography variant="body2" color="text.secondary">
+                                {"★"} {a.rating}
+                              </Typography>
+                            )}
+
+                            <MarqueeOnOverflow
+                              variant="body2"
+                              color="text.secondary"
+                              duration={8}
+                              sx={{ lineHeight: 1.25 }}
+                            >
+                              {a.genre ?? ""}
+                            </MarqueeOnOverflow>
+                          </Stack>
+                        </CardContent>
+                      </Box>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
+              ))
+            ) : (
+              <Grid item xs={12}>
+                <Typography color="text.secondary" textAlign="left">
+                  No albums for this artist.
+                </Typography>
+              </Grid>
+            )}
+
+            <Grid item xs={12} sx={{ mt: 2, textAlign: "left" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate("/albums/new")}
+                size="medium"
+              >
+                + Add Album
+              </Button>
+            </Grid>
           </Grid>
-        </Grid>
-      )}
+        )}
+      </Box>
+
+      <style>
+        {`
+          @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+          }
+
+          .artist-detail-album-card:hover .marquee-enabled {
+            animation: marquee var(--marquee-duration) linear infinite;
+          }
+        `}
+      </style>
 
       <Snackbar
         open={toast.open}
