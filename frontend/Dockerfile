@@ -2,14 +2,11 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
-
 COPY package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
 
 COPY . .
-RUN npm run build
+RUN npm run build && echo "new build"
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
