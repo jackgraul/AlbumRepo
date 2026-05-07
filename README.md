@@ -21,8 +21,13 @@ Note that this is configured as a single user application (not individual rating
 ## Screenshots:
 
 ![Albums page](images/album_list.png)
+
 ![Artists page](images/artist_list.png)
+
 ![Add artist form](images/add_artist.png)
+
 ![Edit artist form](images/edit_artist.png)
+
 ![Add album form](images/add_album.png)
+
 ![Edit album form](images/edit_album.png)
