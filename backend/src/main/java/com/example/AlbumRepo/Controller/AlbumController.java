@@ -48,9 +48,18 @@ public class AlbumController {
     // POST create new album
     @PostMapping("/add-album")
     public Album createAlbum(@RequestBody Album album) {
-        Album saved = albumRepository.save(album);
-        coverArtService.fetchCoverArt(saved.getArtist().getArtistName(), saved.getAlbumName());
-        return saved;
+        if (!hasRealCover(album.getCoverURL())) {
+            String coverUrl = coverArtService.fetchCoverArt(
+                    album.getArtist().getArtistName(),
+                    album.getAlbumName()
+            );
+
+            if (coverUrl != null && !coverUrl.isBlank()) {
+                album.setCoverURL(coverUrl);
+            }
+        }
+
+        return albumRepository.save(album);
     }
 
     @PostMapping("/fetch-covers")
@@ -101,5 +110,11 @@ public class AlbumController {
         headers.setETag(eTag);
 
         return new ResponseEntity<>(cached, headers, HttpStatus.OK);
+    }
+
+    private boolean hasRealCover(String coverUrl) {
+        return coverUrl != null &&
+                !coverUrl.isBlank() &&
+                !coverUrl.contains("default-cover");
     }
 }
