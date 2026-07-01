@@ -325,7 +325,7 @@ const ArtistDetails: React.FC = () => {
                           }}
                         >
                           <LazyLoadImage
-                            src={a.coverURL ?? ""}
+                            src={a.coverURL?.trim() || "/default-cover.png"}
                             alt={a.albumName ?? "Album cover"}
                             effect="blur"
                             referrerPolicy="no-referrer"

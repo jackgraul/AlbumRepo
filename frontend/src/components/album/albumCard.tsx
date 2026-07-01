@@ -9,7 +9,6 @@ import {
 } from "@mui/material";
 import MarqueeOnOverflow from "../marqueeOverflow";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-import { buildApiUrl } from "../../api/apiClient";
 
 interface AlbumCardProps {
   id: number;
@@ -44,12 +43,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const searchToCarry = fromSearch || location.search;
-  const proxiedUrl =
-    coverURL && coverURL.startsWith("http")
-      ? buildApiUrl(
-          `/albums/proxy-cover?url=${encodeURIComponent(coverURL)}`
-        )
-      : "/default-cover.png";
+  const coverImageUrl = coverURL?.trim() || "/default-cover.png";
 
   return (
     <Card
@@ -95,10 +89,11 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
           }}
         >
           <LazyLoadImage
-            src={proxiedUrl}
+            src={coverImageUrl}
             alt={albumName}
             loading={eager ? "eager" : "lazy"}
             effect="blur"
+            visibleByDefault={eager}
             referrerPolicy="no-referrer"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/default-cover.png";

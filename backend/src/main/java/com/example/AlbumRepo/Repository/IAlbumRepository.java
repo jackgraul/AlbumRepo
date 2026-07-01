@@ -17,7 +17,5 @@ public interface IAlbumRepository extends JpaRepository<Album,Integer> {
     WHERE a.coverURL IS NULL
        OR TRIM(a.coverURL) = ''
        OR a.coverURL LIKE '%default-cover%'
-    """)
-    List<Album> findAllWithoutCovers();
-
+    """) List<Album> findAllWithoutCovers();
 }

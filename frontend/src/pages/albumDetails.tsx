@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia } from "@mui/material";
-import { buildApiUrl } from "../api/apiClient";
 import { Album } from "../models/models";
 import DeleteConfirmationDialog from "../components/deleteConfirmation";
 import AlbumService from "../services/albumService";
@@ -76,14 +75,10 @@ const AlbumDetails: React.FC = () => {
     severity: "success",
   });
 
-  const previewUrl = useMemo(() => {
-    if (album?.coverURL) {
-      return buildApiUrl(
-        `/albums/proxy-cover?url=${encodeURIComponent(album.coverURL)}`
-      );
-    }
-    return "/default-cover.png";
-  }, [album?.coverURL]);
+  const previewUrl = useMemo(
+    () => album?.coverURL?.trim() || "/default-cover.png",
+    [album?.coverURL]
+  );
 
   useEffect(() => {
     if (isNew) return;

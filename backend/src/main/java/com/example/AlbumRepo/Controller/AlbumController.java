@@ -2,14 +2,13 @@ package com.example.AlbumRepo.Controller;
 
 import com.example.AlbumRepo.Entity.Album;
 import com.example.AlbumRepo.Repository.IAlbumRepository;
-import com.example.AlbumRepo.Service.*;
+import com.example.AlbumRepo.Service.AlbumService;
+import com.example.AlbumRepo.Service.CoverArtService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.util.DigestUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.awt.*;
+
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/albums")
@@ -18,25 +17,17 @@ public class AlbumController {
     IAlbumRepository albumRepository;
     private final AlbumService albumService;
     private final CoverArtService coverArtService;
-    private final CoverService coverService;
-    private final CoverPreloader coverPreloader;
 
-    public AlbumController(AlbumService albumService, CoverArtService coverArtService, CoverService coverService, CoverPreloader coverPreloader) {
+    public AlbumController(AlbumService albumService, CoverArtService coverArtService) {
         this.albumService = albumService;
         this.coverArtService = coverArtService;
-        this.coverService = coverService;
-        this.coverPreloader = coverPreloader;
     }
 
     // GET all albums
     @GetMapping
     public ResponseEntity<List<Album>> getAllAlbums() {
         List<Album> albums = albumService.getAlbumsWithArtists();
-        ResponseEntity<List<Album>> response = ResponseEntity.ok(albums);
-
-        albums.forEach(album -> coverPreloader.preload(album.getCoverURL()));
-
-        return response;
+        return ResponseEntity.ok(albums);
     }
 
     // GET album by id
@@ -91,30 +82,9 @@ public class AlbumController {
         albumRepository.deleteById(id);
     }
 
-    @GetMapping("/proxy-cover")
-    public ResponseEntity<byte[]> proxyCover(
-            @RequestParam String url,
-            @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch
-    ) {
-        byte[] cached = coverService.fetchAndCache(url);
-        if (cached == null) return ResponseEntity.notFound().build();
-
-        String eTag = "\"" + DigestUtils.md5DigestAsHex(cached) + "\"";
-        if (eTag.equals(ifNoneMatch)) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(eTag).build();
-        }
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.IMAGE_JPEG);
-        headers.setCacheControl(CacheControl.maxAge(7, TimeUnit.DAYS));
-        headers.setETag(eTag);
-
-        return new ResponseEntity<>(cached, headers, HttpStatus.OK);
-    }
-
     private boolean hasRealCover(String coverUrl) {
         return coverUrl != null &&
-                !coverUrl.isBlank() &&
-                !coverUrl.contains("default-cover");
+            !coverUrl.isBlank() &&
+            !coverUrl.contains("default-cover");
     }
 }
