@@ -11,6 +11,7 @@ declare module "react-window" {
     width: number | string;
     itemCount: number;
     itemSize: number;
+    overscanCount?: number;
     className?: string;
     children: (props: ListChildComponentProps) => React.ReactNode;
   }

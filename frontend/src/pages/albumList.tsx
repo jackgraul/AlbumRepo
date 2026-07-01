@@ -14,6 +14,7 @@ const MAX_CARD_WIDTH = 172;
 const IDEAL_CARD_WIDTH = 156;
 const GAP = 10;
 const SCROLLBAR_GUTTER = 24;
+const OVERSCAN_ROW_COUNT = 1;
 
 const getAlbumGridMetrics = (viewportWidth: number) => {
   const listWidth = Math.max(
@@ -359,7 +360,7 @@ const AlbumList: React.FC = () => {
                       album.artist?.artistName ?? "Unknown Artist"
                     }
                     fromSearch={location.search}
-                    eager={index <= 5}
+                    eager
                   />
                 </Box>
               ))}
@@ -371,6 +372,7 @@ const AlbumList: React.FC = () => {
       filteredAlbums,
       itemsPerRow,
       location.search,
+      contentWidth,
       cardWidth,
       imageSize,
       contentHeight,
@@ -442,6 +444,7 @@ const AlbumList: React.FC = () => {
             height={listHeight}
             itemCount={rowCount}
             itemSize={rowHeight}
+            overscanCount={OVERSCAN_ROW_COUNT}
             width={listWidth}
           >
             {Row}
