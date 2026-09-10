@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Box, Button, TextField, InputLabel, MenuItem, FormControl, Select, Autocomplete } from "@mui/material";
 import { Album } from "../../models/models";
 import { normalizeArtistName } from "../../utils/artistName";
+import { toSlug } from "../../utils/slug";
 
 export interface ArtistOption {
   name: string;
@@ -57,8 +58,6 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
   setSortOrder,
   artistOptions,
 }) => {
-  const toSlug = (v: string) =>
-    v.trim().toLowerCase().replace(/\s+/g, "-");
 
   const handleLetterChange = (value: string) => {
     setSelectedLetter(value);

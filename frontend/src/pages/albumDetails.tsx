@@ -5,24 +5,35 @@ import { Album } from "../models/models";
 import DeleteConfirmationDialog from "../components/deleteConfirmation";
 import AlbumService from "../services/albumService";
 import ArtistService from "../services/artistService";
+import { toSlug } from "../utils/slug";
+
+type AlbumLocationState = {
+  fromSearch?: string;
+  fromArtistPath?: string;
+};
 
 const AlbumDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { artistName, albumName } = useParams<{
+    artistName?: string;
+    albumName?: string;
+  }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const locationState = location.state as AlbumLocationState | null;
+  const hasFromSearchState =
+    !!locationState &&
+    Object.prototype.hasOwnProperty.call(locationState, "fromSearch");
+  const routeArtistSlug = toSlug(artistName);
 
-  const normalizeSearch = (search: string) =>
-    search
-      .replace(/\+/g, "-")
-      .toLowerCase();
+  const preservedSearch = hasFromSearchState
+    ? locationState.fromSearch ?? ""
+    : location.search;
 
-  const preservedSearch =
-    location.search || ((location.state as { fromSearch?: string } | null)?.fromSearch ?? "");
+  const fromArtistPath = locationState?.fromArtistPath ?? null;
 
-  const fromArtistPath =
-    (location.state as { fromArtistPath?: string } | null)?.fromArtistPath ?? null;
-
-  const isNew = id === "new";
+  const isNew =
+    location.pathname === "/albums/new" ||
+    location.pathname.endsWith("/albums/new");
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
@@ -42,9 +53,23 @@ const AlbumDetails: React.FC = () => {
           letter: a.letter,
         }));
         setArtistOptions(opts);
+
+        if (isNew && routeArtistSlug) {
+          const matchingArtist = opts.find(
+            (artist) => toSlug(artist.artistName) === routeArtistSlug
+          );
+
+          if (matchingArtist) {
+            setAlbum((prev) =>
+              prev && prev.artist.id === 0
+                ? { ...prev, artist: matchingArtist }
+                : prev
+            );
+          }
+        }
       })
       .finally(() => setArtistLoading(false));
-  }, []);
+  }, [isNew, routeArtistSlug]);
 
   const [album, setAlbum] = useState<Album | null>(
     isNew
@@ -83,8 +108,31 @@ const AlbumDetails: React.FC = () => {
   useEffect(() => {
     if (isNew) return;
 
-    AlbumService.getById(id ?? "")
-      .then((data) => {
+    const artistSlug = toSlug(artistName);
+    const albumSlug = toSlug(albumName);
+
+    if (!artistSlug || !albumSlug) {
+      setToast({
+        open: true,
+        message: "Album not found.",
+        severity: "error",
+      });
+      setLoading(false);
+      return;
+    }
+
+    AlbumService.getAll()
+      .then((albums) => {
+        const data = albums.find(
+          (a) =>
+            toSlug(a.artist?.artistName) === artistSlug &&
+            toSlug(a.albumName) === albumSlug
+        );
+
+        if (!data) {
+          throw new Error("Album not found");
+        }
+
         setAlbum(data);
         setLoading(false);
       })
@@ -96,7 +144,7 @@ const AlbumDetails: React.FC = () => {
         });
         setLoading(false);
       });
-  }, [id, isNew]);
+  }, [artistName, albumName, isNew]);
 
   const handleChange = (field: keyof Album, value: any) => {
     setAlbum((prev) => (prev ? { ...prev, [field]: value } : prev));
@@ -104,9 +152,21 @@ const AlbumDetails: React.FC = () => {
 
   const goBack = () => {
     if (fromArtistPath) {
-      navigate(fromArtistPath, {replace: true});
+      navigate(fromArtistPath, { replace: true });
+    } else if (isNew && routeArtistSlug) {
+      navigate(`/artists/${routeArtistSlug}`, { replace: true });
     } else {
-      navigate({ pathname: "/albums", search: normalizeSearch(preservedSearch) });
+      const params = new URLSearchParams(preservedSearch);
+
+      if (!hasFromSearchState && routeArtistSlug && !params.has("artist")) {
+        params.set("artist", routeArtistSlug);
+      }
+
+      const nextSearch = params.toString();
+      navigate({
+        pathname: "/albums",
+        search: nextSearch ? `?${nextSearch}` : "",
+      });
     }
   };
 

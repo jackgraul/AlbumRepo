@@ -24,8 +24,11 @@ const App: React.FC = () => {
           <Route path="/" element={<Navigate to="/albums" replace />} />
           <Route path="/albums" element={<AlbumList />} />
           <Route path="/artists" element={<ArtistList />} />
-          <Route path="/albums/:id" element={<AlbumDetailsPage />} />
-          <Route path="/artists/:id" element={<ArtistDetailsPage />} />
+          <Route path="/albums/new" element={<AlbumDetailsPage />} />
+          <Route path="/artists/new" element={<ArtistDetailsPage />} />
+          <Route path="/artists/:artistName/albums/new" element={<AlbumDetailsPage />} />
+          <Route path="/albums/:artistName/:albumName" element={<AlbumDetailsPage />} />
+          <Route path="/artists/:artistName" element={<ArtistDetailsPage />} />
         </Routes>
       </Box>
 

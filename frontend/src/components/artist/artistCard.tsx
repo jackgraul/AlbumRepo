@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, Typography, CardActionArea } from "@mui/material";
 import { Album } from "../../models/models";
+import { getArtistPath } from "../../utils/slug";
 
 interface ArtistCardProps {
   id: number;
@@ -36,7 +37,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums,
       }}
     >
       <CardActionArea
-        onClick={() => navigate(`/artists/${id}`)}
+        onClick={() => navigate(getArtistPath(artistName))}
         sx={{ flexGrow: 1 }}
       >
         <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>

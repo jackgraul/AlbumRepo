@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
   Card,
@@ -19,11 +19,18 @@ import { Artist } from "../models/models";
 import DeleteConfirmationDialog from "../components/deleteConfirmation";
 import MarqueeOnOverflow from "../components/marqueeOverflow";
 import ArtistService from "../services/artistService";
+import {
+  getAlbumPath,
+  getArtistAlbumCreatePath,
+  getArtistPath,
+  toSlug,
+} from "../utils/slug";
 
 const ArtistDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { artistName } = useParams<{ artistName?: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
-  const isNew = id === "new";
+  const isNew = location.pathname === "/artists/new";
 
   const [artist, setArtist] = useState<Artist | null>(
     isNew
@@ -47,8 +54,26 @@ const ArtistDetails: React.FC = () => {
   useEffect(() => {
     if (isNew) return;
 
-    ArtistService.getById(id ?? "")
-      .then((data) => {
+    const artistSlug = toSlug(artistName);
+
+    if (!artistSlug) {
+      setToast({
+        open: true,
+        message: "Artist not found.",
+        severity: "error",
+      });
+      setLoading(false);
+      return;
+    }
+
+    ArtistService.getAll()
+      .then((artists) => {
+        const data = artists.find((a) => toSlug(a.artistName) === artistSlug);
+
+        if (!data) {
+          throw new Error("Artist not found");
+        }
+
         setArtist(data);
         setLoading(false);
       })
@@ -60,7 +85,7 @@ const ArtistDetails: React.FC = () => {
         });
         setLoading(false);
       });
-  }, [id, isNew]);
+  }, [artistName, isNew]);
 
   const handleChange = (field: keyof Artist, value: any) => {
     setArtist((prev) => (prev ? { ...prev, [field]: value } : prev));
@@ -301,8 +326,8 @@ const ArtistDetails: React.FC = () => {
                     <CardActionArea
                       sx={{ height: "100%" }}
                       onClick={() =>
-                        navigate(`/albums/${a.id}`, {
-                          state: { fromArtistPath: `/artists/${artist.id}` },
+                        navigate(getAlbumPath(artist.artistName, a.albumName), {
+                          state: { fromArtistPath: getArtistPath(artist.artistName) },
                         })
                       }
                     >
@@ -404,7 +429,11 @@ const ArtistDetails: React.FC = () => {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => navigate("/albums/new")}
+                onClick={() =>
+                  navigate(getArtistAlbumCreatePath(artist.artistName), {
+                    state: { fromArtistPath: getArtistPath(artist.artistName) },
+                  })
+                }
                 size="medium"
               >
                 + Add Album

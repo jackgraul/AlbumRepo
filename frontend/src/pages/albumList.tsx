@@ -8,6 +8,7 @@ import { getNormalizedLetter, normalizeArtistName } from "../utils/artistName";
 import AlbumSummaryBar from "../components/album/albumSummaryBar";
 import { Album } from "../models/models";
 import AlbumService from "../services/albumService";
+import { toSlug } from "../utils/slug";
 
 const MIN_CARD_WIDTH = 145;
 const MAX_CARD_WIDTH = 172;
@@ -52,12 +53,6 @@ const getAlbumGridMetrics = (viewportWidth: number) => {
   };
 };
 
-const toSlug = (value: string) =>
-  value
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-") 
-    .replace(/^-+|-+$/g, "");
 
 const collator = new Intl.Collator(undefined, {
   usage: "sort",

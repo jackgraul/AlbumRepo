@@ -9,6 +9,15 @@ import {
 } from "@mui/material";
 import MarqueeOnOverflow from "../marqueeOverflow";
 import { LazyLoadImage } from "react-lazy-load-image-component";
+import { getAlbumPath } from "../../utils/slug";
+
+const stripArtistSearchParam = (search: string) => {
+  const params = new URLSearchParams(search);
+  params.delete("artist");
+
+  const nextSearch = params.toString();
+  return nextSearch ? `?${nextSearch}` : "";
+};
 
 interface AlbumCardProps {
   id: number;
@@ -69,7 +78,10 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
       <CardActionArea
         onClick={() =>
           navigate(
-            { pathname: `/albums/${id}`, search: searchToCarry },
+            {
+              pathname: getAlbumPath(artistName, albumName),
+              search: stripArtistSearchParam(searchToCarry),
+            },
             { state: { fromSearch: searchToCarry } }
           )
         }
