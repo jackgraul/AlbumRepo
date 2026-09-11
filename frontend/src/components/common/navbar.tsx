@@ -39,6 +39,23 @@ const Navbar: React.FC = () => {
         <Button
           color="inherit"
           component={Link}
+          to="/guide"
+          size="small"
+          sx={{
+            color: "inherit",
+            fontSize: { xs: "0.82rem", sm: "0.88rem" },
+            px: { xs: 0.75, sm: 1 },
+            minWidth: "auto",
+            "&:hover": { color: "primary.main" },
+            mr: { xs: 0.25, sm: 0.5 },
+          }}
+        >
+          Guide
+        </Button>
+
+        <Button
+          color="inherit"
+          component={Link}
           to="/"
           size="small"
           sx={{

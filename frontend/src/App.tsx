@@ -4,6 +4,7 @@ import AlbumList from "./pages/albumList";
 import ArtistList from "./pages/artistList";
 import AlbumDetailsPage from "./pages/albumDetails";
 import ArtistDetailsPage from "./pages/artistDetails";
+import GuidePage from "./pages/guide";
 import Navbar from "./components/common/navbar";
 import Footer from "./components/common/footer";
 import { Box } from "@mui/material";
@@ -29,6 +30,7 @@ const App: React.FC = () => {
           <Route path="/artists/:artistName/albums/new" element={<AlbumDetailsPage />} />
           <Route path="/albums/:artistName/:albumName" element={<AlbumDetailsPage />} />
           <Route path="/artists/:artistName" element={<ArtistDetailsPage />} />
+          <Route path="/guide" element={<GuidePage />} />
         </Routes>
       </Box>
 

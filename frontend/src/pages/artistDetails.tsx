@@ -412,12 +412,6 @@ const ArtistDetails: React.FC = () => {
                               {a.releaseYear ?? ""}
                             </Typography>
 
-                            {a.rating != null && (
-                              <Typography variant="body2" color="text.secondary">
-                                {"★"} {a.rating}
-                              </Typography>
-                            )}
-
                             <MarqueeOnOverflow
                               variant="body2"
                               color="text.secondary"
@@ -426,6 +420,12 @@ const ArtistDetails: React.FC = () => {
                             >
                               {a.genre ?? ""}
                             </MarqueeOnOverflow>
+
+                            {a.rating != null && (
+                              <Typography variant="body2" color="text.secondary">
+                                {"★"} {a.rating}
+                              </Typography>
+                            )}
                           </Stack>
                         </CardContent>
                       </Box>
