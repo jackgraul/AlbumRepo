@@ -186,10 +186,27 @@ const AlbumDetails: React.FC = () => {
     return true;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!album) return;
     if (!isValid()) return;
-    
+
+    const existingAlbums = await AlbumService.getAll();
+    const duplicate = existingAlbums.some(
+      (a) =>
+        a.artist?.id === album.artist.id &&
+        a.albumName.trim().toLowerCase() === album.albumName.trim().toLowerCase() &&
+        a.id !== album.id
+    );
+
+    if (duplicate) {
+      setToast({
+        open: true,
+        message: "This artist already has an album with that name.",
+        severity: "error",
+      });
+      return;
+    }
+
     setSaving(true);
 
     const request = isNew

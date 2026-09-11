@@ -107,9 +107,25 @@ const ArtistDetails: React.FC = () => {
     return true;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!artist) return;
     if (!isValid()) return;
+
+    const existingArtists = await ArtistService.getAll();
+    const duplicate = existingArtists.some(
+      (a) =>
+        a.artistName.trim().toLowerCase() === artist.artistName.trim().toLowerCase() &&
+        a.id !== artist.id
+    );
+
+    if (duplicate) {
+      setToast({
+        open: true,
+        message: "An artist with this name already exists.",
+        severity: "error",
+      });
+      return;
+    }
 
     setSaving(true);
 
