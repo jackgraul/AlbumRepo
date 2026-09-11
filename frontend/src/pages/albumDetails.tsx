@@ -170,7 +170,7 @@ const AlbumDetails: React.FC = () => {
     }
   };
 
-  const isValid = () => {
+  const isValid = async () => {
     if (!album) return false;
 
     if (!album.albumName.trim()) {
@@ -182,13 +182,6 @@ const AlbumDetails: React.FC = () => {
       setToast({ open: true, message: "Artist must be selected.", severity: "error" });
       return false;
     }
-
-    return true;
-  };
-
-  const handleSave = async () => {
-    if (!album) return;
-    if (!isValid()) return;
 
     const existingAlbums = await AlbumService.getAll();
     const duplicate = existingAlbums.some(
@@ -206,6 +199,13 @@ const AlbumDetails: React.FC = () => {
       });
       return;
     }
+
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!album) return;
+    if (!(await isValid())) return;
 
     setSaving(true);
 

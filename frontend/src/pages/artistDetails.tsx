@@ -91,7 +91,7 @@ const ArtistDetails: React.FC = () => {
     setArtist((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
-  const isValid = () => {
+  const isValid = async () => {
     if (!artist) return false;
 
     if (!artist.artistName.trim()) {
@@ -103,13 +103,6 @@ const ArtistDetails: React.FC = () => {
       setToast({ open: true, message: "Letter is required.", severity: "error" });
       return false;
     }
-
-    return true;
-  };
-
-  const handleSave = async () => {
-    if (!artist) return;
-    if (!isValid()) return;
 
     const existingArtists = await ArtistService.getAll();
     const duplicate = existingArtists.some(
@@ -126,6 +119,13 @@ const ArtistDetails: React.FC = () => {
       });
       return;
     }
+
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!artist) return;
+    if (!(await isValid())) return;
 
     setSaving(true);
 
