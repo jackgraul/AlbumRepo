@@ -317,72 +317,74 @@ const ArtistDetails: React.FC = () => {
             </Grid>
 
             {artist.albums?.length ? (
-              artist.albums.map((a) => (
-                <Grid
-                  item
-                  key={a.id}
-                  xs={12}
-                  md={artist.albums && artist.albums.length <= 1 ? 12 : 6}
-                >
-                  <Card
-                    className="artist-detail-album-card"
-                    sx={{
-                      height: 116,
-                      borderRadius: 1.5,
-                      border: "1px solid",
-                      borderColor: "divider",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                      "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: 6,
-                        borderColor: "primary.main",
-                      },
-                    }}
+              [...artist.albums]
+                .sort((a, b) => (a.releaseYear ?? 0) - (b.releaseYear ?? 0))
+                .map((a) => (
+                  <Grid
+                    item
+                    key={a.id}
+                    xs={12}
+                    md={artist.albums && artist.albums.length <= 1 ? 12 : 6}
                   >
-                    <CardActionArea
-                      sx={{ height: "100%" }}
-                      onClick={() =>
-                        navigate(getAlbumPath(artist.artistName, a.albumName), {
-                          state: { fromArtistPath: getArtistPath(artist.artistName) },
-                        })
-                      }
+                    <Card
+                      className="artist-detail-album-card"
+                      sx={{
+                        height: 116,
+                        borderRadius: 1.5,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                        "&:hover": {
+                          transform: "translateY(-4px)",
+                          boxShadow: 6,
+                          borderColor: "primary.main",
+                        },
+                      }}
                     >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          height: "100%",
-                          alignItems: "center",
-                          gap: 1.5,
-                          px: 1.25,
-                          py: 1.25,
-                        }}
+                      <CardActionArea
+                        sx={{ height: "100%" }}
+                        onClick={() =>
+                          navigate(getAlbumPath(artist.artistName, a.albumName), {
+                            state: { fromArtistPath: getArtistPath(artist.artistName) },
+                          })
+                        }
                       >
                         <Box
                           sx={{
-                            width: 88,
-                            height: 88,
-                            overflow: "hidden",
-                            flexShrink: 0,
+                            display: "flex",
+                            height: "100%",
+                            alignItems: "center",
+                            gap: 1.5,
+                            px: 1.25,
+                            py: 1.25,
                           }}
                         >
-                          <LazyLoadImage
-                            src={a.coverURL?.trim() || "/default-cover.png"}
-                            alt={a.albumName ?? "Album cover"}
-                            effect="blur"
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src =
-                                "/default-cover.png";
-                            }}
-                            style={{
+                          <Box
+                            sx={{
                               width: 88,
                               height: 88,
-                              borderRadius: 6,
-                              objectFit: "cover",
-                              objectPosition: "center",
+                              overflow: "hidden",
+                              flexShrink: 0,
                             }}
-                          />
-                        </Box>
+                          >
+                            <LazyLoadImage
+                              src={a.coverURL?.trim() || "/default-cover.png"}
+                              alt={a.albumName ?? "Album cover"}
+                              effect="blur"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src =
+                                  "/default-cover.png";
+                              }}
+                              style={{
+                                width: 88,
+                                height: 88,
+                                borderRadius: 6,
+                                objectFit: "cover",
+                                objectPosition: "center",
+                              }}
+                            />
+                          </Box>
 
                         <CardContent
                           sx={{
