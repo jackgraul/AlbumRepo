@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia, Rating, FormControl, InputLabel, OutlinedInput } from "@mui/material";
 import { Album } from "../models/models";
-import DeleteConfirmationDialog from "../components/deleteConfirmation";
+import DeleteConfirmationDialog from "../utils/deleteConfirmation";
 import AlbumService from "../services/albumService";
 import ArtistService from "../services/artistService";
 import { toSlug } from "../utils/slug";

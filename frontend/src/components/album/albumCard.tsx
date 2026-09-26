@@ -7,7 +7,7 @@ import {
   Box,
   CardActionArea,
 } from "@mui/material";
-import MarqueeOnOverflow from "../marqueeOverflow";
+import MarqueeOnOverflow from "../../utils/marqueeOverflow";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { getAlbumPath } from "../../utils/slug";
 

@@ -16,8 +16,8 @@ import {
 } from "@mui/material";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Artist } from "../models/models";
-import DeleteConfirmationDialog from "../components/deleteConfirmation";
-import MarqueeOnOverflow from "../components/marqueeOverflow";
+import DeleteConfirmationDialog from "../utils/deleteConfirmation";
+import MarqueeOnOverflow from "../utils/marqueeOverflow";
 import ArtistService from "../services/artistService";
 import {
   getAlbumPath,
