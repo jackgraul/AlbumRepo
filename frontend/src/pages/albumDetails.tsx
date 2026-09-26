@@ -197,8 +197,17 @@ const AlbumDetails: React.FC = () => {
         message: "This artist already has an album with that name.",
         severity: "error",
       });
-      return;
+      return false;
     }
+
+    if (album.rating != null && (album.rating < 0 || album.rating > 10)) {
+      setToast({
+        open: true, 
+        message: "Rating must be between 0 and 10.",
+        severity: "error",
+      });
+      return false;
+    } 
 
     return true;
   };
