@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia } from "@mui/material";
+import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia, Rating, FormControl, InputLabel, OutlinedInput } from "@mui/material";
 import { Album } from "../models/models";
 import DeleteConfirmationDialog from "../components/deleteConfirmation";
 import AlbumService from "../services/albumService";
@@ -359,19 +359,37 @@ const AlbumDetails: React.FC = () => {
               size="small"
             />
 
-            <TextField
-              label="Rating"
-              type="number"
-              value={album.rating ?? ""}
-              onChange={(e) =>
-                handleChange(
-                  "rating",
-                  e.target.value ? Number(e.target.value) : null
-                )
-              }
-              fullWidth
-              size="small"
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink>Rating</InputLabel>
+
+              <OutlinedInput
+                notched
+                label="Rating"
+                readOnly
+                sx={{p: 2}}
+                inputComponent={() => (
+                  <Rating
+                    name="album-rating"
+                    value={album.rating ?? null}
+                    onChange={(_, newValue) => {
+                      handleChange("rating", newValue);
+                    }}
+                    max={10}
+                    precision={0.5}
+                    size="large"
+                    sx={{
+                      fontSize: "2.5rem",
+                      "& .MuiRating-iconFilled": {
+                        color: "#1976d2",
+                      },
+                      "& .MuiRating-iconHover": {
+                        color: "#1976d2",
+                      },
+                    }}
+                  />
+                )}
+              />
+            </FormControl>
 
             {!isNew && (
               <TextField
