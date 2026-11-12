@@ -20,15 +20,18 @@ class AlbumService {
   }
 
   static async create(album: Album | AlbumPayload): Promise<Album> {
-    const { data } = await api.post<Album>(
-      "/albums/add-album",
-      toAlbumPayload(album)
-    );
+    const { data } = await api.post<Album>("/albums/add-album", {
+      album: toAlbumPayload(album),
+      rating: album.rating ?? null,
+    });
     return data;
   }
 
-  static async update(id: number, album: Album): Promise<Album> {
-    const { data } = await api.put<Album>(`/albums/update-album/${id}`, album);
+  static async update(id: number, rating: number | null): Promise<Album> {
+    const { data } = await api.put<Album>(
+      `/albums/update-album/${id}`,
+      { rating }
+    );
     return data;
   }
 

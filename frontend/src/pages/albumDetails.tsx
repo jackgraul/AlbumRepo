@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia, Rating, FormControl, InputLabel, OutlinedInput } from "@mui/material";
+import { SxProps, Theme } from "@mui/material/styles";
 import { Album } from "../models/models";
 import DeleteConfirmationDialog from "../utils/deleteConfirmation";
 import AlbumService from "../services/albumService";
@@ -173,17 +174,39 @@ const AlbumDetails: React.FC = () => {
   const isValid = async () => {
     if (!album) return false;
 
+    // Rating validation applies to both creating and editing
+    if (album.rating != null && (album.rating < 0 || album.rating > 10)) {
+      setToast({
+        open: true,
+        message: "Rating must be between 0 and 10.",
+        severity: "error",
+      });
+      return false;
+    }
+
+    // Editing only changes the rating
+    if (!isNew) return true;
+
     if (!album.albumName.trim()) {
-      setToast({ open: true, message: "Album name is required.", severity: "error" });
+      setToast({
+        open: true,
+        message: "Album name is required.",
+        severity: "error",
+      });
       return false;
     }
 
     if (!album.artist || album.artist.id === 0) {
-      setToast({ open: true, message: "Artist must be selected.", severity: "error" });
+      setToast({
+        open: true,
+        message: "Artist must be selected.",
+        severity: "error",
+      });
       return false;
     }
 
     const existingAlbums = await AlbumService.getAll();
+
     const duplicate = existingAlbums.some(
       (a) =>
         a.artist?.id === album.artist.id &&
@@ -200,15 +223,6 @@ const AlbumDetails: React.FC = () => {
       return false;
     }
 
-    if (album.rating != null && (album.rating < 0 || album.rating > 10)) {
-      setToast({
-        open: true, 
-        message: "Rating must be between 0 and 10.",
-        severity: "error",
-      });
-      return false;
-    } 
-
     return true;
   };
 
@@ -220,7 +234,7 @@ const AlbumDetails: React.FC = () => {
 
     const request = isNew
       ? AlbumService.create(album)
-      : AlbumService.update(album.id, album);
+      : AlbumService.update(album.id, album.rating ?? null);
 
     request
       .then(() => {
@@ -277,6 +291,10 @@ const AlbumDetails: React.FC = () => {
 
   if (!album) return null;
 
+  const readOnlyFieldSx: SxProps<Theme> = {
+    "& .MuiInputBase-input": { opacity: isNew ? 1 : 0.5 }
+  };
+
   return (
     <Box
       sx={{
@@ -305,18 +323,22 @@ const AlbumDetails: React.FC = () => {
             <TextField
               label="Album Name"
               value={album.albumName}
+              InputProps={{ readOnly: !isNew }}
               onChange={(e) => handleChange("albumName", e.target.value)}
               fullWidth
               size="small"
+              sx={readOnlyFieldSx}
             />
 
             <Autocomplete
+              readOnly={!isNew}
               size="small"
               options={artistOptions}
               value={selectedArtist}
               loading={artistLoading}
               getOptionLabel={(o) => o?.artistName ?? ""}
               isOptionEqualToValue={(o, v) => o.id === v.id}
+              sx={readOnlyFieldSx}
               onChange={(_, newValue) => {
                 handleChange(
                   "artist",
@@ -346,17 +368,21 @@ const AlbumDetails: React.FC = () => {
               label="Release Year"
               type="number"
               value={album.releaseYear ?? ""}
+              InputProps={{ readOnly: !isNew }}
               onChange={(e) => handleChange("releaseYear", Number(e.target.value))}
               fullWidth
               size="small"
+              sx={readOnlyFieldSx} 
             />
 
             <TextField
               label="Genre"
               value={album.genre ?? ""}
+              InputProps={{ readOnly: !isNew }}
               onChange={(e) => handleChange("genre", e.target.value)}
               fullWidth
               size="small"
+              sx={readOnlyFieldSx}  
             />
 
             <FormControl fullWidth variant="outlined">
@@ -365,7 +391,6 @@ const AlbumDetails: React.FC = () => {
               <OutlinedInput
                 notched
                 label="Rating"
-                readOnly
                 sx={{p: 2}}
                 inputComponent={() => (
                   <Rating
@@ -390,16 +415,6 @@ const AlbumDetails: React.FC = () => {
                 )}
               />
             </FormControl>
-
-            {!isNew && (
-              <TextField
-                label="Cover URL"
-                value={album.coverURL ?? ""}
-                onChange={(e) => handleChange("coverURL", e.target.value)}
-                fullWidth
-                size="small"
-              />
-            )}
           </Stack>
 
           <Stack direction="row" spacing={1.5} mt={3} flexWrap="wrap" useFlexGap>

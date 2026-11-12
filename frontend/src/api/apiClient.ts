@@ -9,14 +9,31 @@ export const API_BASE_URL =
 
 // const API_BASE_URL = "http://localhost:7373/api";
 
-export const buildApiUrl = (path: string): string =>
-  `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+// export const buildApiUrl = (path: string): string =>
+//   `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+api.interceptors.request.use((config) => {
+  const csrfCookie = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith("XSRF-TOKEN="));
+
+  if (csrfCookie) {
+    const csrfToken = decodeURIComponent(
+      csrfCookie.substring("XSRF-TOKEN=".length)
+    );
+
+    config.headers.set("X-XSRF-TOKEN", csrfToken);
+  }
+
+  return config;
 });
 
 export default api;

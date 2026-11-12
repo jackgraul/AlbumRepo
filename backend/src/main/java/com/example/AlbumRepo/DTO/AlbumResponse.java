@@ -7,5 +7,6 @@ public record AlbumResponse(
         Integer releaseOrder,
         String genre,
         String coverURL,
-        Double rating
+        Double rating,
+        ArtistSummaryResponse artist
 ) {}

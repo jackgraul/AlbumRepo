@@ -4,10 +4,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 
 const Navbar: React.FC = () => {
-  const { user, loading, logout, login } = useAuth();
-
-  console.log("Authenticated user:", user);
-
+  const { user, logout } = useAuth();
+  
   return (
     <AppBar position="sticky" color="primary">
       <Toolbar

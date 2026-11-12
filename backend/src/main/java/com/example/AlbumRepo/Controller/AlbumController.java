@@ -1,11 +1,18 @@
 package com.example.AlbumRepo.Controller;
 
+import com.example.AlbumRepo.DTO.AddAlbumRequest;
+import com.example.AlbumRepo.DTO.AlbumResponse;
+import com.example.AlbumRepo.DTO.UpdateAlbumRequest;
 import com.example.AlbumRepo.Entity.Album;
+import com.example.AlbumRepo.Entity.User;
 import com.example.AlbumRepo.Repository.IAlbumRepository;
 import com.example.AlbumRepo.Service.AlbumService;
 import com.example.AlbumRepo.Service.CoverArtService;
+import com.example.AlbumRepo.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,74 +24,51 @@ public class AlbumController {
     IAlbumRepository albumRepository;
     private final AlbumService albumService;
     private final CoverArtService coverArtService;
+    private final UserService userService;
 
-    public AlbumController(AlbumService albumService, CoverArtService coverArtService) {
+    public AlbumController(AlbumService albumService, CoverArtService coverArtService, UserService userService) {
         this.albumService = albumService;
         this.coverArtService = coverArtService;
+        this.userService = userService;
     }
 
-    // GET all albums
+    // GET all albums for authenticated user
     @GetMapping
-    public ResponseEntity<List<Album>> getAllAlbums() {
-        List<Album> albums = albumService.getAlbumsWithArtists();
+    public ResponseEntity<List<AlbumResponse>> getAllAlbums(@AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        List<AlbumResponse> albums = albumService.getAlbumsForUser(user.getId());
         return ResponseEntity.ok(albums);
     }
 
-    // GET album by id
+    // GET album by id for authenticated user
     @GetMapping("/{id}")
-    public Album getAlbumById(@PathVariable Integer id) {
-        return albumRepository.findById(id).orElse(null);
+    public ResponseEntity<AlbumResponse> getAlbumById(@PathVariable Integer id, @AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        AlbumResponse album = albumService.getAlbumForUser(user.getId(), id);
+        return ResponseEntity.ok(album);
     }
 
-    // POST create new album
+    // POST create new album for authenticated user
     @PostMapping("/add-album")
-    public Album createAlbum(@RequestBody Album album) {
-        if (!hasRealCover(album.getCoverURL())) {
-            String coverUrl = coverArtService.fetchCoverArt(
-                    album.getArtist().getArtistName(),
-                    album.getAlbumName()
-            );
-
-            if (coverUrl != null && !coverUrl.isBlank()) {
-                album.setCoverURL(coverUrl);
-            }
-        }
-
-        return albumRepository.save(album);
+    public ResponseEntity<AlbumResponse> createAlbum(@RequestBody AddAlbumRequest request, @AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        AlbumResponse createdAlbum = albumService.addAlbumForUser(user, request);
+        return ResponseEntity.ok(createdAlbum);
     }
 
-    @PostMapping("/fetch-covers")
-    public String fetchCovers() {
-        coverArtService.fetchCoversForAllAlbums();
-        return "Cover images updated!";
-    }
-
-    // PUT update album
+    // PUT update album for authenticated user
     @PutMapping("/update-album/{id}")
-    public Album updateAlbum(@PathVariable Integer id, @RequestBody Album album) {
-        return albumRepository.findById(id).map(existingAlbum -> {
-            existingAlbum.setAlbumName(album.getAlbumName());
-            existingAlbum.setGenre(album.getGenre());
-            existingAlbum.setReleaseYear(album.getReleaseYear());
-            existingAlbum.setRating(album.getRating());
-            existingAlbum.setCoverURL(album.getCoverURL());
-            existingAlbum.setArtist(album.getArtist());
-            return albumRepository.save(existingAlbum);
-        }).orElseGet(() -> {
-            album.setId(id);
-            return albumRepository.save(album);
-        });
+    public ResponseEntity<AlbumResponse> updateAlbum(@PathVariable Integer id, @RequestBody UpdateAlbumRequest request, @AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        AlbumResponse updatedAlbum = albumService.updateAlbumRatingForUser(user.getId(), id, request.rating());
+        return ResponseEntity.ok(updatedAlbum);
     }
 
-    // DELETE album
+    // DELETE album for authenticated user
     @DeleteMapping("/delete-album/{id}")
-    public void deleteAlbum(@PathVariable Integer id) {
-        albumRepository.deleteById(id);
-    }
-
-    private boolean hasRealCover(String coverUrl) {
-        return coverUrl != null &&
-            !coverUrl.isBlank() &&
-            !coverUrl.contains("default-cover");
+    public ResponseEntity<Void> deleteAlbum(@PathVariable Integer id, @AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        albumService.removeAlbumForUser(user.getId(), id);
+        return ResponseEntity.noContent().build();
     }
 }

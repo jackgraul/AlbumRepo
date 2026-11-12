@@ -2,6 +2,7 @@ package com.example.AlbumRepo.Service;
 
 import com.example.AlbumRepo.DTO.AlbumResponse;
 import com.example.AlbumRepo.DTO.ArtistResponse;
+import com.example.AlbumRepo.DTO.ArtistSummaryResponse;
 import com.example.AlbumRepo.Entity.*;
 import com.example.AlbumRepo.Repository.IArtistRepository;
 import com.example.AlbumRepo.Repository.IUserAlbumRepository;
@@ -53,7 +54,12 @@ public class ArtistService {
                     album.getReleaseOrder(),
                     album.getGenre(),
                     album.getCoverURL(),
-                    userAlbum.getRating()
+                    userAlbum.getRating(),
+                    new ArtistSummaryResponse(
+                            album.getArtist().getId(),
+                            album.getArtist().getLetter(),
+                            album.getArtist().getArtistName()
+                    )
             );
 
             albumsByArtist
@@ -108,7 +114,12 @@ public class ArtistService {
                             album.getReleaseOrder(),
                             album.getGenre(),
                             album.getCoverURL(),
-                            userAlbum.getRating()
+                            userAlbum.getRating(),
+                            new ArtistSummaryResponse(
+                                    album.getArtist().getId(),
+                                    album.getArtist().getLetter(),
+                                    album.getArtist().getArtistName()
+                            )
                     );
                 })
                 .toList();
