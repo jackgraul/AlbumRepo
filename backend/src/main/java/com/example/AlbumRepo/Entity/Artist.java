@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "Artists")
+@Table(name = "Artists", schema = "AlbumRepo")
 public class Artist {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
