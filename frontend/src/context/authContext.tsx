@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useCallback,
@@ -6,7 +5,7 @@ import React, {
   useEffect,
   useState
 } from "react";
-
+import api from "../api/apiClient";
 import { User } from "../models/models";
 
 interface AuthContextType {
@@ -20,19 +19,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = "http://localhost:7373";
-
-// Read the raw CSRF token from the XSRF-TOKEN cookie.
-const getCsrfTokenFromCookie = (): string | null => {
-  const cookie = document.cookie
-    .split("; ")
-    .find(row => row.startsWith("XSRF-TOKEN="));
-
-  return cookie
-    ? decodeURIComponent(cookie.substring("XSRF-TOKEN=".length))
-    : null;
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
@@ -44,26 +30,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setError(null);
 
-      const response = await fetch(`${API_URL}/api/auth/me`, {
-        method: "GET",
-        credentials: "include"
-      });
+      const { data } = await api.get<User>("/auth/me");
 
-      if (response.status === 401) {
+      setUser(data);
+      return data;
+
+    } catch (err: any) {
+      if (err.response?.status === 401) {
         setUser(null);
         return null;
       }
 
-      if (!response.ok) {
-        throw new Error("Failed to retrieve authenticated user");
-      }
-
-      const userData: User = await response.json();
-      setUser(userData);
-
-      return userData;
-
-    } catch (err) {
       console.error("Authentication check failed:", err);
       setUser(null);
       setError(
@@ -77,42 +54,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = useCallback(() => {
-    window.location.href = `${API_URL}/oauth2/authorization/google`;
+    window.location.href = `${api.defaults.baseURL?.replace("/api", "")}/oauth2/authorization/google`;
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {
     try {
       setError(null);
 
-      // Ensure a fresh CSRF token cookie exists.
-      const csrfResponse = await fetch(`${API_URL}/api/auth/csrf`, {
-        method: "GET",
-        credentials: "include"
-      });
+      // Get a fresh CSRF token.
+      await api.get("/auth/csrf");
 
-      if (!csrfResponse.ok) {
-        throw new Error("Failed to retrieve CSRF token");
-      }
-
-      // Read the raw token directly from the cookie.
-      const csrfToken = getCsrfTokenFromCookie();
-
-      if (!csrfToken) {
-        throw new Error("CSRF token cookie not found");
-      }
-
-      // Send the raw cookie token in the CSRF header.
-      const logoutResponse = await fetch(`${API_URL}/api/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "X-XSRF-TOKEN": csrfToken
-        }
-      });
-
-      if (!logoutResponse.ok) {
-        throw new Error("Failed to log out");
-      }
+      // The API interceptor automatically attaches the CSRF token.
+      await api.post("/auth/logout");
 
       setUser(null);
 

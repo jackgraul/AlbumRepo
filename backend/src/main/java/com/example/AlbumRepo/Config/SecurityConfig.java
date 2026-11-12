@@ -67,7 +67,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .oidcUserService(customOidcUserService)
                         )
-                        .defaultSuccessUrl("http://localhost:3000", true)
+                        .defaultSuccessUrl("https://albumrepo-frontend.onrender.com", true)
                 )
 
                 .logout(logout -> logout
