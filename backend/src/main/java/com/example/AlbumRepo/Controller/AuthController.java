@@ -8,9 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.web.csrf.CsrfToken;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -44,6 +46,11 @@ public class AuthController {
                         user.getDisplayName()
                 )
         );
+    }
+
+    @GetMapping("/csrf")
+    public CsrfToken getCsrfToken(CsrfToken csrfToken) {
+        return csrfToken;
     }
 
     public record AuthResponse(

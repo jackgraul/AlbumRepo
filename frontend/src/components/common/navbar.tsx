@@ -1,8 +1,13 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/authContext";
 
 const Navbar: React.FC = () => {
+  const { user, loading, logout, login } = useAuth();
+
+  console.log("Authenticated user:", user);
+
   return (
     <AppBar position="sticky" color="primary">
       <Toolbar
@@ -84,6 +89,21 @@ const Navbar: React.FC = () => {
           }}
         >
           Artists
+        </Button>
+
+        <Button
+          color="inherit"
+          size="small"
+          onClick={logout}
+          sx={{
+            color: "inherit",
+            fontSize: { xs: "0.82rem", sm: "0.88rem" },
+            px: { xs: 0.75, sm: 1 },
+            minWidth: "auto",
+            "&:hover": { color: "primary.main" },
+          }}
+        >
+          Logout
         </Button>
       </Toolbar>
     </AppBar>

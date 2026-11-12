@@ -15,3 +15,9 @@ export interface Artist {
   artistName: string;
   albums?: Album[];
 }
+
+export interface User {
+  id: number;
+  email: string;
+  displayName: string;
+}
