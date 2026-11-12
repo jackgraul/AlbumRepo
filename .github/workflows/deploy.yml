@@ -61,7 +61,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ping frontend
-        run: curl --fail https://albumrepo-frontend.onrender.com
-      - name: Ping backend health endpoint
-        run: curl --fail https://albumrepo-backend.onrender.com/actuator/health
+      - name: Wait for Frontend to become ready
+        run: |
+          echo "Waiting for Render frontend..."
+          URL="https://albumrepo-frontend.onrender.com"
+          TIMEOUT=300
+          INTERVAL=10
+          ELAPSED=0
+
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            if curl --silent --fail --output /dev/null "$URL"; then
+              echo "Frontend is live!"
+              exit 0
+            fi
+            echo "Frontend is still starting up... Retrying in ${INTERVAL}s."
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          echo "Error: Frontend timed out."
+          exit 1
+
+      - name: Wait for Backend Health Check
+        run: |
+          echo "Waiting for Render backend actuator health..."
+          URL="https://albumrepo-backend.onrender.com/actuator/health"
+          TIMEOUT=300
+          INTERVAL=10
+          ELAPSED=0
+
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            if curl --silent --fail "$URL" | grep -q '"status":"UP"'; then
+              echo "Backend is up, healthy, and connected to PostgreSQL!"
+              exit 0
+            fi
+            echo "Backend is still starting up... Retrying in ${INTERVAL}s."
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          echo "Error: Backend health check timed out."
+          exit 1
