@@ -41,4 +41,11 @@ public class UserService extends OidcUserService {
         // Return the authenticated Google user to Spring Security.
         return oidcUser;
     }
+
+    public User getUserByGoogleId(String googleId) {
+        return userRepository.findByGoogleId(googleId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Authenticated user was not found in the database"
+                ));
+    }
 }

@@ -16,7 +16,7 @@ public class Artist {
     @Column(name = "artist_name")
     private String artistName;
 
-    @OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("artist")
     private List<Album> albums;
 
