@@ -58,7 +58,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/csrf",
                                 "/oauth2/**",
-                                "/login/**"
+                                "/login/**",
+                                "/actuator/health"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
