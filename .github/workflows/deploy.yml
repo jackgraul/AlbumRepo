@@ -10,6 +10,7 @@ jobs:
   backend:
     name: Build and Deploy Backend
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -28,12 +29,27 @@ jobs:
           push: true
           tags: jackgraul/albumrepo-backend:latest
 
-      - name: Deploy backend to Render
-        run: curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
+      - name: Install Render CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
+          echo "$HOME/.render/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy backend and wait for completion
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_BACKEND_SERVICE_ID }}
+          CI: true
+        run: |
+          render deploys create "$RENDER_SERVICE_ID" \
+            --image docker.io/jackgraul/albumrepo-backend:latest \
+            --wait \
+            --output json \
+            --confirm
 
   frontend:
     name: Build and Deploy Frontend
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -52,18 +68,34 @@ jobs:
           push: true
           tags: jackgraul/albumrepo-frontend:latest
 
-      - name: Deploy frontend to Render
-        run: curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}"
+      - name: Install Render CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
+          echo "$HOME/.render/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy frontend and wait for completion
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_FRONTEND_SERVICE_ID }}
+          CI: true
+        run: |
+          render deploys create "$RENDER_SERVICE_ID" \
+            --image docker.io/jackgraul/albumrepo-frontend:latest \
+            --wait \
+            --output json \
+            --confirm
 
   test:
     name: Test Deployment
     needs: [backend, frontend]
     runs-on: ubuntu-latest
+    timeout-minutes: 6
 
     steps:
       - name: Wait for Frontend to become ready
         run: |
           echo "Waiting for Render frontend..."
+
           URL="https://albumrepo-frontend.onrender.com"
           TIMEOUT=300
           INTERVAL=10
@@ -74,7 +106,8 @@ jobs:
               echo "Frontend is live!"
               exit 0
             fi
-            echo "Frontend is still starting up... Retrying in ${INTERVAL}s."
+
+            echo "Frontend is still starting... Retrying."
             sleep $INTERVAL
             ELAPSED=$((ELAPSED + INTERVAL))
           done
@@ -82,20 +115,24 @@ jobs:
           echo "Error: Frontend timed out."
           exit 1
 
-      - name: Wait for Backend Health Check
+      - name: Verify Backend Health
         run: |
-          echo "Waiting for Render backend actuator health..."
+          echo "Checking backend health..."
+
           URL="https://albumrepo-backend.onrender.com/actuator/health"
           TIMEOUT=300
           INTERVAL=10
           ELAPSED=0
 
           while [ $ELAPSED -lt $TIMEOUT ]; do
-            if curl --silent --fail "$URL" | grep -q '"status":"UP"'; then
-              echo "Backend is up, healthy, and connected to PostgreSQL!"
+            RESPONSE=$(curl --silent --fail "$URL" || true)
+
+            if echo "$RESPONSE" | grep -Eq '"status"[[:space:]]*:[[:space:]]*"UP"'; then
+              echo "Backend is healthy!"
               exit 0
             fi
-            echo "Backend is still starting up... Retrying in ${INTERVAL}s."
+
+            echo "Backend is still starting... Retrying."
             sleep $INTERVAL
             ELAPSED=$((ELAPSED + INTERVAL))
           done
