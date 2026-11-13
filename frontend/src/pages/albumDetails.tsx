@@ -4,6 +4,7 @@ import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Sta
 import { SxProps, Theme } from "@mui/material/styles";
 import { Album } from "../models/models";
 import DeleteConfirmationDialog from "../utils/deleteConfirmation";
+import { normalizeArtistName } from "../utils/artistName";
 import AlbumService from "../services/albumService";
 import ArtistService from "../services/artistService";
 import { toSlug } from "../utils/slug";
@@ -90,6 +91,24 @@ const AlbumDetails: React.FC = () => {
     () => artistOptions.find(o => o.id === album?.artist?.id) ?? null,
     [artistOptions, album?.artist?.id]
   );
+
+  const sortedArtistOptions = useMemo(() => {
+    return [...artistOptions].sort((a, b) => {
+      const aLetter = (a.letter || "#").toUpperCase();
+      const bLetter = (b.letter || "#").toUpperCase();
+
+      if (aLetter < bLetter) return -1;
+      if (aLetter > bLetter) return 1;
+
+      const aName = normalizeArtistName(a.artistName);
+      const bName = normalizeArtistName(b.artistName);
+
+      if (aName < bName) return -1;
+      if (aName > bName) return 1;
+
+      return 0;
+    });
+  }, [artistOptions]);
 
   const [toast, setToast] = useState<{
     open: boolean;
@@ -334,7 +353,7 @@ const AlbumDetails: React.FC = () => {
               readOnly={!isNew}
               fullWidth
               size="small"
-              options={artistOptions}
+              options={sortedArtistOptions}
               groupBy={(o) => (o.letter || "").toUpperCase()}
               getOptionLabel={(o) => o.artistName ?? ""}
               isOptionEqualToValue={(o, v) => o.id === v.id}
