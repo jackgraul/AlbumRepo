@@ -12,10 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.Normalizer;
+import java.util.*;
 
 @Service
 public class ArtistService {
@@ -82,7 +80,7 @@ public class ArtistService {
     }
 
     @Transactional(readOnly = true)
-    public ArtistResponse getArtistForUser(Long userId, Integer artistId) {
+    public ArtistResponse getArtistByIdForUser(Long userId, Integer artistId) {
         UserArtist userArtist = userArtistRepository
                 .findByUser_IdAndArtist_Id(userId, artistId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -125,6 +123,20 @@ public class ArtistService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public ArtistResponse getArtistBySlugForUser(Long userId, String artistSlug) {
+        return getArtistsForUser(userId)
+                .stream()
+                .filter(artist ->
+                        toSlug(artist.artistName()).equals(artistSlug)
+                )
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Artist not found in user's collection"
+                ));
+    }
+
     @Transactional
     public ArtistResponse addArtistForUser(User user, Artist artist) {
         if (artist.getArtistName() == null || artist.getArtistName().isBlank()) {
@@ -158,7 +170,7 @@ public class ArtistService {
             userArtistRepository.save(userArtist);
         }
 
-        return getArtistForUser(user.getId(), existingArtist.getId());
+        return getArtistByIdForUser(user.getId(), existingArtist.getId());
     }
 
     @Transactional
@@ -186,7 +198,7 @@ public class ArtistService {
 
         artistRepository.save(existingArtist);
 
-        return getArtistForUser(user.getId(), existingArtist.getId());
+        return getArtistByIdForUser(user.getId(), existingArtist.getId());
     }
 
     @Transactional
@@ -199,5 +211,30 @@ public class ArtistService {
                 ));
 
         userArtistRepository.delete(userArtist);
+    }
+
+    private String toSlug(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD);
+
+        normalized = normalized
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .replace("&", " and ")
+                .replace("æ", "ae")
+                .replace("œ", "oe")
+                .replace("ß", "ss")
+                .replace("ø", "o")
+                .replace("ł", "l")
+                .replace("đ", "d")
+                .replace("þ", "th");
+
+        return normalized
+                .replaceAll("['\"’‘“”]", "")
+                .replaceAll("[^\\p{L}\\p{N}]+", "-")
+                .replaceAll("^-|-$", "");
     }
 }

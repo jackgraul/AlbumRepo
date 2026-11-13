@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia, Rating, FormControl, InputLabel, OutlinedInput } from "@mui/material";
@@ -33,14 +34,13 @@ const AlbumDetails: React.FC = () => {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupMessage, setLookupMessage] = useState("");
-
   type ArtistOption = { id: number; artistName: string; letter: string };
 
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
   const [artistLoading, setArtistLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [albumFetchErrorStatus, setAlbumFetchErrorStatus] = useState<number | null>(null);
 
   useEffect(() => {
     setArtistLoading(true);
@@ -107,26 +107,20 @@ const AlbumDetails: React.FC = () => {
     });
   }, [artistOptions]);
 
+  const lookupArtistId = album?.artist?.id ?? 0;
+  const lookupAlbumName = album?.albumName?.trim() ?? "";
+
   useEffect(() => {
-    if (!isNew || !album) return;
-
-    const artistId = album.artist?.id;
-    const name = album.albumName.trim();
-
-    if (!artistId || artistId === 0 || !name) {
-      setLookupLoading(false);
-      setLookupMessage("");
-      return;
-    }
+    if (!isNew || !lookupArtistId || !lookupAlbumName) return;
 
     let cancelled = false;
 
     const timeoutId = window.setTimeout(async () => {
-      setLookupLoading(true);
-      setLookupMessage("");
-
       try {
-        const existingAlbum = await AlbumService.lookup(artistId, name);
+        const existingAlbum = await AlbumService.lookup(
+          lookupArtistId,
+          lookupAlbumName
+        );
 
         if (cancelled) return;
 
@@ -163,14 +157,14 @@ const AlbumDetails: React.FC = () => {
             severity: "error",
           });
         }
-      } 
+      }
     }, 500);
 
     return () => {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [isNew, album?.artist?.id, album?.albumName]);
+  }, [isNew, lookupArtistId, lookupAlbumName]);
 
   const [toast, setToast] = useState<{
     open: boolean;
@@ -194,6 +188,7 @@ const AlbumDetails: React.FC = () => {
     const albumSlug = toSlug(albumName);
 
     if (!artistSlug || !albumSlug) {
+      setAlbum(null);
       setToast({
         open: true,
         message: "Album not found.",
@@ -203,29 +198,31 @@ const AlbumDetails: React.FC = () => {
       return;
     }
 
-    AlbumService.getAll()
-      .then((albums) => {
-        const data = albums.find(
-          (a) =>
-            toSlug(a.artist?.artistName) === artistSlug &&
-            toSlug(a.albumName) === albumSlug
-        );
+    let cancelled = false;
 
-        if (!data) {
-          throw new Error("Album not found");
-        }
+    setLoading(true);
+
+    AlbumService.getBySlug(artistSlug, albumSlug)
+      .then((data) => {
+        if (cancelled) return;
 
         setAlbum(data);
         setLoading(false);
       })
-      .catch(() => {
-        setToast({
-          open: true,
-          message: "Error fetching album.",
-          severity: "error",
-        });
+      .catch((error) => {
+        if (cancelled) return;
+
+        if (axios.isAxiosError(error)) {
+          setAlbumFetchErrorStatus(error.response?.status ?? null);
+        }
+
+        setAlbum(null);
         setLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [artistName, albumName, isNew]);
 
   const handleChange = (field: keyof Album, value: any) => {
@@ -366,9 +363,17 @@ const AlbumDetails: React.FC = () => {
   if (loading)
     return (
       <Box textAlign="center" mt={5}>
-        <CircularProgress />
+        <CircularProgress size={60} thickness={4} sx={{ mt: 25 }}/>
       </Box>
     );
+
+  if (!album && albumFetchErrorStatus === 404) {
+    return (
+      <Box textAlign="center" mt={5}>
+        <Typography variant="h6">404 - Album not found.</Typography>
+      </Box>
+    );
+  }
 
   if (!album) return null;
 

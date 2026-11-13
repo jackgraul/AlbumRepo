@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.text.Normalizer;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class AlbumService {
@@ -42,15 +44,23 @@ public class AlbumService {
     }
 
     @Transactional(readOnly = true)
-    public AlbumResponse getAlbumForUser(Long userId, Integer albumId) {
-        UserAlbum userAlbum = userAlbumRepository
-                .findByUser_IdAndAlbum_Id(userId, albumId)
+    public AlbumResponse getAlbumForUser(Long userId, String artistSlug, String albumSlug) {
+        return userAlbumRepository.findAlbumsForUser(userId)
+                .stream()
+                .filter(userAlbum -> {
+                    Album album = userAlbum.getAlbum();
+
+                    return toSlug(album.getArtist().getArtistName())
+                            .equals(artistSlug)
+                            && toSlug(album.getAlbumName())
+                            .equals(albumSlug);
+                })
+                .findFirst()
+                .map(this::toAlbumResponse)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Album not found in user's collection"
                 ));
-
-        return toAlbumResponse(userAlbum);
     }
 
     @Transactional
@@ -222,5 +232,33 @@ public class AlbumService {
                 userAlbum.getRating(),
                 artist
         );
+    }
+
+    private String toSlug(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        String normalized = Normalizer.normalize(
+                value,
+                Normalizer.Form.NFD
+        );
+
+        normalized = normalized
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .replace("&", " and ")
+                .replace("æ", "ae")
+                .replace("œ", "oe")
+                .replace("ß", "ss")
+                .replace("ø", "o")
+                .replace("ł", "l")
+                .replace("đ", "d")
+                .replace("þ", "th");
+
+        return normalized
+                .replaceAll("['\"’‘“”]", "")
+                .replaceAll("[^\\p{L}\\p{N}]+", "-")
+                .replaceAll("^-|-$", "");
     }
 }

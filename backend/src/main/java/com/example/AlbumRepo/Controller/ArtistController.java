@@ -31,11 +31,11 @@ public class ArtistController {
         return artistService.getArtistsForUser(user.getId());
     }
 
-    // GET artist by id for authenticated user
-    @GetMapping("/{id}")
-    public ArtistResponse getArtistById(@PathVariable Integer id, @AuthenticationPrincipal OidcUser oidcUser) {
+    // GET artist by slug for authenticated user
+    @GetMapping("/{artistSlug}")
+    public ArtistResponse getArtistBySlug(@PathVariable String artistSlug, @AuthenticationPrincipal OidcUser oidcUser) {
         User user = userService.getUserByGoogleId(oidcUser.getSubject());
-        return artistService.getArtistForUser(user.getId(), id);
+        return artistService.getArtistBySlugForUser(user.getId(), artistSlug);
     }
 
     // POST create artist for authenticated user

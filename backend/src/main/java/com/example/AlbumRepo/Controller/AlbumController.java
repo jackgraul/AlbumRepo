@@ -38,11 +38,20 @@ public class AlbumController {
         return ResponseEntity.ok(albums);
     }
 
-    // GET album by id for authenticated user
-    @GetMapping("/{id}")
-    public ResponseEntity<AlbumResponse> getAlbumById(@PathVariable Integer id, @AuthenticationPrincipal OidcUser oidcUser) {
+    // GET album by artist and album slugs for authenticated user
+    @GetMapping("/{artistSlug}/{albumSlug}")
+    public ResponseEntity<AlbumResponse> getAlbumBySlug(
+            @PathVariable String artistSlug,
+            @PathVariable String albumSlug,
+            @AuthenticationPrincipal OidcUser oidcUser) {
         User user = userService.getUserByGoogleId(oidcUser.getSubject());
-        AlbumResponse album = albumService.getAlbumForUser(user.getId(), id);
+
+        AlbumResponse album = albumService.getAlbumForUser(
+                user.getId(),
+                artistSlug,
+                albumSlug
+        );
+
         return ResponseEntity.ok(album);
     }
 

@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Box, Card, CardActionArea, CardContent, Button, TextField, Typography, CircularProgress, Stack, Snackbar, Alert, Grid } from "@mui/material";
@@ -10,6 +11,7 @@ import { getAlbumPath, getArtistAlbumCreatePath, getArtistPath, toSlug } from ".
 
 const ArtistDetails: React.FC = () => {
   const { artistName } = useParams<{ artistName?: string }>();
+
   const location = useLocation();
   const navigate = useNavigate();
   const isNew = location.pathname === "/artists/new";
@@ -23,9 +25,12 @@ const ArtistDetails: React.FC = () => {
         }
       : null
   );
+
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [artistFetchErrorStatus, setArtistFetchErrorStatus] = useState<number | null>(null);
 
   const [toast, setToast] = useState({
     open: false,
@@ -38,35 +43,42 @@ const ArtistDetails: React.FC = () => {
 
     const artistSlug = toSlug(artistName);
 
+    setArtistFetchErrorStatus(null);
+
     if (!artistSlug) {
-      setToast({
-        open: true,
-        message: "Artist not found.",
-        severity: "error",
-      });
+      setArtist(null);
+      setArtistFetchErrorStatus(404);
       setLoading(false);
       return;
     }
 
-    ArtistService.getAll()
-      .then((artists) => {
-        const data = artists.find((a) => toSlug(a.artistName) === artistSlug);
+    let cancelled = false;
 
-        if (!data) {
-          throw new Error("Artist not found");
-        }
+    setArtist(null);
+    setLoading(true);
+
+    ArtistService.getBySlug(artistSlug)
+      .then((data) => {
+        if (cancelled) return;
 
         setArtist(data);
         setLoading(false);
       })
-      .catch(() => {
-        setToast({
-          open: true,
-          message: "Error fetching artist.",
-          severity: "error",
-        });
+      .catch((error) => {
+        if (cancelled) return;
+
+        setArtist(null);
+
+        if (axios.isAxiosError(error)) {
+          setArtistFetchErrorStatus(error.response?.status ?? null);
+        }
+
         setLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [artistName, isNew]);
 
   const handleChange = (field: keyof Artist, value: any) => {
@@ -172,9 +184,19 @@ const ArtistDetails: React.FC = () => {
   if (loading)
     return (
       <Box textAlign="center" mt={5}>
-        <CircularProgress />
+        <CircularProgress size={60} thickness={4} sx={{ mt: 25 }}/>
       </Box>
     );
+
+  if (!artist && artistFetchErrorStatus === 404) {
+    return (
+      <Box textAlign="center" mt={5}>
+        <Typography variant="h5" fontWeight={600}>
+          404 - Artist not found.
+        </Typography>
+      </Box>
+    );
+  }
 
   if (!artist) return null;
 

@@ -15,8 +15,11 @@ class AlbumService {
     return data;
   }
 
-  static async getById(id: number | string): Promise<Album> {
-    const { data } = await api.get<Album>(`/albums/${id}`);
+  static async getBySlug(artistSlug: string, albumSlug: string): Promise<Album> {
+    const { data } = await api.get<Album>(
+      `/albums/${encodeURIComponent(artistSlug)}/${encodeURIComponent(albumSlug)}`
+    );
+
     return data;
   }
 
