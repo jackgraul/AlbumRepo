@@ -19,25 +19,22 @@ const AlbumDetails: React.FC = () => {
     artistName?: string;
     albumName?: string;
   }>();
+
   const location = useLocation();
   const navigate = useNavigate();
   const locationState = location.state as AlbumLocationState | null;
-  const hasFromSearchState =
-    !!locationState &&
-    Object.prototype.hasOwnProperty.call(locationState, "fromSearch");
+
+  const hasFromSearchState = !!locationState && Object.prototype.hasOwnProperty.call(locationState, "fromSearch");
   const routeArtistSlug = toSlug(artistName);
-
-  const preservedSearch = hasFromSearchState
-    ? locationState.fromSearch ?? ""
-    : location.search;
-
+  const preservedSearch = hasFromSearchState ? locationState.fromSearch ?? "" : location.search;
   const fromArtistPath = locationState?.fromArtistPath ?? null;
 
-  const isNew =
-    location.pathname === "/albums/new" ||
-    location.pathname.endsWith("/albums/new");
+  const isNew = location.pathname === "/albums/new" || location.pathname.endsWith("/albums/new");
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupMessage, setLookupMessage] = useState("");
 
   type ArtistOption = { id: number; artistName: string; letter: string };
 
@@ -110,10 +107,75 @@ const AlbumDetails: React.FC = () => {
     });
   }, [artistOptions]);
 
+  useEffect(() => {
+    if (!isNew || !album) return;
+
+    const artistId = album.artist?.id;
+    const name = album.albumName.trim();
+
+    if (!artistId || artistId === 0 || !name) {
+      setLookupLoading(false);
+      setLookupMessage("");
+      return;
+    }
+
+    let cancelled = false;
+
+    const timeoutId = window.setTimeout(async () => {
+      setLookupLoading(true);
+      setLookupMessage("");
+
+      try {
+        const existingAlbum = await AlbumService.lookup(artistId, name);
+
+        if (cancelled) return;
+
+        if (existingAlbum) {
+          setAlbum((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  releaseYear: existingAlbum.releaseYear,
+                  releaseOrder: existingAlbum.releaseOrder,
+                  genre: existingAlbum.genre ?? "",
+                  coverURL: existingAlbum.coverURL ?? "",
+                }
+              : prev
+          );
+
+          setToast({
+            open: true,
+            message: "Existing album found. Details have been filled in.",
+            severity: "success",
+          });
+        } else {
+          setToast({
+            open: true,
+            message: "No existing album found. Enter the album details manually.",
+            severity: "info",
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setToast({
+            open: true,
+            message: "Unable to check the shared album catalogue.",
+            severity: "error",
+          });
+        }
+      } 
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [isNew, album?.artist?.id, album?.albumName]);
+
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
-    severity: "success" | "error";
+    severity: "success" | "error" | "info";
   }>({
     open: false,
     message: "",
@@ -375,11 +437,7 @@ const AlbumDetails: React.FC = () => {
                       }
                 );
               }}
-              ListboxProps={{
-                sx: {
-                  py: 0.25,
-                },
-              }}
+              ListboxProps={{sx: {py: 0.25}}}
               renderOption={(props, option) => (
                 <Box
                   component="li"
@@ -561,9 +619,10 @@ const AlbumDetails: React.FC = () => {
 
       <Snackbar
         open={toast.open}
-        autoHideDuration={2500}
+        autoHideDuration={2000}
         onClose={handleToastClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{ mb: 10 }}
       >
         <Alert
           onClose={handleToastClose}

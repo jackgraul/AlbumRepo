@@ -182,6 +182,37 @@ public class AlbumService {
         userAlbumRepository.delete(userAlbum);
     }
 
+    public AlbumResponse lookupAlbum(Integer artistId, String albumName) {
+        if (artistId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Artist ID cannot be empty");
+        }
+
+        if (albumName == null || albumName.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Album name cannot be empty");
+        }
+
+        Album album = albumRepository
+                .findByAlbumNameAndArtistId(albumName.trim(), artistId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Album not found"));
+
+        ArtistSummaryResponse artist = new ArtistSummaryResponse(
+                album.getArtist().getId(),
+                album.getArtist().getLetter(),
+                album.getArtist().getArtistName()
+        );
+
+        return new AlbumResponse(
+                album.getId(),
+                album.getAlbumName(),
+                album.getReleaseYear(),
+                album.getReleaseOrder(),
+                album.getGenre(),
+                album.getCoverURL(),
+                null,
+                artist
+        );
+    }
+
     private AlbumResponse toAlbumResponse(UserAlbum userAlbum) {
         Album album = userAlbum.getAlbum();
 

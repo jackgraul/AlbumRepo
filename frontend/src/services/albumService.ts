@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "../api/apiClient";
 import { Album } from "../models/models";
 
@@ -17,6 +18,26 @@ class AlbumService {
   static async getById(id: number | string): Promise<Album> {
     const { data } = await api.get<Album>(`/albums/${id}`);
     return data;
+  }
+
+  static async lookup(artistId: number, albumName: string): Promise<Album | null> {
+    try {
+      const { data } = await api.get<Album>("/albums/lookup", {
+        params: {
+          artistId,
+          albumName,
+        },
+      });
+
+      return data;
+    } catch (error) {
+      // A 404 simply means this album isn't in the shared catalogue yet.
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return null;
+      }
+
+      throw error;
+    }
   }
 
   static async create(album: Album | AlbumPayload): Promise<Album> {

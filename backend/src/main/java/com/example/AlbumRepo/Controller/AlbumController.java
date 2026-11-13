@@ -48,6 +48,13 @@ public class AlbumController {
         return ResponseEntity.ok(album);
     }
 
+    // GET album by lookup to search for duplicates
+    @GetMapping("/lookup")
+    public ResponseEntity<AlbumResponse> lookupAlbum(@RequestParam Integer artistId, @RequestParam String albumName) {
+        AlbumResponse album = albumService.lookupAlbum(artistId, albumName);
+        return ResponseEntity.ok(album);
+    }
+
     // POST create new album for authenticated user
     @PostMapping("/add-album")
     public ResponseEntity<AlbumResponse> createAlbum(@RequestBody AddAlbumRequest request, @AuthenticationPrincipal OidcUser oidcUser) {
