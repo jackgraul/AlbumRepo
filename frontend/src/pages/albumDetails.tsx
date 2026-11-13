@@ -334,11 +334,11 @@ const AlbumDetails: React.FC = () => {
               readOnly={!isNew}
               size="small"
               options={artistOptions}
+              groupBy={(o) => (o.letter || "").toUpperCase()}
+              getOptionLabel={(o) => o.artistName ?? ""}
+              isOptionEqualToValue={(o, v) => o.id === v.id}
               value={selectedArtist}
               loading={artistLoading}
-              getOptionLabel={(o) => o?.artistName ?? ""}
-              isOptionEqualToValue={(o, v) => o.id === v.id}
-              sx={readOnlyFieldSx}
               onChange={(_, newValue) => {
                 handleChange(
                   "artist",
@@ -355,6 +355,43 @@ const AlbumDetails: React.FC = () => {
                       }
                 );
               }}
+              ListboxProps={{
+                sx: {
+                  py: 0.25,
+                },
+              }}
+              renderOption={(props, option) => (
+                <Box
+                  component="li"
+                  {...props}
+                  sx={{
+                    fontSize: "0.7rem",
+                    minHeight: 28,
+                    py: 0.3,
+                  }}
+                >
+                  {option.artistName}
+                </Box>
+              )}
+              renderGroup={(params) => (
+                <li key={params.key}>
+                  <Box
+                    sx={{
+                      px: 1.5,
+                      py: 0.4,
+                      fontSize: "0.65rem",
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                      color: "primary.main",
+                    }}
+                  >
+                    {params.group}
+                  </Box>
+                  <Box component="ul" sx={{ p: 0, m: 0 }}>
+                    {params.children}
+                  </Box>
+                </li>
+              )}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -362,6 +399,11 @@ const AlbumDetails: React.FC = () => {
                   placeholder="Search artists…"
                 />
               )}
+              sx={{
+                ...readOnlyFieldSx,
+                width: { xs: "100%", sm: 220, md: 240 },
+                flex: { lg: "1 1 220px" },
+              }}
             />
 
             <TextField
