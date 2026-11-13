@@ -332,6 +332,7 @@ const AlbumDetails: React.FC = () => {
 
             <Autocomplete
               readOnly={!isNew}
+              fullWidth
               size="small"
               options={artistOptions}
               groupBy={(o) => (o.letter || "").toUpperCase()}
@@ -374,7 +375,7 @@ const AlbumDetails: React.FC = () => {
                 </Box>
               )}
               renderGroup={(params) => (
-                <li key={params.key}>
+                <li key={params.key} style={{ listStyle: "none" }}>
                   <Box
                     sx={{
                       px: 1.5,
@@ -397,12 +398,12 @@ const AlbumDetails: React.FC = () => {
                   {...params}
                   label="Artist"
                   placeholder="Search artists…"
+                  fullWidth
                 />
               )}
               sx={{
                 ...readOnlyFieldSx,
-                width: { xs: "100%", sm: 220, md: 240 },
-                flex: { lg: "1 1 220px" },
+                width: "100%",
               }}
             />
 

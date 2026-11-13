@@ -5,7 +5,7 @@ import com.example.AlbumRepo.Service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -24,6 +24,9 @@ import java.util.function.Supplier;
 
 @Configuration
 public class SecurityConfig {
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
     private final UserService customOidcUserService;
 
     public SecurityConfig(UserService customOidcUserService) {
@@ -68,7 +71,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .oidcUserService(customOidcUserService)
                         )
-                        .defaultSuccessUrl("https://albumrepo-frontend.onrender.com", true)
+                        .defaultSuccessUrl(frontendUrl, true)
                 )
 
                 .logout(logout -> logout
