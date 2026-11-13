@@ -34,7 +34,6 @@ class AlbumService {
 
       return data;
     } catch (error) {
-      // A 404 simply means this album isn't in the shared catalogue yet.
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return null;
       }
