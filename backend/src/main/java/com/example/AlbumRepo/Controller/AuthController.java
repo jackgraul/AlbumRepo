@@ -7,10 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.web.csrf.CsrfToken;
 
@@ -51,10 +48,8 @@ public class AuthController {
     }
 
     @GetMapping("/csrf")
-    public ResponseEntity<Map<String, String>> getCsrfToken(CsrfToken csrfToken) {
-        return ResponseEntity.ok(
-                Map.of("token", csrfToken.getToken())
-        );
+    public ResponseEntity<Map<String, String>> getCsrfToken(@RequestAttribute("rawCsrfToken") CsrfToken csrfToken) {
+        return ResponseEntity.ok(Map.of("token", csrfToken.getToken()));
     }
 
     public record AuthResponse(

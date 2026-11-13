@@ -31,11 +31,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
-
-        CookieCsrfTokenRepository csrfTokenRepository =
-                CookieCsrfTokenRepository.withHttpOnlyFalse();
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
 
         csrfTokenRepository.setCookiePath("/");
         csrfTokenRepository.setCookieCustomizer(cookie ->
@@ -103,10 +100,14 @@ public class SecurityConfig {
                 HttpServletResponse response,
                 Supplier<CsrfToken> csrfToken) {
 
-            this.xor.handle(request, response, csrfToken);
+            // Obtain the underlying, raw token.
+            CsrfToken rawToken = csrfToken.get();
 
-            // Force generation of the token and its cookie.
-            csrfToken.get();
+            // Make it available to our CSRF endpoint.
+            request.setAttribute("rawCsrfToken", rawToken);
+
+            // Preserve Spring's XOR/BREACH protection.
+            this.xor.handle(request, response, () -> rawToken);
         }
 
         @Override
