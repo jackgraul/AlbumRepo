@@ -1,12 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  CardActionArea,
-} from "@mui/material";
+import { Card, CardContent, Typography, Box, CardActionArea } from "@mui/material";
 import MarqueeOnOverflow from "../../utils/marqueeOverflow";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { getAlbumPath } from "../../utils/slug";

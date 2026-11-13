@@ -1,30 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import {
-  Box,
-  Card,
-  CardActionArea,
-  CardContent,
-  Button,
-  TextField,
-  Typography,
-  CircularProgress,
-  Stack,
-  Snackbar,
-  Alert,
-  Grid,
-} from "@mui/material";
+import { Box, Card, CardActionArea, CardContent, Button, TextField, Typography, CircularProgress, Stack, Snackbar, Alert, Grid } from "@mui/material";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Artist } from "../models/models";
 import DeleteConfirmationDialog from "../utils/deleteConfirmation";
 import MarqueeOnOverflow from "../utils/marqueeOverflow";
 import ArtistService from "../services/artistService";
-import {
-  getAlbumPath,
-  getArtistAlbumCreatePath,
-  getArtistPath,
-  toSlug,
-} from "../utils/slug";
+import { getAlbumPath, getArtistAlbumCreatePath, getArtistPath, toSlug } from "../utils/slug";
 
 const ArtistDetails: React.FC = () => {
   const { artistName } = useParams<{ artistName?: string }>();

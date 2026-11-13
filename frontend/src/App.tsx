@@ -8,7 +8,7 @@ import GuidePage from "./pages/guide";
 import SignInPage from "./pages/signIn";
 import Navbar from "./components/common/navbar";
 import Footer from "./components/common/footer";
-import ProtectedRoute from "./components/common/protectedRoute";
+import ProtectedRoute from "./utils/protectedRoute";
 import { Box } from "@mui/material";
 import { AuthProvider } from "./context/authContext";
 
