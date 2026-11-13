@@ -40,11 +40,15 @@ public class UserAlbum {
     }
 
     public Long getId() { return id; }
+
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
+
     public Album getAlbum() { return album; }
     public void setAlbum(Album album) { this.album = album; }
+
     public Double getRating() { return rating; }
     public void setRating(Double rating) { this.rating = rating; }
+
     public OffsetDateTime getCreatedAt() { return createdAt; }
 }

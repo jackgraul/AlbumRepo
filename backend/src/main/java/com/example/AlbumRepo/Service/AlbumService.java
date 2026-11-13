@@ -5,7 +5,6 @@ import com.example.AlbumRepo.DTO.AlbumResponse;
 import com.example.AlbumRepo.DTO.ArtistSummaryResponse;
 import com.example.AlbumRepo.Entity.*;
 import com.example.AlbumRepo.Repository.*;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +55,6 @@ public class AlbumService {
 
     @Transactional
     public AlbumResponse addAlbumForUser(User user, AddAlbumRequest request) {
-
         if (request.album().getAlbumName() == null
                 || request.album().getAlbumName().isBlank()) {
             throw new ResponseStatusException(
@@ -145,19 +143,11 @@ public class AlbumService {
                     return userAlbumRepository.save(newUserAlbum);
                 });
 
-        System.out.println("UserAlbum ID: " + userAlbum.getId());
-        System.out.println("User ID: " + userAlbum.getUser().getId());
-        System.out.println("Album ID: " + userAlbum.getAlbum().getId());
-
         return toAlbumResponse(userAlbum);
     }
 
     @Transactional
-    public AlbumResponse updateAlbumRatingForUser(
-            Long userId,
-            Integer albumId,
-            Double rating) {
-
+    public AlbumResponse updateAlbumRatingForUser(Long userId, Integer albumId, Double rating) {
         UserAlbum userAlbum = userAlbumRepository
                 .findByUser_IdAndAlbum_Id(userId, albumId)
                 .orElseThrow(() -> new ResponseStatusException(

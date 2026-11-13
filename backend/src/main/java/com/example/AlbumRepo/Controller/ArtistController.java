@@ -42,7 +42,7 @@ public class ArtistController {
     @PostMapping("/add-artist")
     public ArtistResponse createArtist(@RequestBody Artist artist, @AuthenticationPrincipal OidcUser oidcUser) {
         User user = userService.getUserByGoogleId(oidcUser.getSubject());
-        return artistService.addArtistToUser(user, artist);
+        return artistService.addArtistForUser(user, artist);
     }
 
     // PUT update artist for authenticated user
@@ -56,7 +56,7 @@ public class ArtistController {
     @DeleteMapping("/delete-artist/{id}")
     public ResponseEntity<Void> deleteArtist(@PathVariable Integer id, @AuthenticationPrincipal OidcUser oidcUser) {
         User user = userService.getUserByGoogleId(oidcUser.getSubject());
-        artistService.removeArtistFromUser(user, id);
+        artistService.removeArtistForUser(user, id);
         return ResponseEntity.noContent().build();
     }
 }

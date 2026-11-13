@@ -19,7 +19,6 @@ import java.util.Map;
 
 @Service
 public class ArtistService {
-
     private final IArtistRepository artistRepository;
     private final IUserArtistRepository userArtistRepository;
     private final IUserAlbumRepository userAlbumRepository;
@@ -35,13 +34,8 @@ public class ArtistService {
 
     @Transactional(readOnly = true)
     public List<ArtistResponse> getArtistsForUser(Long userId) {
-
-        List<UserArtist> userArtists =
-                userArtistRepository.findArtistsForUser(userId);
-
-        List<UserAlbum> userAlbums =
-                userAlbumRepository.findAlbumsForUser(userId);
-
+        List<UserArtist> userArtists = userArtistRepository.findArtistsForUser(userId);
+        List<UserAlbum> userAlbums = userAlbumRepository.findAlbumsForUser(userId);
         Map<Integer, List<AlbumResponse>> albumsByArtist = new HashMap<>();
 
         for (UserAlbum userAlbum : userAlbums) {
@@ -89,7 +83,6 @@ public class ArtistService {
 
     @Transactional(readOnly = true)
     public ArtistResponse getArtistForUser(Long userId, Integer artistId) {
-
         UserArtist userArtist = userArtistRepository
                 .findByUser_IdAndArtist_Id(userId, artistId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -133,7 +126,7 @@ public class ArtistService {
     }
 
     @Transactional
-    public ArtistResponse addArtistToUser(User user, Artist artist) {
+    public ArtistResponse addArtistForUser(User user, Artist artist) {
         if (artist.getArtistName() == null || artist.getArtistName().isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -197,7 +190,7 @@ public class ArtistService {
     }
 
     @Transactional
-    public void removeArtistFromUser(User user, Integer artistId) {
+    public void removeArtistForUser(User user, Integer artistId) {
 
         UserArtist userArtist = userArtistRepository
                 .findByUser_IdAndArtist_Id(user.getId(), artistId)

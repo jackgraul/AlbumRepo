@@ -23,12 +23,10 @@ public class AlbumController {
     @Autowired
     IAlbumRepository albumRepository;
     private final AlbumService albumService;
-    private final CoverArtService coverArtService;
     private final UserService userService;
 
-    public AlbumController(AlbumService albumService, CoverArtService coverArtService, UserService userService) {
+    public AlbumController(AlbumService albumService, UserService userService) {
         this.albumService = albumService;
-        this.coverArtService = coverArtService;
         this.userService = userService;
     }
 

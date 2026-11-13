@@ -1,5 +1,6 @@
 package com.example.AlbumRepo.Controller;
 
+import com.example.AlbumRepo.DTO.AuthResponse;
 import com.example.AlbumRepo.Entity.User;
 import com.example.AlbumRepo.Repository.IUserRepository;
 
@@ -23,9 +24,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<AuthResponse> getCurrentUser(
-            @AuthenticationPrincipal OidcUser oidcUser) {
-
+    public ResponseEntity<AuthResponse> getCurrentUser(@AuthenticationPrincipal OidcUser oidcUser) {
         // No authenticated user.
         if (oidcUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -51,10 +50,4 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> getCsrfToken(@RequestAttribute("rawCsrfToken") CsrfToken csrfToken) {
         return ResponseEntity.ok(Map.of("token", csrfToken.getToken()));
     }
-
-    public record AuthResponse(
-            Long id,
-            String email,
-            String displayName
-    ) {}
 }

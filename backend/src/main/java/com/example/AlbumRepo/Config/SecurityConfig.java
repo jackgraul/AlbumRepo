@@ -1,4 +1,3 @@
-
 package com.example.AlbumRepo.Config;
 
 import com.example.AlbumRepo.Service.UserService;
@@ -88,14 +87,9 @@ public class SecurityConfig {
     }
 
     // Handles CSRF tokens for a JavaScript frontend.
-    private static final class SpaCsrfTokenRequestHandler
-            implements CsrfTokenRequestHandler {
-
-        private final CsrfTokenRequestHandler plain =
-                new CsrfTokenRequestAttributeHandler();
-
-        private final CsrfTokenRequestHandler xor =
-                new XorCsrfTokenRequestAttributeHandler();
+    private static final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
+        private final CsrfTokenRequestHandler plain = new CsrfTokenRequestAttributeHandler();
+        private final CsrfTokenRequestHandler xor = new XorCsrfTokenRequestAttributeHandler();
 
         @Override
         public void handle(
@@ -114,12 +108,8 @@ public class SecurityConfig {
         }
 
         @Override
-        public String resolveCsrfTokenValue(
-                HttpServletRequest request,
-                CsrfToken csrfToken) {
-
-            String headerValue =
-                    request.getHeader(csrfToken.getHeaderName());
+        public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
+            String headerValue = request.getHeader(csrfToken.getHeaderName());
 
             return (StringUtils.hasText(headerValue) ? this.plain : this.xor)
                     .resolveCsrfTokenValue(request, csrfToken);

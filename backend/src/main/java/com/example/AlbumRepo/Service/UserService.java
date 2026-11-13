@@ -18,7 +18,6 @@ public class UserService extends OidcUserService {
 
     @Override
     public OidcUser loadUser(OidcUserRequest userRequest) {
-
         // Complete Google's normal user-loading process first.
         OidcUser oidcUser = super.loadUser(userRequest);
 
@@ -28,8 +27,7 @@ public class UserService extends OidcUserService {
         String displayName = oidcUser.getFullName();
 
         // Look for an existing application user.
-        User user = userRepository.findByGoogleId(googleId)
-                .orElseGet(User::new);
+        User user = userRepository.findByGoogleId(googleId).orElseGet(User::new);
 
         // Populate or update their application profile.
         user.setGoogleId(googleId);
