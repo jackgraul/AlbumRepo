@@ -15,17 +15,36 @@ const api = axios.create({
   },
 });
 
-api.interceptors.request.use((config) => {
-  const csrfCookie = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith("XSRF-TOKEN="));
+let csrfToken: string | null = null;
+let csrfTokenPromise: Promise<string> | null = null;
 
-  if (csrfCookie) {
-    const csrfToken = decodeURIComponent(
-      csrfCookie.substring("XSRF-TOKEN=".length)
-    );
+export const refreshCsrfToken = async (): Promise<string> => {
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = api
+      .get<{ token: string }>("/auth/csrf")
+      .then((response) => {
+        csrfToken = response.data.token;
+        return csrfToken;
+      })
+      .finally(() => {
+        csrfTokenPromise = null;
+      });
+  }
 
-    config.headers.set("X-XSRF-TOKEN", csrfToken);
+  return csrfTokenPromise;
+};
+
+api.interceptors.request.use(async (config) => {
+  const method = config.method?.toLowerCase();
+
+  if (["post", "put", "patch", "delete"].includes(method ?? "")) {
+    if (!csrfToken) {
+      await refreshCsrfToken();
+    }
+
+    if (csrfToken) {
+      config.headers.set("X-XSRF-TOKEN", csrfToken);
+    }
   }
 
   return config;

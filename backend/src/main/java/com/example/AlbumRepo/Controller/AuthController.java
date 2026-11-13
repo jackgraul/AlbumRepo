@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.web.csrf.CsrfToken;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -49,8 +51,10 @@ public class AuthController {
     }
 
     @GetMapping("/csrf")
-    public CsrfToken getCsrfToken(CsrfToken csrfToken) {
-        return csrfToken;
+    public ResponseEntity<Map<String, String>> getCsrfToken(CsrfToken csrfToken) {
+        return ResponseEntity.ok(
+                Map.of("token", csrfToken.getToken())
+        );
     }
 
     public record AuthResponse(

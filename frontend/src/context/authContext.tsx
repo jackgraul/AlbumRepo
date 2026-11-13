@@ -60,23 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = useCallback(async (): Promise<void> => {
     try {
       setError(null);
-
-      // Get a fresh CSRF token.
-      await api.get("/auth/csrf");
-
-      // The API interceptor automatically attaches the CSRF token.
       await api.post("/auth/logout");
-
       setUser(null);
-
     } catch (err) {
       console.error("Logout failed:", err);
-
-      const message = err instanceof Error
-        ? err.message
-        : "An unexpected error occurred";
-
-      setError(message);
       throw err;
     }
   }, []);

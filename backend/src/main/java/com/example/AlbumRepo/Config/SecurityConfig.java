@@ -38,6 +38,9 @@ public class SecurityConfig {
                 CookieCsrfTokenRepository.withHttpOnlyFalse();
 
         csrfTokenRepository.setCookiePath("/");
+        csrfTokenRepository.setCookieCustomizer(cookie ->
+                cookie.sameSite("None").secure(true)
+        );
 
         http
                 .cors(Customizer.withDefaults())
