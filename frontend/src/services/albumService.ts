@@ -58,6 +58,14 @@ class AlbumService {
     return data;
   }
 
+  static async updateMetadata(id: number, album: Album): Promise<Album> {
+    const { data } = await api.put<Album>(
+      `/albums/update-metadata/${id}`,
+      album
+    );
+    return data;
+  }
+
   static async delete(id: number): Promise<void> {
     await api.delete(`/albums/delete-album/${id}`);
   }

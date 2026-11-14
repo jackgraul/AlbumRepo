@@ -9,6 +9,7 @@ import { normalizeArtistName } from "../utils/artistName";
 import AlbumService from "../services/albumService";
 import ArtistService from "../services/artistService";
 import { toSlug } from "../utils/slug";
+import { useAuth } from "../context/authContext";
 
 type AlbumLocationState = {
   fromSearch?: string;
@@ -41,6 +42,9 @@ const AlbumDetails: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const [albumFetchErrorStatus, setAlbumFetchErrorStatus] = useState<number | null>(null);
+
+  const { user } = useAuth();
+  const isAdmin = user?.id === 1;
 
   useEffect(() => {
     setArtistLoading(true);
@@ -312,6 +316,8 @@ const AlbumDetails: React.FC = () => {
 
     const request = isNew
       ? AlbumService.create(album)
+      : isAdmin
+      ? AlbumService.updateMetadata(album.id, album).then(() => AlbumService.update(album.id, album.rating ?? null))
       : AlbumService.update(album.id, album.rating ?? null);
 
     request
@@ -378,7 +384,7 @@ const AlbumDetails: React.FC = () => {
   if (!album) return null;
 
   const readOnlyFieldSx: SxProps<Theme> = {
-    "& .MuiInputBase-input": { opacity: isNew ? 1 : 0.5 }
+    "& .MuiInputBase-input": { opacity: isNew || isAdmin ? 1 : 0.5 }
   };
 
   return (
@@ -409,7 +415,7 @@ const AlbumDetails: React.FC = () => {
             <TextField
               label="Album Name"
               value={album.albumName}
-              InputProps={{ readOnly: !isNew }}
+              InputProps={{ readOnly: !isNew && !isAdmin }}
               onChange={(e) => handleChange("albumName", e.target.value)}
               fullWidth
               size="small"
@@ -417,7 +423,7 @@ const AlbumDetails: React.FC = () => {
             />
 
             <Autocomplete
-              readOnly={!isNew}
+              readOnly={!isNew && !isAdmin}
               fullWidth
               size="small"
               options={sortedArtistOptions}
@@ -493,7 +499,7 @@ const AlbumDetails: React.FC = () => {
               label="Release Year"
               type="number"
               value={album.releaseYear ?? ""}
-              InputProps={{ readOnly: !isNew }}
+              InputProps={{ readOnly: !isNew && !isAdmin }}
               onChange={(e) => handleChange("releaseYear", Number(e.target.value))}
               fullWidth
               size="small"
@@ -503,7 +509,7 @@ const AlbumDetails: React.FC = () => {
             <TextField
               label="Genre"
               value={album.genre ?? ""}
-              InputProps={{ readOnly: !isNew }}
+              InputProps={{ readOnly: !isNew && !isAdmin }}
               onChange={(e) => handleChange("genre", e.target.value)}
               fullWidth
               size="small"
@@ -540,6 +546,18 @@ const AlbumDetails: React.FC = () => {
                 )}
               />
             </FormControl>
+
+            {isAdmin && (
+              <TextField
+                label="Cover URL"
+                value={album.coverURL ?? ""}
+                InputProps={{ readOnly: !isNew && !isAdmin }}
+                onChange={(e) => handleChange("coverURL", e.target.value)}
+                fullWidth
+                size="small"
+                sx={readOnlyFieldSx}  
+              />
+            )}
           </Stack>
 
           <Stack direction="row" spacing={1.5} mt={3} flexWrap="wrap" useFlexGap>

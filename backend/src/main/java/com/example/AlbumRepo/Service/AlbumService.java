@@ -3,6 +3,7 @@ package com.example.AlbumRepo.Service;
 import com.example.AlbumRepo.DTO.AddAlbumRequest;
 import com.example.AlbumRepo.DTO.AlbumResponse;
 import com.example.AlbumRepo.DTO.ArtistSummaryResponse;
+import com.example.AlbumRepo.DTO.UpdateAlbumMetadataRequest;
 import com.example.AlbumRepo.Entity.*;
 import com.example.AlbumRepo.Repository.*;
 import org.springframework.http.HttpStatus;
@@ -168,6 +169,30 @@ public class AlbumService {
         userAlbum.setRating(rating);
 
         return toAlbumResponse(userAlbum);
+    }
+
+    @Transactional
+    public Album updateAlbumMetadata(Integer albumId, UpdateAlbumMetadataRequest request) {
+
+        Album album = albumRepository.findById(albumId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Album not found"
+                ));
+
+        Artist artist = artistRepository.findById(request.artist().id())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Artist not found"
+                ));
+
+        album.setAlbumName(request.albumName());
+        album.setArtist(artist);
+        album.setReleaseYear(request.releaseYear());
+        album.setGenre(request.genre());
+        album.setCoverURL(request.coverURL());
+        album.setReleaseOrder(request.releaseOrder());
+
+        return albumRepository.save(album);
     }
 
     @Transactional

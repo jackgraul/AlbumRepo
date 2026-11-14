@@ -2,6 +2,7 @@ package com.example.AlbumRepo.Controller;
 
 import com.example.AlbumRepo.DTO.AddAlbumRequest;
 import com.example.AlbumRepo.DTO.AlbumResponse;
+import com.example.AlbumRepo.DTO.UpdateAlbumMetadataRequest;
 import com.example.AlbumRepo.DTO.UpdateAlbumRequest;
 import com.example.AlbumRepo.Entity.Album;
 import com.example.AlbumRepo.Entity.User;
@@ -10,10 +11,12 @@ import com.example.AlbumRepo.Service.AlbumService;
 import com.example.AlbumRepo.Service.CoverArtService;
 import com.example.AlbumRepo.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -76,6 +79,20 @@ public class AlbumController {
         User user = userService.getUserByGoogleId(oidcUser.getSubject());
         AlbumResponse updatedAlbum = albumService.updateAlbumRatingForUser(user.getId(), id, request.rating());
         return ResponseEntity.ok(updatedAlbum);
+    }
+
+    @PutMapping("/update-metadata/{id}")
+    public Album updateMetadata(
+            @PathVariable Integer id,
+            @RequestBody UpdateAlbumMetadataRequest request,
+            @AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+
+        if (!user.getId().equals(1L)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        return albumService.updateAlbumMetadata(id, request);
     }
 
     // DELETE album for authenticated user
