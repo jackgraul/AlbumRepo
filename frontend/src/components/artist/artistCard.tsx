@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent, Typography, CardActionArea } from "@mui/material";
 import { Album } from "../../models/models";
 import { getArtistPath } from "../../utils/slug";
@@ -14,6 +14,7 @@ interface ArtistCardProps {
 
 const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums, avgRating }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <Card
@@ -37,7 +38,12 @@ const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums,
       }}
     >
       <CardActionArea
-        onClick={() => navigate(getArtistPath(artistName))}
+        onClick={() =>
+          navigate({
+            pathname: getArtistPath(artistName),
+            search: location.search,
+          })
+        }
         sx={{ flexGrow: 1 }}
       >
         <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>

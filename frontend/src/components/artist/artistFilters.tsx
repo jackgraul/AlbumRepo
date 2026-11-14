@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Box, Button, TextField, InputLabel, MenuItem, FormControl, Select, Autocomplete } from "@mui/material";
 import { ArtistOption } from "../album/albumFilters";
 import { normalizeArtistName } from "../../utils/artistName";
+import { toSlug } from "../../utils/slug";
 
 interface ArtistFilterProps {
   selectedLetter: string;
@@ -45,7 +46,7 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
   };
 
   const handleArtistChange = (value: string | null) => {
-    setSelectedArtist(value);
+    setSelectedArtist(value ? toSlug(value) : null);
   };
 
   const handleResetFilters = () => {
@@ -127,7 +128,7 @@ const ArtistFilters: React.FC<ArtistFilterProps> = ({
 
   const selectedArtistOption =
     selectedArtist != null
-      ? filteredArtistOptions.find((o) => o.name === selectedArtist) ?? null
+      ? filteredArtistOptions.find((o) => toSlug(o.name) === selectedArtist) ?? null
       : null;
 
   return (

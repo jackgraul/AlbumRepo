@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { Artist } from "../models/models";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import ArtistCard from "../components/artist/artistCard";
@@ -7,15 +8,45 @@ import { ArtistOption } from "../components/album/albumFilters";
 import { getNormalizedLetter, normalizeArtistName } from "../utils/artistName";
 import ArtistSummaryBar from "../components/artist/artistSummaryBar";
 import ArtistService from "../services/artistService";
+import { toSlug } from "../utils/slug";
 
 const ArtistList: React.FC = () => {
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLetter, setSelectedLetter] = useState<string>("");
-  const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<string>("letter");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [selectedLetter, setSelectedLetter] = useState<string>(
+    () => searchParams.get("letter")?.toUpperCase() ?? ""
+  );
+  const [selectedArtist, setSelectedArtist] = useState<string | null>(
+    () => searchParams.get("artist")
+  );
+  const [sortBy, setSortBy] = useState<string>(
+    () => searchParams.get("sortby") ?? "letter"
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(
+    () => searchParams.get("order") === "desc" ? "desc" : "asc"
+  );
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedLetter) params.set("letter", selectedLetter.toLowerCase());
+    if (selectedArtist) params.set("artist", selectedArtist);
+    if (sortBy !== "letter") params.set("sortby", sortBy);
+    if (sortOrder !== "asc") params.set("order", sortOrder);
+
+    const next = params.toString();
+    const current = location.search.replace(/^\?/, "");
+    if (next !== current) setSearchParams(params, { replace: true });
+  }, [
+    selectedLetter,
+    selectedArtist,
+    sortBy,
+    sortOrder,
+    location.search,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     ArtistService.getAll()
@@ -86,9 +117,8 @@ const ArtistList: React.FC = () => {
     }
 
     if (selectedArtist) {
-      const target = selectedArtist.toLowerCase();
       filtered = filtered.filter(
-        a => a.artistName?.toLowerCase() === target
+        a => toSlug(a.artistName) === selectedArtist
       );
     }
 

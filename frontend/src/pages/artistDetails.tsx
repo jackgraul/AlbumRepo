@@ -90,6 +90,9 @@ const ArtistDetails: React.FC = () => {
     setArtist((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
+  const goBack = () =>
+    navigate({ pathname: "/artists", search: location.search });
+
   const isValid = async () => {
     if (!artist) return false;
 
@@ -140,7 +143,7 @@ const ArtistDetails: React.FC = () => {
         severity: "success",
       });
       setSaving(false);
-      setTimeout(() => navigate("/artists"), 1200);
+      setTimeout(goBack, 1200);
     }).catch((err) => {
       setToast({
         open: true,
@@ -170,7 +173,7 @@ const ArtistDetails: React.FC = () => {
           severity: "success",
         });
         setSaving(false);
-        setTimeout(() => navigate("/artists"), 1200);
+        setTimeout(goBack, 1200);
       })
       .catch((err) => {
         setToast({
@@ -194,7 +197,7 @@ const ArtistDetails: React.FC = () => {
           message: "Artist deleted successfully!",
           severity: "success",
         });
-        setTimeout(() => navigate("/artists"), 1000);
+        setTimeout(goBack, 1000);
       })
       .catch(() => {
         setToast({
@@ -339,7 +342,7 @@ const ArtistDetails: React.FC = () => {
 
             <Button
               variant="text"
-              onClick={() => navigate("/artists")}
+              onClick={goBack}
               size="medium"
             >
               Cancel
@@ -399,7 +402,9 @@ const ArtistDetails: React.FC = () => {
                         sx={{ height: "100%" }}
                         onClick={() =>
                           navigate(getAlbumPath(artist.artistName, a.albumName), {
-                            state: { fromArtistPath: getArtistPath(artist.artistName) },
+                            state: {
+                              fromArtistPath: `${getArtistPath(artist.artistName)}${location.search}`,
+                            },
                           })
                         }
                       >
@@ -503,7 +508,9 @@ const ArtistDetails: React.FC = () => {
                 color="primary"
                 onClick={() =>
                   navigate(getArtistAlbumCreatePath(artist.artistName), {
-                    state: { fromArtistPath: getArtistPath(artist.artistName) },
+                    state: {
+                      fromArtistPath: `${getArtistPath(artist.artistName)}${location.search}`,
+                    },
                   })
                 }
                 size="medium"
