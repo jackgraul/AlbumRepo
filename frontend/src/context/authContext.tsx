@@ -1,11 +1,7 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import api from "../api/apiClient";
+import { Snackbar, Alert } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { User } from "../models/models";
 
 interface AuthContextType {
@@ -25,6 +21,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toastOpen, setToastOpen] = useState(false);
+  const navigate = useNavigate();
 
   const refreshUser = useCallback(async (): Promise<User | null> => {
     try {
@@ -62,11 +60,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setError(null);
       await api.post("/auth/logout");
       setUser(null);
+      setToastOpen(true);
+      navigate("/");
     } catch (err) {
       console.error("Logout failed:", err);
       throw err;
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     refreshUser();
@@ -84,6 +84,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }}
     >
       {children}
+
+      <AuthContext.Provider
+        value={{
+          user,
+          loading,
+          error,
+          refreshUser,
+          login,
+          logout
+        }}
+      >
+        {children}
+
+        <Snackbar
+          open={toastOpen}
+          autoHideDuration={2000}
+          onClose={() => setToastOpen(false)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          sx={{ mb: 10 }}
+        >
+          <Alert
+            onClose={() => setToastOpen(false)}
+            severity="success"
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            Logged out successfully!
+          </Alert>
+        </Snackbar>
+      </AuthContext.Provider>
     </AuthContext.Provider>
   );
 };
