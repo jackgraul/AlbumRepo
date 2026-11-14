@@ -31,7 +31,6 @@ public class User {
 
     public Long getId() { return id; }
 
-    public String getGoogleId() { return googleId; }
     public void setGoogleId(String googleId) { this.googleId = googleId; }
 
     public String getEmail() { return email; }
@@ -39,6 +38,4 @@ public class User {
 
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
-
-    public OffsetDateTime getCreatedAt() { return createdAt; }
 }

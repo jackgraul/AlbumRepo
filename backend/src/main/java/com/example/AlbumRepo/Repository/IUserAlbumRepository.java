@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IUserAlbumRepository extends JpaRepository<UserAlbum, Long> {
-    List<UserAlbum> findByUser_Id(Long userId);
     Optional<UserAlbum> findByUser_IdAndAlbum_Id(Long userId, Integer albumId);
 
     @Query("""
@@ -20,6 +19,4 @@ public interface IUserAlbumRepository extends JpaRepository<UserAlbum, Long> {
     WHERE ua.user.id = :userId
     """)
     List<UserAlbum> findAlbumsForUser(@Param("userId") Long userId);
-
-    boolean existsByUser_IdAndAlbum_Id(Long userId, Integer albumId);
 }

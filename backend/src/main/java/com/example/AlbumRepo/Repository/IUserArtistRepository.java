@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IUserArtistRepository extends JpaRepository<UserArtist, Long> {
-    List<UserArtist> findByUser_Id(Long userId);
+    boolean existsByUser_IdAndArtist_Id(Long userId, Integer artistId);
     Optional<UserArtist> findByUser_IdAndArtist_Id(Long userId, Integer artistId);
 
     @Query("""
@@ -19,6 +19,4 @@ public interface IUserArtistRepository extends JpaRepository<UserArtist, Long> {
     WHERE ua.user.id = :userId
     """)
     List<UserArtist> findArtistsForUser(@Param("userId") Long userId);
-
-    boolean existsByUser_IdAndArtist_Id(Long userId, Integer artistId);
 }

@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IAlbumRepository extends JpaRepository<Album,Integer> {
-    @Query("SELECT a FROM Album a JOIN FETCH a.artist")
-    List<Album> findAllWithArtists();
-
     @Query("""
     SELECT a
     FROM Album a

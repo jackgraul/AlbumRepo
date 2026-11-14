@@ -28,7 +28,4 @@ public class Artist {
 
     public String getArtistName() { return artistName; }
     public void setArtistName(String artistName) { this.artistName = artistName; }
-
-    public List<Album> getAlbums() { return albums; }
-    public void setAlbums(List<Album> albums) { this.albums = albums; }
 }
