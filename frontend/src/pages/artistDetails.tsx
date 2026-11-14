@@ -1,33 +1,19 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import {
-  Box,
-  Card,
-  CardActionArea,
-  CardContent,
-  Button,
-  TextField,
-  Typography,
-  CircularProgress,
-  Stack,
-  Snackbar,
-  Alert,
-  Grid,
-} from "@mui/material";
+import { Box, Card, CardActionArea, CardContent, Button, TextField, Typography, CircularProgress, Stack, Snackbar, Alert, Grid } from "@mui/material";
+import { SxProps, Theme } from "@mui/material/styles";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Artist } from "../models/models";
-import DeleteConfirmationDialog from "../components/deleteConfirmation";
-import MarqueeOnOverflow from "../components/marqueeOverflow";
+import DeleteConfirmationDialog from "../utils/deleteConfirmation";
+import MarqueeOnOverflow from "../utils/marqueeOverflow";
 import ArtistService from "../services/artistService";
-import {
-  getAlbumPath,
-  getArtistAlbumCreatePath,
-  getArtistPath,
-  toSlug,
-} from "../utils/slug";
+import { getAlbumPath, getArtistAlbumCreatePath, getArtistPath, toSlug } from "../utils/slug";
+import { useAuth } from "../context/authContext";
 
 const ArtistDetails: React.FC = () => {
   const { artistName } = useParams<{ artistName?: string }>();
+
   const location = useLocation();
   const navigate = useNavigate();
   const isNew = location.pathname === "/artists/new";
@@ -41,9 +27,15 @@ const ArtistDetails: React.FC = () => {
         }
       : null
   );
+
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [artistFetchErrorStatus, setArtistFetchErrorStatus] = useState<number | null>(null);
+
+  const { user } = useAuth();
+  const isAdmin = user?.id === 1;
 
   const [toast, setToast] = useState({
     open: false,
@@ -56,35 +48,42 @@ const ArtistDetails: React.FC = () => {
 
     const artistSlug = toSlug(artistName);
 
+    setArtistFetchErrorStatus(null);
+
     if (!artistSlug) {
-      setToast({
-        open: true,
-        message: "Artist not found.",
-        severity: "error",
-      });
+      setArtist(null);
+      setArtistFetchErrorStatus(404);
       setLoading(false);
       return;
     }
 
-    ArtistService.getAll()
-      .then((artists) => {
-        const data = artists.find((a) => toSlug(a.artistName) === artistSlug);
+    let cancelled = false;
 
-        if (!data) {
-          throw new Error("Artist not found");
-        }
+    setArtist(null);
+    setLoading(true);
+
+    ArtistService.getBySlug(artistSlug)
+      .then((data) => {
+        if (cancelled) return;
 
         setArtist(data);
         setLoading(false);
       })
-      .catch(() => {
-        setToast({
-          open: true,
-          message: "Error fetching artist.",
-          severity: "error",
-        });
+      .catch((error) => {
+        if (cancelled) return;
+
+        setArtist(null);
+
+        if (axios.isAxiosError(error)) {
+          setArtistFetchErrorStatus(error.response?.status ?? null);
+        }
+
         setLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [artistName, isNew]);
 
   const handleChange = (field: keyof Artist, value: any) => {
@@ -123,29 +122,51 @@ const ArtistDetails: React.FC = () => {
     return true;
   };
 
-  const handleSave = async () => {
+  const handleAdd = async () => {
+    if (!artist) return;
+    if (!(await isValid())) return;
+
+    setSaving(true);
+    
+    const request = ArtistService.create({
+      artistName: artist.artistName,
+      letter: artist.letter,
+    });
+
+    request.then(() => {
+      setToast({
+        open: true,
+        message: "Artist created successfully!",
+        severity: "success",
+      });
+      setSaving(false);
+      setTimeout(() => navigate("/artists"), 1200);
+    }).catch((err) => {
+      setToast({
+        open: true,
+        message: err?.response?.data?.message || "Failed to create artist.",
+        severity: "error"
+      });
+      setSaving(false);
+    });
+  };
+
+  const handleUpdate = async () => {
     if (!artist) return;
     if (!(await isValid())) return;
 
     setSaving(true);
 
-    const request = isNew
-      ? ArtistService.create({
-          artistName: artist.artistName,
-          letter: artist.letter,
-        })
-      : ArtistService.update(artist.id, {
-          artistName: artist.artistName,
-          letter: artist.letter,
-        });
+    const request = ArtistService.update(artist.id, {
+      artistName: artist.artistName,
+      letter: artist.letter,
+    });
 
     request
       .then(() => {
         setToast({
           open: true,
-          message: isNew
-            ? "Artist created successfully!"
-            : "Artist saved successfully!",
+          message: "Artist updated successfully!",
           severity: "success",
         });
         setSaving(false);
@@ -155,7 +176,7 @@ const ArtistDetails: React.FC = () => {
         setToast({
           open: true,
           message:
-            err?.response?.data?.message || "Failed to save artist.",
+            err?.response?.data?.message || "Failed to update artist.",
           severity: "error",
         });
         setSaving(false);
@@ -190,11 +211,25 @@ const ArtistDetails: React.FC = () => {
   if (loading)
     return (
       <Box textAlign="center" mt={5}>
-        <CircularProgress />
+        <CircularProgress size={60} thickness={4} sx={{ mt: 25 }}/>
       </Box>
     );
 
+  if (!artist && artistFetchErrorStatus === 404) {
+    return (
+      <Box textAlign="center" mt={5}>
+        <Typography variant="h5" fontWeight={600}>
+          404 - Artist not found.
+        </Typography>
+      </Box>
+    );
+  }
+
   if (!artist) return null;
+
+  const readOnlyFieldSx: SxProps<Theme> = {
+    "& .MuiInputBase-input": { opacity: isNew || isAdmin ? 1 : 0.5 }
+  };
 
   return (
     <Box
@@ -220,8 +255,10 @@ const ArtistDetails: React.FC = () => {
               onChange={(e) =>
                 handleChange("artistName", e.target.value)
               }
+              InputProps={{ readOnly: !isNew && !isAdmin }}
               fullWidth
               size="small"
+              sx={readOnlyFieldSx}
             />
             <TextField
               label="Letter"
@@ -229,26 +266,43 @@ const ArtistDetails: React.FC = () => {
               onChange={(e) =>
                 handleChange("letter", e.target.value.toUpperCase())
               }
+              InputProps={{ readOnly: !isNew && !isAdmin }}
               fullWidth
               size="small"
+              sx={readOnlyFieldSx}
             />
           </Stack>
 
           <Stack direction="row" spacing={1.5} mt={3} flexWrap="wrap" useFlexGap>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSave}
-              disabled={saving}
-              size="medium"
-            >
-              {saving
-                ? "Saving..."
-                : isNew
-                ? "Create Artist"
-                : "Save Changes"
-              }
-            </Button>
+            {!isNew && isAdmin && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleUpdate}
+                disabled={saving}
+                size="medium"
+              >
+                {saving
+                  ? "Saving..."
+                  : "Save Changes"
+                }
+              </Button>
+            )}
+
+            {isNew && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleAdd}
+                disabled={saving}
+                size="medium"
+              >
+                {saving
+                  ? "Saving..."
+                  : "Create Artist"
+                }
+              </Button>
+            )}
 
             {!isNew && (
               <Button

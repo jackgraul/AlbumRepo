@@ -9,8 +9,11 @@ class ArtistService {
     return data;
   }
 
-  static async getById(id: number | string): Promise<Artist> {
-    const { data } = await api.get<Artist>(`/artists/${id}`);
+  static async getBySlug(artistSlug: string): Promise<Artist> {
+    const { data } = await api.get<Artist>(
+      `/artists/${encodeURIComponent(artistSlug)}`
+    );
+
     return data;
   }
 

@@ -1,11 +1,15 @@
+import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia, Rating, FormControl, InputLabel, OutlinedInput } from "@mui/material";
+import { SxProps, Theme } from "@mui/material/styles";
 import { Album } from "../models/models";
-import DeleteConfirmationDialog from "../components/deleteConfirmation";
+import DeleteConfirmationDialog from "../utils/deleteConfirmation";
+import { normalizeArtistName } from "../utils/artistName";
 import AlbumService from "../services/albumService";
 import ArtistService from "../services/artistService";
 import { toSlug } from "../utils/slug";
+import { useAuth } from "../context/authContext";
 
 type AlbumLocationState = {
   fromSearch?: string;
@@ -17,23 +21,17 @@ const AlbumDetails: React.FC = () => {
     artistName?: string;
     albumName?: string;
   }>();
+
   const location = useLocation();
   const navigate = useNavigate();
   const locationState = location.state as AlbumLocationState | null;
-  const hasFromSearchState =
-    !!locationState &&
-    Object.prototype.hasOwnProperty.call(locationState, "fromSearch");
+
+  const hasFromSearchState = !!locationState && Object.prototype.hasOwnProperty.call(locationState, "fromSearch");
   const routeArtistSlug = toSlug(artistName);
-
-  const preservedSearch = hasFromSearchState
-    ? locationState.fromSearch ?? ""
-    : location.search;
-
+  const preservedSearch = hasFromSearchState ? locationState.fromSearch ?? "" : location.search;
   const fromArtistPath = locationState?.fromArtistPath ?? null;
 
-  const isNew =
-    location.pathname === "/albums/new" ||
-    location.pathname.endsWith("/albums/new");
+  const isNew = location.pathname === "/albums/new" || location.pathname.endsWith("/albums/new");
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
@@ -42,6 +40,11 @@ const AlbumDetails: React.FC = () => {
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
   const [artistLoading, setArtistLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [albumFetchErrorStatus, setAlbumFetchErrorStatus] = useState<number | null>(null);
+
+  const { user } = useAuth();
+  const isAdmin = user?.id === 1;
 
   useEffect(() => {
     setArtistLoading(true);
@@ -90,10 +93,87 @@ const AlbumDetails: React.FC = () => {
     [artistOptions, album?.artist?.id]
   );
 
+  const sortedArtistOptions = useMemo(() => {
+    return [...artistOptions].sort((a, b) => {
+      const aLetter = (a.letter || "#").toUpperCase();
+      const bLetter = (b.letter || "#").toUpperCase();
+
+      if (aLetter < bLetter) return -1;
+      if (aLetter > bLetter) return 1;
+
+      const aName = normalizeArtistName(a.artistName);
+      const bName = normalizeArtistName(b.artistName);
+
+      if (aName < bName) return -1;
+      if (aName > bName) return 1;
+
+      return 0;
+    });
+  }, [artistOptions]);
+
+  const lookupArtistId = album?.artist?.id ?? 0;
+  const lookupAlbumName = album?.albumName?.trim() ?? "";
+
+  useEffect(() => {
+    if (!isNew || !lookupArtistId || !lookupAlbumName) return;
+
+    let cancelled = false;
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const existingAlbum = await AlbumService.lookup(
+          lookupArtistId,
+          lookupAlbumName
+        );
+
+        if (cancelled) return;
+
+        if (existingAlbum) {
+          setAlbum((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  releaseYear: existingAlbum.releaseYear,
+                  releaseOrder: existingAlbum.releaseOrder,
+                  genre: existingAlbum.genre ?? "",
+                  coverURL: existingAlbum.coverURL ?? "",
+                }
+              : prev
+          );
+
+          setToast({
+            open: true,
+            message: "Existing album found. Details have been filled in.",
+            severity: "success",
+          });
+        } else {
+          setToast({
+            open: true,
+            message: "No existing album found. Enter the album details manually.",
+            severity: "info",
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setToast({
+            open: true,
+            message: "Unable to check the shared album catalogue.",
+            severity: "error",
+          });
+        }
+      }
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [isNew, lookupArtistId, lookupAlbumName]);
+
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
-    severity: "success" | "error";
+    severity: "success" | "error" | "info";
   }>({
     open: false,
     message: "",
@@ -112,6 +192,7 @@ const AlbumDetails: React.FC = () => {
     const albumSlug = toSlug(albumName);
 
     if (!artistSlug || !albumSlug) {
+      setAlbum(null);
       setToast({
         open: true,
         message: "Album not found.",
@@ -121,29 +202,31 @@ const AlbumDetails: React.FC = () => {
       return;
     }
 
-    AlbumService.getAll()
-      .then((albums) => {
-        const data = albums.find(
-          (a) =>
-            toSlug(a.artist?.artistName) === artistSlug &&
-            toSlug(a.albumName) === albumSlug
-        );
+    let cancelled = false;
 
-        if (!data) {
-          throw new Error("Album not found");
-        }
+    setLoading(true);
+
+    AlbumService.getBySlug(artistSlug, albumSlug)
+      .then((data) => {
+        if (cancelled) return;
 
         setAlbum(data);
         setLoading(false);
       })
-      .catch(() => {
-        setToast({
-          open: true,
-          message: "Error fetching album.",
-          severity: "error",
-        });
+      .catch((error) => {
+        if (cancelled) return;
+
+        if (axios.isAxiosError(error)) {
+          setAlbumFetchErrorStatus(error.response?.status ?? null);
+        }
+
+        setAlbum(null);
         setLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [artistName, albumName, isNew]);
 
   const handleChange = (field: keyof Album, value: any) => {
@@ -173,17 +256,39 @@ const AlbumDetails: React.FC = () => {
   const isValid = async () => {
     if (!album) return false;
 
+    // Rating validation applies to both creating and editing
+    if (album.rating != null && (album.rating < 0 || album.rating > 10)) {
+      setToast({
+        open: true,
+        message: "Rating must be between 0 and 10.",
+        severity: "error",
+      });
+      return false;
+    }
+
+    // Editing only changes the rating
+    if (!isNew) return true;
+
     if (!album.albumName.trim()) {
-      setToast({ open: true, message: "Album name is required.", severity: "error" });
+      setToast({
+        open: true,
+        message: "Album name is required.",
+        severity: "error",
+      });
       return false;
     }
 
     if (!album.artist || album.artist.id === 0) {
-      setToast({ open: true, message: "Artist must be selected.", severity: "error" });
+      setToast({
+        open: true,
+        message: "Artist must be selected.",
+        severity: "error",
+      });
       return false;
     }
 
     const existingAlbums = await AlbumService.getAll();
+
     const duplicate = existingAlbums.some(
       (a) =>
         a.artist?.id === album.artist.id &&
@@ -200,15 +305,6 @@ const AlbumDetails: React.FC = () => {
       return false;
     }
 
-    if (album.rating != null && (album.rating < 0 || album.rating > 10)) {
-      setToast({
-        open: true, 
-        message: "Rating must be between 0 and 10.",
-        severity: "error",
-      });
-      return false;
-    } 
-
     return true;
   };
 
@@ -220,7 +316,9 @@ const AlbumDetails: React.FC = () => {
 
     const request = isNew
       ? AlbumService.create(album)
-      : AlbumService.update(album.id, album);
+      : isAdmin
+      ? AlbumService.updateMetadata(album.id, album).then(() => AlbumService.update(album.id, album.rating ?? null))
+      : AlbumService.update(album.id, album.rating ?? null);
 
     request
       .then(() => {
@@ -271,11 +369,23 @@ const AlbumDetails: React.FC = () => {
   if (loading)
     return (
       <Box textAlign="center" mt={5}>
-        <CircularProgress />
+        <CircularProgress size={60} thickness={4} sx={{ mt: 25 }}/>
       </Box>
     );
 
+  if (!album && albumFetchErrorStatus === 404) {
+    return (
+      <Box textAlign="center" mt={5}>
+        <Typography variant="h6">404 - Album not found.</Typography>
+      </Box>
+    );
+  }
+
   if (!album) return null;
+
+  const readOnlyFieldSx: SxProps<Theme> = {
+    "& .MuiInputBase-input": { opacity: isNew || isAdmin ? 1 : 0.5 }
+  };
 
   return (
     <Box
@@ -305,18 +415,23 @@ const AlbumDetails: React.FC = () => {
             <TextField
               label="Album Name"
               value={album.albumName}
+              InputProps={{ readOnly: !isNew && !isAdmin }}
               onChange={(e) => handleChange("albumName", e.target.value)}
               fullWidth
               size="small"
+              sx={readOnlyFieldSx}
             />
 
             <Autocomplete
+              readOnly={!isNew && !isAdmin}
+              fullWidth
               size="small"
-              options={artistOptions}
+              options={sortedArtistOptions}
+              groupBy={(o) => (o.letter || "").toUpperCase()}
+              getOptionLabel={(o) => o.artistName ?? ""}
+              isOptionEqualToValue={(o, v) => o.id === v.id}
               value={selectedArtist}
               loading={artistLoading}
-              getOptionLabel={(o) => o?.artistName ?? ""}
-              isOptionEqualToValue={(o, v) => o.id === v.id}
               onChange={(_, newValue) => {
                 handleChange(
                   "artist",
@@ -333,30 +448,72 @@ const AlbumDetails: React.FC = () => {
                       }
                 );
               }}
+              ListboxProps={{sx: {py: 0.25}}}
+              renderOption={(props, option) => (
+                <Box
+                  component="li"
+                  {...props}
+                  sx={{
+                    fontSize: "0.7rem",
+                    minHeight: 28,
+                    py: 0.3,
+                  }}
+                >
+                  {option.artistName}
+                </Box>
+              )}
+              renderGroup={(params) => (
+                <li key={params.key} style={{ listStyle: "none" }}>
+                  <Box
+                    sx={{
+                      px: 1.5,
+                      py: 0.4,
+                      fontSize: "0.65rem",
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                      color: "primary.main",
+                    }}
+                  >
+                    {params.group}
+                  </Box>
+                  <Box component="ul" sx={{ p: 0, m: 0 }}>
+                    {params.children}
+                  </Box>
+                </li>
+              )}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label="Artist"
                   placeholder="Search artists…"
+                  fullWidth
                 />
               )}
+              sx={{
+                ...readOnlyFieldSx,
+                width: "100%",
+              }}
             />
 
             <TextField
               label="Release Year"
               type="number"
               value={album.releaseYear ?? ""}
+              InputProps={{ readOnly: !isNew && !isAdmin }}
               onChange={(e) => handleChange("releaseYear", Number(e.target.value))}
               fullWidth
               size="small"
+              sx={readOnlyFieldSx} 
             />
 
             <TextField
               label="Genre"
               value={album.genre ?? ""}
+              InputProps={{ readOnly: !isNew && !isAdmin }}
               onChange={(e) => handleChange("genre", e.target.value)}
               fullWidth
               size="small"
+              sx={readOnlyFieldSx}  
             />
 
             <FormControl fullWidth variant="outlined">
@@ -365,7 +522,6 @@ const AlbumDetails: React.FC = () => {
               <OutlinedInput
                 notched
                 label="Rating"
-                readOnly
                 sx={{p: 2}}
                 inputComponent={() => (
                   <Rating
@@ -391,13 +547,15 @@ const AlbumDetails: React.FC = () => {
               />
             </FormControl>
 
-            {!isNew && (
+            {isAdmin && (
               <TextField
                 label="Cover URL"
                 value={album.coverURL ?? ""}
+                InputProps={{ readOnly: !isNew && !isAdmin }}
                 onChange={(e) => handleChange("coverURL", e.target.value)}
                 fullWidth
                 size="small"
+                sx={readOnlyFieldSx}  
               />
             )}
           </Stack>
@@ -484,9 +642,10 @@ const AlbumDetails: React.FC = () => {
 
       <Snackbar
         open={toast.open}
-        autoHideDuration={2500}
+        autoHideDuration={2000}
         onClose={handleToastClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{ mb: 10 }}
       >
         <Alert
           onClose={handleToastClose}

@@ -1,9 +1,14 @@
 package com.example.AlbumRepo.Controller;
 
+import com.example.AlbumRepo.DTO.ArtistResponse;
 import com.example.AlbumRepo.Entity.Artist;
+import com.example.AlbumRepo.Entity.User;
 import com.example.AlbumRepo.Repository.IArtistRepository;
 import com.example.AlbumRepo.Service.ArtistService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.AlbumRepo.Service.UserService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,45 +16,47 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/artists")
 public class ArtistController {
-    @Autowired
-    IArtistRepository artistRepository;
     private final ArtistService artistService;
+    private final UserService userService;
 
-    public ArtistController(ArtistService artistService) {
+    public ArtistController(ArtistService artistService, UserService userService) {
         this.artistService = artistService;
+        this.userService = userService;
     }
 
-    // GET all artists
+    // GET all artists belonging to the authenticated user
     @GetMapping
-    public List<Artist> getAllArtists() {
-        return artistService.getArtistsWithAlbums();
+    public List<ArtistResponse> getAllArtists(@AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        return artistService.getArtistsForUser(user.getId());
     }
 
-    // GET artist by id
-    @GetMapping("/{id}")
-    public Artist getArtistById(@PathVariable Integer id) {
-        return artistRepository.findById(id).orElse(null);
+    // GET artist by slug for authenticated user
+    @GetMapping("/{artistSlug}")
+    public ArtistResponse getArtistBySlug(@PathVariable String artistSlug, @AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        return artistService.getArtistBySlugForUser(user.getId(), artistSlug);
     }
 
-    // POST create artist
+    // POST create artist for authenticated user
     @PostMapping("/add-artist")
-    public Artist createArtist(@RequestBody Artist artist) {
-        return artistRepository.save(artist);
+    public ArtistResponse createArtist(@RequestBody Artist artist, @AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        return artistService.addArtistForUser(user, artist);
     }
 
-    // PUT update artist
+    // PUT update artist for authenticated user
     @PutMapping("/update-artist/{id}")
-    public Artist updateArtist(@PathVariable Integer id, @RequestBody Artist artist) {
-        return artistRepository.findById(id).map(existingArtist -> {
-            existingArtist.setArtistName(artist.getArtistName());
-            existingArtist.setLetter(artist.getLetter());
-            return artistRepository.save(existingArtist);
-        }).orElse(null);
+    public ArtistResponse updateArtist(@PathVariable Integer id, @RequestBody Artist artist, @AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        return artistService.updateArtistForUser(user, id, artist);
     }
 
-    // DELETE artist
+    // DELETE artist for authenticated user
     @DeleteMapping("/delete-artist/{id}")
-    public void deleteArtist(@PathVariable Integer id) {
-        artistRepository.deleteById(id);
+    public ResponseEntity<Void> deleteArtist(@PathVariable Integer id, @AuthenticationPrincipal OidcUser oidcUser) {
+        User user = userService.getUserByGoogleId(oidcUser.getSubject());
+        artistService.removeArtistForUser(user, id);
+        return ResponseEntity.noContent().build();
     }
 }

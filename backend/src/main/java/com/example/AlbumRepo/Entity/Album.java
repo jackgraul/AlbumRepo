@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "Albums")
+@Table(name = "Albums", schema = "AlbumRepo")
 public class Album {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +25,6 @@ public class Album {
     private Integer releaseOrder;
 
     private String genre;
-    private Double rating;
 
     @Column(name = "cover_url")
     private String coverURL;
@@ -47,9 +46,6 @@ public class Album {
 
     public String getGenre() { return genre; }
     public void setGenre(String genre) { this.genre = genre; }
-
-    public Double getRating() { return rating; }
-    public void setRating(Double rating) { this.rating = rating; }
 
     public String getCoverURL() { return coverURL; }
     public void setCoverURL(String coverURL) { this.coverURL = coverURL; }

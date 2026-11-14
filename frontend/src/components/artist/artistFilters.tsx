@@ -1,14 +1,5 @@
 import React, { useMemo } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  InputLabel,
-  MenuItem,
-  FormControl,
-  Select,
-  Autocomplete,
-} from "@mui/material";
+import { Box, Button, TextField, InputLabel, MenuItem, FormControl, Select, Autocomplete } from "@mui/material";
 import { ArtistOption } from "../album/albumFilters";
 import { normalizeArtistName } from "../../utils/artistName";
 
