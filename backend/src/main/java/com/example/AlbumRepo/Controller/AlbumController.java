@@ -81,6 +81,7 @@ public class AlbumController {
         return ResponseEntity.ok(updatedAlbum);
     }
 
+    // PUT update album metadata (admin only)
     @PutMapping("/update-metadata/{id}")
     public Album updateMetadata(
             @PathVariable Integer id,
