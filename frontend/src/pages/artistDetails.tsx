@@ -208,6 +208,9 @@ const ArtistDetails: React.FC = () => {
     return (
       <Box textAlign="center" mt={5}>
         <CircularProgress size={60} thickness={4} sx={{mt: 25}}/>
+          <Typography variant="body1" mt={2}>
+            Loading artist...
+          </Typography> 
       </Box>
     );
 
