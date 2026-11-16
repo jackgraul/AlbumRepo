@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, useLocation  } from "react-router-dom";
+import {Routes, Route, useLocation} from "react-router-dom";
 import AlbumList from "./pages/albumList";
 import ArtistList from "./pages/artistList";
 import AlbumDetailsPage from "./pages/albumDetails";
@@ -9,8 +9,8 @@ import SignInPage from "./pages/signIn";
 import Navbar from "./components/common/navbar";
 import Footer from "./components/common/footer";
 import ProtectedRoute from "./utils/protectedRoute";
-import { Box } from "@mui/material";
-import { AuthProvider } from "./context/authContext";
+import {Box} from "@mui/material";
+import {AuthProvider} from "./context/authContext";
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -27,7 +27,7 @@ const App: React.FC = () => {
       >
         {!isSignInPage && <Navbar />}
 
-        <Box component="main" sx={{ flexGrow: 1 }}>
+        <Box component="main" sx={{flexGrow: 1}}>
           <Routes>
             {/* Default route */}
             <Route path="/" element={<SignInPage />} />

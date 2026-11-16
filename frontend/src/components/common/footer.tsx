@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import {Box, Typography} from "@mui/material";
 
 const Footer: React.FC = () => {
   const year = new Date().getFullYear();
@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
         py: 0.5,
         backgroundColor: "background.paper",
         boxShadow: 2,
-        textAlign: "center",
+        textAlign: "center"
       }}
     >
       <Typography variant="caption" color="text.secondary">

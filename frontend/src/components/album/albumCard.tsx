@@ -1,17 +1,9 @@
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Card, CardContent, Typography, Box, CardActionArea } from "@mui/material";
+import {useNavigate, useLocation} from "react-router-dom";
+import {Card, CardContent, Typography, Box, CardActionArea} from "@mui/material";
 import MarqueeOnOverflow from "../../utils/marqueeOverflow";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import { getAlbumPath } from "../../utils/slug";
-
-const stripArtistSearchParam = (search: string) => {
-  const params = new URLSearchParams(search);
-  params.delete("artist");
-
-  const nextSearch = params.toString();
-  return nextSearch ? `?${nextSearch}` : "";
-};
+import {LazyLoadImage} from "react-lazy-load-image-component";
+import {getAlbumPath} from "../../utils/slug";
 
 interface AlbumCardProps {
   id: number;
@@ -30,7 +22,6 @@ interface AlbumCardProps {
 }
 
 const AlbumCard: React.FC<AlbumCardProps> = ({
-  id,
   albumName,
   releaseYear,
   cardWidth,
@@ -60,13 +51,9 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
         backgroundColor: "background.paper",
         borderRadius: 1.5,
         overflow: "hidden",
-        transition: "box-shadow 0.2s ease, transform 0.2s ease",
+        transition: "box-shadow 0.2s ease, border-color 0.2s ease",
         border: "2px solid transparent",
-        "&:hover": {
-          boxShadow: 6,
-          transform: "translateY(-4px)",
-          borderColor: "#1976d2",
-        },
+        "&:hover": {boxShadow: 6, borderColor: "#1976d2"}
       }}
     >
       <CardActionArea
@@ -74,16 +61,16 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
           navigate(
             {
               pathname: getAlbumPath(artistName, albumName),
-              search: stripArtistSearchParam(searchToCarry),
+              search: searchToCarry,
             },
-            { state: { fromSearch: searchToCarry } }
+            {state: {fromSearch: searchToCarry}}
           )
         }
         sx={{
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          alignItems: "stretch",
+          alignItems: "stretch"
         }}
       >
         <Box
@@ -91,7 +78,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
             width: "100%",
             height: imageSize,
             overflow: "hidden",
-            flexShrink: 0,
+            flexShrink: 0
           }}
         >
           <LazyLoadImage
@@ -108,7 +95,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
               width: "100%",
               height: "100%",
               objectFit: "contain",
-              display: "block",
+              display: "block"
             }}
           />
         </Box>
@@ -124,16 +111,14 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
             flexDirection: "column",
             justifyContent: "flex-start",
             gap: 0.5,
-            "&:last-child": {
-              pb: 1,
-            },
+            "&:last-child": {pb: 1}
           }}
         >
           <MarqueeOnOverflow
             variant="subtitle2"
             fontWeight={600}
             duration={8}
-            sx={{ lineHeight: 1.1, fontSize: "0.85rem" }}
+            sx={{lineHeight: 1.1, fontSize: "0.85rem"}}
           >
             {albumName}
           </MarqueeOnOverflow>
@@ -142,7 +127,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
             variant="body2"
             color="text.secondary"
             duration={6}
-            sx={{ fontSize: "0.65rem", lineHeight: 0.8 }}
+            sx={{fontSize: "0.65rem", lineHeight: 0.8}}
           >
             {artistName} • {releaseYear}
           </MarqueeOnOverflow>
@@ -152,14 +137,14 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
               display: "flex",
               alignItems: "center",
               gap: 1,
-              minWidth: 0,
+              minWidth: 0
             }}
           >
             <MarqueeOnOverflow
               variant="body2"
               color="text.secondary"
               duration={8}
-              sx={{ fontSize: "0.65rem", lineHeight: 0.8 }}
+              sx={{fontSize: "0.65rem", lineHeight: 0.8}}
             >
               {genre}
             </MarqueeOnOverflow>
@@ -170,7 +155,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({
                   fontWeight: 500,
                   fontSize: "0.7rem",
                   flexShrink: 0,
-                  whiteSpace: "nowrap",
+                  whiteSpace: "nowrap"
                 }}
               >
                 ★ {rating} / 10

@@ -1,15 +1,15 @@
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia, Rating, FormControl, InputLabel, OutlinedInput } from "@mui/material";
-import { SxProps, Theme } from "@mui/material/styles";
-import { Album } from "../models/models";
+import React, {useEffect, useMemo, useState} from "react";
+import {useParams, useNavigate, useLocation} from "react-router-dom";
+import {Box, Button, TextField, Autocomplete, Typography, CircularProgress, Stack, Snackbar, Alert, Grid, Card, CardMedia, Rating, FormControl, InputLabel, OutlinedInput} from "@mui/material";
+import {SxProps, Theme} from "@mui/material/styles";
+import {Album} from "../models/models";
 import DeleteConfirmationDialog from "../utils/deleteConfirmation";
-import { normalizeArtistName } from "../utils/artistName";
+import {normalizeArtistName} from "../utils/artistName";
 import AlbumService from "../services/albumService";
 import ArtistService from "../services/artistService";
-import { toSlug } from "../utils/slug";
-import { useAuth } from "../context/authContext";
+import {toSlug} from "../utils/slug";
+import {useAuth} from "../context/authContext";
 
 type AlbumLocationState = {
   fromSearch?: string;
@@ -17,7 +17,7 @@ type AlbumLocationState = {
 };
 
 const AlbumDetails: React.FC = () => {
-  const { artistName, albumName } = useParams<{
+  const {artistName, albumName} = useParams<{
     artistName?: string;
     albumName?: string;
   }>();
@@ -35,7 +35,7 @@ const AlbumDetails: React.FC = () => {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
-  type ArtistOption = { id: number; artistName: string; letter: string };
+  type ArtistOption = {id: number; artistName: string; letter: string};
 
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
   const [artistLoading, setArtistLoading] = useState(false);
@@ -43,7 +43,7 @@ const AlbumDetails: React.FC = () => {
 
   const [albumFetchErrorStatus, setAlbumFetchErrorStatus] = useState<number | null>(null);
 
-  const { user } = useAuth();
+  const {user} = useAuth();
   const isAdmin = user?.id === 1;
 
   useEffect(() => {
@@ -53,7 +53,7 @@ const AlbumDetails: React.FC = () => {
         const opts = artists.map((a) => ({
           id: a.id,
           artistName: a.artistName,
-          letter: a.letter,
+          letter: a.letter
         }));
         setArtistOptions(opts);
 
@@ -65,7 +65,7 @@ const AlbumDetails: React.FC = () => {
           if (matchingArtist) {
             setAlbum((prev) =>
               prev && prev.artist.id === 0
-                ? { ...prev, artist: matchingArtist }
+                ? {...prev, artist: matchingArtist}
                 : prev
             );
           }
@@ -83,7 +83,7 @@ const AlbumDetails: React.FC = () => {
           genre: "",
           rating: null,
           coverURL: "",
-          artist: { id: 0, letter: "", artistName: "" },
+          artist: {id: 0, letter: "", artistName: ""}
         }
       : null
   );
@@ -121,10 +121,7 @@ const AlbumDetails: React.FC = () => {
 
     const timeoutId = window.setTimeout(async () => {
       try {
-        const existingAlbum = await AlbumService.lookup(
-          lookupArtistId,
-          lookupAlbumName
-        );
+        const existingAlbum = await AlbumService.lookup(lookupArtistId, lookupAlbumName);
 
         if (cancelled) return;
 
@@ -136,7 +133,7 @@ const AlbumDetails: React.FC = () => {
                   releaseYear: existingAlbum.releaseYear,
                   releaseOrder: existingAlbum.releaseOrder,
                   genre: existingAlbum.genre ?? "",
-                  coverURL: existingAlbum.coverURL ?? "",
+                  coverURL: existingAlbum.coverURL ?? ""
                 }
               : prev
           );
@@ -144,13 +141,13 @@ const AlbumDetails: React.FC = () => {
           setToast({
             open: true,
             message: "Existing album found. Details have been filled in.",
-            severity: "success",
+            severity: "success"
           });
         } else {
           setToast({
             open: true,
             message: "No existing album found. Enter the album details manually.",
-            severity: "info",
+            severity: "info"
           });
         }
       } catch (error) {
@@ -158,7 +155,7 @@ const AlbumDetails: React.FC = () => {
           setToast({
             open: true,
             message: "Unable to check the shared album catalogue.",
-            severity: "error",
+            severity: "error"
           });
         }
       }
@@ -177,7 +174,7 @@ const AlbumDetails: React.FC = () => {
   }>({
     open: false,
     message: "",
-    severity: "success",
+    severity: "success"
   });
 
   const previewUrl = useMemo(
@@ -196,7 +193,7 @@ const AlbumDetails: React.FC = () => {
       setToast({
         open: true,
         message: "Album not found.",
-        severity: "error",
+        severity: "error"
       });
       setLoading(false);
       return;
@@ -230,14 +227,14 @@ const AlbumDetails: React.FC = () => {
   }, [artistName, albumName, isNew]);
 
   const handleChange = (field: keyof Album, value: any) => {
-    setAlbum((prev) => (prev ? { ...prev, [field]: value } : prev));
+    setAlbum((prev) => (prev ? {...prev, [field]: value} : prev));
   };
 
   const goBack = () => {
     if (fromArtistPath) {
-      navigate(fromArtistPath, { replace: true });
+      navigate(fromArtistPath, {replace: true});
     } else if (isNew && routeArtistSlug) {
-      navigate(`/artists/${routeArtistSlug}`, { replace: true });
+      navigate(`/artists/${routeArtistSlug}`, {replace: true});
     } else {
       const params = new URLSearchParams(preservedSearch);
 
@@ -248,7 +245,7 @@ const AlbumDetails: React.FC = () => {
       const nextSearch = params.toString();
       navigate({
         pathname: "/albums",
-        search: nextSearch ? `?${nextSearch}` : "",
+        search: nextSearch ? `?${nextSearch}` : ""
       });
     }
   };
@@ -261,7 +258,7 @@ const AlbumDetails: React.FC = () => {
       setToast({
         open: true,
         message: "Rating must be between 0 and 10.",
-        severity: "error",
+        severity: "error"
       });
       return false;
     }
@@ -273,7 +270,7 @@ const AlbumDetails: React.FC = () => {
       setToast({
         open: true,
         message: "Album name is required.",
-        severity: "error",
+        severity: "error"
       });
       return false;
     }
@@ -282,7 +279,7 @@ const AlbumDetails: React.FC = () => {
       setToast({
         open: true,
         message: "Artist must be selected.",
-        severity: "error",
+        severity: "error"
       });
       return false;
     }
@@ -300,7 +297,7 @@ const AlbumDetails: React.FC = () => {
       setToast({
         open: true,
         message: "This artist already has an album with that name.",
-        severity: "error",
+        severity: "error"
       });
       return false;
     }
@@ -336,7 +333,7 @@ const AlbumDetails: React.FC = () => {
         setToast({
           open: true,
           message: "Failed to save album.",
-          severity: "error",
+          severity: "error"
         });
         setSaving(false);
       });
@@ -351,7 +348,7 @@ const AlbumDetails: React.FC = () => {
         setToast({
           open: true,
           message: "Album deleted successfully!",
-          severity: "success",
+          severity: "success"
         });
         setTimeout(goBack, 1000);
       })
@@ -359,17 +356,17 @@ const AlbumDetails: React.FC = () => {
         setToast({
           open: true,
           message: "Failed to delete album.",
-          severity: "error",
+          severity: "error"
         });
       });
   };
 
-  const handleToastClose = () => setToast((prev) => ({ ...prev, open: false }));
+  const handleToastClose = () => setToast((prev) => ({...prev, open: false}));
 
   if (loading)
     return (
       <Box textAlign="center" mt={5}>
-        <CircularProgress size={60} thickness={4} sx={{ mt: 25 }}/>
+        <CircularProgress size={60} thickness={4} sx={{mt: 25}}/>
       </Box>
     );
 
@@ -384,7 +381,7 @@ const AlbumDetails: React.FC = () => {
   if (!album) return null;
 
   const readOnlyFieldSx: SxProps<Theme> = {
-    "& .MuiInputBase-input": { opacity: isNew || isAdmin ? 1 : 0.5 }
+    "& .MuiInputBase-input": {opacity: isNew || isAdmin ? 1 : 0.5}
   };
 
   return (
@@ -393,8 +390,8 @@ const AlbumDetails: React.FC = () => {
         flexGrow: 1,
         display: "flex",
         justifyContent: "center",
-        px: { xs: 2, md: 3 },
-        mt: { xs: 2.5, md: 3 },
+        px: {xs: 2, md: 3},
+        mt: {xs: 2.5, md: 3}
       }}
     >
       <Grid
@@ -403,11 +400,16 @@ const AlbumDetails: React.FC = () => {
         sx={{
           maxWidth: 780,
           alignItems: "flex-start",
-          justifyContent: "center",
+          justifyContent: "center"
         }}
       >
         <Grid item xs={12} md={7}>
-          <Typography variant="h5" gutterBottom sx={{ mt: 5, mb: 2.25, fontWeight: 600 }}>
+          <Typography variant="h5" gutterBottom sx={{ 
+              mt: 5, 
+              mb: 2.25, 
+              fontWeight: 600 
+            }}
+          >
             {isNew ? "Add New Album" : "Edit Album"}
           </Typography>
 
@@ -415,7 +417,7 @@ const AlbumDetails: React.FC = () => {
             <TextField
               label="Album Name"
               value={album.albumName}
-              InputProps={{ readOnly: !isNew && !isAdmin }}
+              InputProps={{readOnly: !isNew && !isAdmin}}
               onChange={(e) => handleChange("albumName", e.target.value)}
               fullWidth
               size="small"
@@ -439,12 +441,12 @@ const AlbumDetails: React.FC = () => {
                     ? {
                         id: newValue.id,
                         artistName: newValue.artistName,
-                        letter: newValue.letter,
+                        letter: newValue.letter
                       }
                     : {
                         id: 0,
                         artistName: "",
-                        letter: "",
+                        letter: ""
                       }
                 );
               }}
@@ -456,14 +458,14 @@ const AlbumDetails: React.FC = () => {
                   sx={{
                     fontSize: "0.7rem",
                     minHeight: 28,
-                    py: 0.3,
+                    py: 0.3
                   }}
                 >
                   {option.artistName}
                 </Box>
               )}
               renderGroup={(params) => (
-                <li key={params.key} style={{ listStyle: "none" }}>
+                <li key={params.key} style={{listStyle: "none"}}>
                   <Box
                     sx={{
                       px: 1.5,
@@ -471,12 +473,12 @@ const AlbumDetails: React.FC = () => {
                       fontSize: "0.65rem",
                       fontWeight: 600,
                       lineHeight: 1.2,
-                      color: "primary.main",
+                      color: "primary.main"
                     }}
                   >
                     {params.group}
                   </Box>
-                  <Box component="ul" sx={{ p: 0, m: 0 }}>
+                  <Box component="ul" sx={{p: 0, m: 0}}>
                     {params.children}
                   </Box>
                 </li>
@@ -489,17 +491,14 @@ const AlbumDetails: React.FC = () => {
                   fullWidth
                 />
               )}
-              sx={{
-                ...readOnlyFieldSx,
-                width: "100%",
-              }}
+              sx={{...readOnlyFieldSx, width: "100%"}}
             />
 
             <TextField
               label="Release Year"
               type="number"
               value={album.releaseYear ?? ""}
-              InputProps={{ readOnly: !isNew && !isAdmin }}
+              InputProps={{readOnly: !isNew && !isAdmin}}
               onChange={(e) => handleChange("releaseYear", Number(e.target.value))}
               fullWidth
               size="small"
@@ -509,7 +508,7 @@ const AlbumDetails: React.FC = () => {
             <TextField
               label="Genre"
               value={album.genre ?? ""}
-              InputProps={{ readOnly: !isNew && !isAdmin }}
+              InputProps={{readOnly: !isNew && !isAdmin}}
               onChange={(e) => handleChange("genre", e.target.value)}
               fullWidth
               size="small"
@@ -540,7 +539,7 @@ const AlbumDetails: React.FC = () => {
                       },
                       "& .MuiRating-iconHover": {
                         color: "#1976d2",
-                      },
+                      }
                     }}
                   />
                 )}
@@ -551,7 +550,7 @@ const AlbumDetails: React.FC = () => {
               <TextField
                 label="Cover URL"
                 value={album.coverURL ?? ""}
-                InputProps={{ readOnly: !isNew && !isAdmin }}
+                InputProps={{readOnly: !isNew && !isAdmin}}
                 onChange={(e) => handleChange("coverURL", e.target.value)}
                 fullWidth
                 size="small"
@@ -622,7 +621,7 @@ const AlbumDetails: React.FC = () => {
                 borderRadius: 2,
                 overflow: "hidden",
                 boxShadow: 3,
-                mt: { xs: 3, md: 10 },
+                mt: {xs: 3, md: 10}
               }}
             >
               <CardMedia
@@ -630,7 +629,7 @@ const AlbumDetails: React.FC = () => {
                 height="272"
                 image={previewUrl}
                 alt={album.albumName}
-                sx={{ objectFit: "cover" }}
+                sx={{objectFit: "cover"}}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "/default-cover.png";
                 }}
@@ -644,14 +643,14 @@ const AlbumDetails: React.FC = () => {
         open={toast.open}
         autoHideDuration={2000}
         onClose={handleToastClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        sx={{ mb: 10 }}
+        anchorOrigin={{vertical: "bottom", horizontal: "center"}}
+        sx={{mb: 10}}
       >
         <Alert
           onClose={handleToastClose}
           severity={toast.severity}
           variant="filled"
-          sx={{ width: "100%" }}
+          sx={{width: "100%"}}
         >
           {toast.message}
         </Alert>

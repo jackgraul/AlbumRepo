@@ -1,11 +1,11 @@
-import { Accordion, AccordionDetails, AccordionSummary, Typography, Slider, Tooltip } from "@mui/material";
+import {Accordion, AccordionDetails, AccordionSummary, Typography, Slider, Tooltip} from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Box } from "@mui/system";
-import { useState } from "react";
+import {Box} from "@mui/system";
+import {useState} from "react";
 
 const scoreMarks = [0,1,2,3,4,5,6,7,8,9,10].map((value) => ({
     value,
-    label: value.toString(),
+    label: value.toString()
 }));
 
 const scoreDescriptions: Record<number, string> = {
@@ -19,7 +19,7 @@ const scoreDescriptions: Record<number, string> = {
     7: "Very Good — very strong with minor flaws",
     8: "Great — exceptional and highly memorable",
     9: "Amazing — outstanding in nearly every way",
-    10: "Masterpiece — exceptional, defining, and nearly flawless",
+    10: "Masterpiece — exceptional, defining, and nearly flawless"
 };
 
 const Guide: React.FC = () => {
@@ -37,7 +37,7 @@ const Guide: React.FC = () => {
     };
 
     return(
-        <Box sx={{ p: 2, mx: "auto" }}>
+        <Box sx={{p: 2, mx: "auto"}}>
             <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Typography>Score Ranges</Typography>
@@ -48,10 +48,10 @@ const Guide: React.FC = () => {
                         sx={{
                             width: "100%",
                             px: 2,
-                            py: 4,
+                            py: 4
                         }}
                     >
-                        <Box sx={{ position: "relative", height: 50 }}>
+                        <Box sx={{position: "relative", height: 50}}>
                             <Slider
                                 min={0}
                                 max={10}
@@ -62,14 +62,8 @@ const Guide: React.FC = () => {
                                     top: "50%",
                                     transform: "translateY(-50%)",
                                     width: "100%",
-
-                                    "& .MuiSlider-thumb": {
-                                        display: "none",
-                                    },
-
-                                    "& .MuiSlider-mark": {
-                                        display: "none",
-                                    },
+                                    "& .MuiSlider-thumb": {display: "none"},
+                                    "& .MuiSlider-mark": {display: "none"}
                                 }}
                             />
 
@@ -81,9 +75,7 @@ const Guide: React.FC = () => {
                                     arrow
                                     slotProps={{
                                         tooltip: {
-                                            sx: {
-                                                fontSize: "0.8rem"
-                                            }
+                                            sx: {fontSize: "0.8rem"}
                                         }
                                     }}
                                 >
@@ -93,30 +85,23 @@ const Guide: React.FC = () => {
                                             left: `${((mark.value) / 10) * 100}%`,
                                             top: "50%",
                                             transform: "translate(-50%, -50%)",
-
                                             width: 32,
                                             height: 32,
                                             borderRadius: "50%",
-
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "center",
-
                                             backgroundColor: "background.paper",
                                             border: "2px solid",
                                             borderColor: "primary.main",
-
                                             fontSize: "0.9rem",
                                             fontWeight: 600,
-
                                             cursor: "help",
-
                                             zIndex: 2,
-
                                             "&:hover": {
                                                 backgroundColor: "primary.main",
                                                 color: "primary.contrastText"
-                                            },
+                                            }
                                         }}
                                     >
                                         {mark.value}

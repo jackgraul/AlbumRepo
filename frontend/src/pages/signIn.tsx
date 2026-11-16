@@ -1,14 +1,9 @@
 import React from "react";
-import {
-  Box,
-  Button,
-  Container,
-  Typography
-} from "@mui/material";
-import { useAuth } from "../context/authContext";
+import {Box, Button, Container, Typography} from "@mui/material";
+import {useAuth} from "../context/authContext";
 
 const SignInPage: React.FC = () => {
-  const { login, user, loading } = useAuth();
+  const {login, user, loading} = useAuth();
 
   // If already authenticated, go to the albums page.
   if (!loading && user) {

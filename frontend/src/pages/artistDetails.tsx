@@ -1,18 +1,18 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Box, Card, CardActionArea, CardContent, Button, TextField, Typography, CircularProgress, Stack, Snackbar, Alert, Grid } from "@mui/material";
-import { SxProps, Theme } from "@mui/material/styles";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import { Artist } from "../models/models";
+import React, {useEffect, useState} from "react";
+import {useParams, useNavigate, useLocation} from "react-router-dom";
+import {Box, Card, CardActionArea, CardContent, Button, TextField, Typography, CircularProgress, Stack, Snackbar, Alert, Grid} from "@mui/material";
+import {SxProps, Theme} from "@mui/material/styles";
+import {LazyLoadImage} from "react-lazy-load-image-component";
+import {Artist} from "../models/models";
 import DeleteConfirmationDialog from "../utils/deleteConfirmation";
 import MarqueeOnOverflow from "../utils/marqueeOverflow";
 import ArtistService from "../services/artistService";
-import { getAlbumPath, getArtistAlbumCreatePath, getArtistPath, toSlug } from "../utils/slug";
-import { useAuth } from "../context/authContext";
+import {getAlbumPath, getArtistAlbumCreatePath, getArtistPath, toSlug} from "../utils/slug";
+import {useAuth} from "../context/authContext";
 
 const ArtistDetails: React.FC = () => {
-  const { artistName } = useParams<{ artistName?: string }>();
+  const {artistName} = useParams<{ artistName?: string }>();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ const ArtistDetails: React.FC = () => {
       ? {
           id: 0,
           artistName: "",
-          letter: "",
+          letter: ""
         }
       : null
   );
@@ -34,13 +34,13 @@ const ArtistDetails: React.FC = () => {
 
   const [artistFetchErrorStatus, setArtistFetchErrorStatus] = useState<number | null>(null);
 
-  const { user } = useAuth();
+  const {user} = useAuth();
   const isAdmin = user?.id === 1;
 
   const [toast, setToast] = useState({
     open: false,
     message: "",
-    severity: "success" as "success" | "error",
+    severity: "success" as "success" | "error"
   });
 
   useEffect(() => {
@@ -87,22 +87,22 @@ const ArtistDetails: React.FC = () => {
   }, [artistName, isNew]);
 
   const handleChange = (field: keyof Artist, value: any) => {
-    setArtist((prev) => (prev ? { ...prev, [field]: value } : prev));
+    setArtist((prev) => (prev ? {...prev, [field]: value} : prev));
   };
 
   const goBack = () =>
-    navigate({ pathname: "/artists", search: location.search });
+    navigate({pathname: "/artists", search: location.search});
 
   const isValid = async () => {
     if (!artist) return false;
 
     if (!artist.artistName.trim()) {
-      setToast({ open: true, message: "Artist name is required.", severity: "error" });
+      setToast({open: true, message: "Artist name is required.", severity: "error"});
       return false;
     }
 
     if (!artist.letter.trim()) {
-      setToast({ open: true, message: "Letter is required.", severity: "error" });
+      setToast({open: true, message: "Letter is required.", severity: "error"});
       return false;
     }
 
@@ -117,7 +117,7 @@ const ArtistDetails: React.FC = () => {
       setToast({
         open: true,
         message: "An artist with this name already exists.",
-        severity: "error",
+        severity: "error"
       });
       return;
     }
@@ -131,16 +131,13 @@ const ArtistDetails: React.FC = () => {
 
     setSaving(true);
     
-    const request = ArtistService.create({
-      artistName: artist.artistName,
-      letter: artist.letter,
-    });
+    const request = ArtistService.create({artistName: artist.artistName, letter: artist.letter});
 
     request.then(() => {
       setToast({
         open: true,
         message: "Artist created successfully!",
-        severity: "success",
+        severity: "success"
       });
       setSaving(false);
       setTimeout(goBack, 1200);
@@ -160,17 +157,14 @@ const ArtistDetails: React.FC = () => {
 
     setSaving(true);
 
-    const request = ArtistService.update(artist.id, {
-      artistName: artist.artistName,
-      letter: artist.letter,
-    });
+    const request = ArtistService.update(artist.id, {artistName: artist.artistName, letter: artist.letter});
 
     request
       .then(() => {
         setToast({
           open: true,
           message: "Artist updated successfully!",
-          severity: "success",
+          severity: "success"
         });
         setSaving(false);
         setTimeout(goBack, 1200);
@@ -178,9 +172,8 @@ const ArtistDetails: React.FC = () => {
       .catch((err) => {
         setToast({
           open: true,
-          message:
-            err?.response?.data?.message || "Failed to update artist.",
-          severity: "error",
+          message: err?.response?.data?.message || "Failed to update artist.",
+          severity: "error"
         });
         setSaving(false);
       });
@@ -195,7 +188,7 @@ const ArtistDetails: React.FC = () => {
         setToast({
           open: true,
           message: "Artist deleted successfully!",
-          severity: "success",
+          severity: "success"
         });
         setTimeout(goBack, 1000);
       })
@@ -203,18 +196,18 @@ const ArtistDetails: React.FC = () => {
         setToast({
           open: true,
           message: "Failed to delete artist.",
-          severity: "error",
+          severity: "error"
         });
       });
   };
 
   const handleToastClose = () =>
-    setToast((prev) => ({ ...prev, open: false }));
+    setToast((prev) => ({...prev, open: false}));
 
   if (loading)
     return (
       <Box textAlign="center" mt={5}>
-        <CircularProgress size={60} thickness={4} sx={{ mt: 25 }}/>
+        <CircularProgress size={60} thickness={4} sx={{mt: 25}}/>
       </Box>
     );
 
@@ -231,7 +224,7 @@ const ArtistDetails: React.FC = () => {
   if (!artist) return null;
 
   const readOnlyFieldSx: SxProps<Theme> = {
-    "& .MuiInputBase-input": { opacity: isNew || isAdmin ? 1 : 0.5 }
+    "& .MuiInputBase-input": {opacity: isNew || isAdmin ? 1 : 0.5}
   };
 
   return (
@@ -240,14 +233,14 @@ const ArtistDetails: React.FC = () => {
         height: "87vh",
         display: "flex",
         flexDirection: "column",
-        px: { xs: 1.5, sm: 2 },
-        pt: { xs: 1, sm: 1.25 },
-        pb: { xs: 1.5, sm: 2 },
+        px: {xs: 1.5, sm: 2},
+        pt: {xs: 1, sm: 1.25},
+        pb: {xs: 1.5, sm: 2}
       }}
     >
-      <Box className="scroll" sx={{ flex: 1, overflowY: "auto" }}>
-        <Box sx={{ maxWidth: 520, mx: "auto" }}>
-          <Typography variant="h5" gutterBottom sx={{ mt: 5, mb: 2.25, fontWeight: 600 }}>
+      <Box className="scroll" sx={{flex: 1, overflowY: "auto"}}>
+        <Box sx={{maxWidth: 520, mx: "auto"}}>
+          <Typography variant="h5" gutterBottom sx={{mt: 5, mb: 2.25, fontWeight: 600}}>
             {isNew ? "Add New Artist" : "Edit Artist"}
           </Typography>
 
@@ -258,7 +251,7 @@ const ArtistDetails: React.FC = () => {
               onChange={(e) =>
                 handleChange("artistName", e.target.value)
               }
-              InputProps={{ readOnly: !isNew && !isAdmin }}
+              InputProps={{readOnly: !isNew && !isAdmin}}
               fullWidth
               size="small"
               sx={readOnlyFieldSx}
@@ -269,7 +262,7 @@ const ArtistDetails: React.FC = () => {
               onChange={(e) =>
                 handleChange("letter", e.target.value.toUpperCase())
               }
-              InputProps={{ readOnly: !isNew && !isAdmin }}
+              InputProps={{readOnly: !isNew && !isAdmin}}
               fullWidth
               size="small"
               sx={readOnlyFieldSx}
@@ -360,13 +353,13 @@ const ArtistDetails: React.FC = () => {
               width: "100%",
               maxWidth: artist.albums && artist.albums.length <= 1 ? 320 : 760,
               mx: "auto",
-              pt: 0.5,
+              pt: 0.5
             }}
           >
             <Grid
               item
               xs={12}
-              sx={{ textAlign: "left" }}
+              sx={{textAlign: "left"}}
             >
               <Typography variant="subtitle1" fontWeight={600}>
                 Albums
@@ -394,17 +387,15 @@ const ArtistDetails: React.FC = () => {
                         "&:hover": {
                           transform: "translateY(-4px)",
                           boxShadow: 6,
-                          borderColor: "primary.main",
-                        },
+                          borderColor: "primary.main"
+                        }
                       }}
                     >
                       <CardActionArea
-                        sx={{ height: "100%" }}
+                        sx={{height: "100%"}}
                         onClick={() =>
                           navigate(getAlbumPath(artist.artistName, a.albumName), {
-                            state: {
-                              fromArtistPath: `${getArtistPath(artist.artistName)}${location.search}`,
-                            },
+                            state: {fromArtistPath: `${getArtistPath(artist.artistName)}${location.search}`}
                           })
                         }
                       >
@@ -415,7 +406,7 @@ const ArtistDetails: React.FC = () => {
                             alignItems: "center",
                             gap: 1.5,
                             px: 1.25,
-                            py: 1.25,
+                            py: 1.25
                           }}
                         >
                           <Box
@@ -423,7 +414,7 @@ const ArtistDetails: React.FC = () => {
                               width: 88,
                               height: 88,
                               overflow: "hidden",
-                              flexShrink: 0,
+                              flexShrink: 0
                             }}
                           >
                             <LazyLoadImage
@@ -440,7 +431,7 @@ const ArtistDetails: React.FC = () => {
                                 height: 88,
                                 borderRadius: 6,
                                 objectFit: "cover",
-                                objectPosition: "center",
+                                objectPosition: "center"
                               }}
                             />
                           </Box>
@@ -454,17 +445,15 @@ const ArtistDetails: React.FC = () => {
                             px: 0,
                             py: 0,
                             minWidth: 0,
-                            "&:last-child": {
-                              pb: 0,
-                            },
+                            "&:last-child": {pb: 0}
                           }}
                         >
-                          <Stack spacing={0.35} sx={{ width: "100%" }}>
+                          <Stack spacing={0.35} sx={{width: "100%"}}>
                             <MarqueeOnOverflow
                               variant="subtitle2"
                               fontWeight={600}
                               duration={8}
-                              sx={{ lineHeight: 1.25 }}
+                              sx={{lineHeight: 1.25}}
                             >
                               {a.albumName}
                             </MarqueeOnOverflow>
@@ -477,7 +466,7 @@ const ArtistDetails: React.FC = () => {
                               variant="body2"
                               color="text.secondary"
                               duration={8}
-                              sx={{ lineHeight: 1.25 }}
+                              sx={{lineHeight: 1.25}}
                             >
                               {a.genre ?? ""}
                             </MarqueeOnOverflow>
@@ -502,18 +491,16 @@ const ArtistDetails: React.FC = () => {
               </Grid>
             )}
 
-            <Grid item xs={12} sx={{ mt: 2, textAlign: "left" }}>
+            <Grid item xs={12} sx={{mt: 2, textAlign: "left"}}>
               <Button
                 variant="contained"
                 color="primary"
+                size="medium"
                 onClick={() =>
                   navigate(getArtistAlbumCreatePath(artist.artistName), {
-                    state: {
-                      fromArtistPath: `${getArtistPath(artist.artistName)}${location.search}`,
-                    },
+                    state: {fromArtistPath: `${getArtistPath(artist.artistName)}${location.search}`}
                   })
                 }
-                size="medium"
               >
                 + Add Album
               </Button>
@@ -539,13 +526,13 @@ const ArtistDetails: React.FC = () => {
         open={toast.open}
         autoHideDuration={2500}
         onClose={handleToastClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{vertical: "bottom", horizontal: "center"}}
       >
         <Alert
           onClose={handleToastClose}
           severity={toast.severity}
           variant="filled"
-          sx={{ width: "100%" }}
+          sx={{width: "100%"}}
         >
           {toast.message}
         </Alert>

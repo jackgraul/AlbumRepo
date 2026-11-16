@@ -1,9 +1,9 @@
 import React from "react";
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/authContext";
+import {Navigate, Outlet} from "react-router-dom";
+import {useAuth} from "../context/authContext";
 
 const ProtectedRoute: React.FC = () => {
-  const { user, loading } = useAuth();
+  const {user, loading} = useAuth();
 
   // Wait until the initial authentication check finishes.
   if (loading) {

@@ -1,8 +1,8 @@
-import React, { useMemo } from "react";
-import { Box, Button, TextField, InputLabel, MenuItem, FormControl, Select, Autocomplete } from "@mui/material";
-import { Album } from "../../models/models";
-import { normalizeArtistName } from "../../utils/artistName";
-import { toSlug } from "../../utils/slug";
+import React, {useMemo} from "react";
+import {Box, Button, TextField, InputLabel, MenuItem, FormControl, Select, Autocomplete} from "@mui/material";
+import {Album} from "../../models/models";
+import {normalizeArtistName} from "../../utils/artistName";
+import {toSlug} from "../../utils/slug";
 
 export interface ArtistOption {
   name: string;
@@ -25,20 +25,21 @@ interface AlbumFiltersProps {
   setSortBy: (value: string) => void;
   sortOrder: string;
   setSortOrder: (value: string) => void;
+  onResetFilters: () => void;
   artistOptions: ArtistOption[];
 }
 
-const letters = ["#", ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
+const letters = ["#", ...Array.from({length: 26}, (_, i) => String.fromCharCode(65 + i))];
 const compactSelectMenuProps = {
   PaperProps: {
     sx: {
       "& .MuiMenuItem-root": {
         fontSize: "0.7rem",
         minHeight: 28,
-        py: 0.3,
-      },
-    },
-  },
+        py: 0.3
+      }
+    }
+  }
 };
 
 const AlbumFilters: React.FC<AlbumFiltersProps> = ({
@@ -56,6 +57,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
   setSortBy,
   sortOrder,
   setSortOrder,
+  onResetFilters,
   artistOptions,
 }) => {
 
@@ -66,16 +68,6 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
 
   const handleArtistChange = (value: string | null) => {
     setSelectedArtist(value ? toSlug(value) : null);
-  };
-
-  const handleResetFilters = () => {
-    setSelectedLetter("");
-    setSelectedArtist(null);
-    setGenreQuery("");
-    setYearQuery("");
-    setMinRating("");
-    setSortBy("artist");
-    setSortOrder("asc");
   };
 
   const filteredArtistOptions = useMemo(() => {
@@ -117,29 +109,18 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         flexWrap: "wrap",
         gap: 1.25,
         alignItems: "center",
-        justifyContent: { xs: "flex-start", lg: "space-between" },
+        justifyContent: {xs: "flex-start", lg: "space-between"},
         mb: 1.75,
         mt: 0.25,
-        "& .MuiInputLabel-root": {
-          fontSize: "0.82rem",
-        },
-        "& .MuiInputBase-input": {
-          fontSize: "0.82rem",
-        },
-        "& .MuiSelect-select": {
-          fontSize: "0.82rem",
-        },
-        "& .MuiAutocomplete-input": {
-          fontSize: "0.82rem !important",
-        },
+        "& .MuiInputLabel-root": {fontSize: "0.82rem"},
+        "& .MuiInputBase-input": {fontSize: "0.82rem"},
+        "& .MuiSelect-select": {fontSize: "0.82rem"},
+        "& .MuiAutocomplete-input": {fontSize: "0.82rem !important"}
       }}
     >
       <FormControl
         size="small"
-        sx={{
-          width: { xs: "100%", sm: 104 },
-          flex: { lg: "0 0 104px" },
-        }}
+        sx={{width: {xs: "100%", sm: 104}, flex: {lg: "0 0 104px"}}}
       >
         <InputLabel>Letter</InputLabel>
         <Select
@@ -164,11 +145,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         getOptionLabel={(o) => o.name}
         value={selectedArtistOption}
         onChange={(_, newVal) => handleArtistChange(newVal?.name ?? null)}
-        ListboxProps={{
-          sx: {
-            py: 0.25,
-          },
-        }}
+        ListboxProps={{sx: {py: 0.25}}}
         renderOption={(props, option) => (
           <Box
             component="li"
@@ -176,7 +153,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
             sx={{
               fontSize: "0.7rem",
               minHeight: 28,
-              py: 0.3,
+              py: 0.3
             }}
           >
             {option.name}
@@ -191,12 +168,12 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
                 fontSize: "0.65rem",
                 fontWeight: 600,
                 lineHeight: 1.2,
-                color: "primary.main",
+                color: "primary.main"
               }}
             >
               {params.group}
             </Box>
-            <Box component="ul" sx={{ p: 0, m: 0 }}>
+            <Box component="ul" sx={{p: 0, m: 0}}>
               {params.children}
             </Box>
           </li>
@@ -204,10 +181,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         renderInput={(params) => (
           <TextField {...params} label="Artist" variant="outlined" />
         )}
-        sx={{
-          width: { xs: "100%", sm: 220, md: 240 },
-          flex: { lg: "1 1 220px" },
-        }}
+        sx={{width: {xs: "100%", sm: 220, md: 240}, flex: {lg: "1 1 220px"}}}
       />
 
       <TextField
@@ -216,10 +190,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         size="small"
         value={genreQuery ?? ""}
         onChange={(e) => setGenreQuery(e.target.value)}
-        sx={{
-          flex: { xs: "1 1 100%", lg: "1 1 180px" },
-          minWidth: { xs: "100%", sm: 140 },
-        }}
+        sx={{flex: {xs: "1 1 100%", lg: "1 1 180px"}, minWidth: {xs: "100%", sm: 140}}}
       />
 
       <TextField
@@ -228,18 +199,12 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
         size="small"
         value={yearQuery ?? ""}
         onChange={(e) => setYearQuery(e.target.value)}
-        sx={{
-          width: { xs: "calc(50% - 5px)", sm: 96 },
-          flex: { lg: "0 0 96px" },
-        }}
+        sx={{width: {xs: "calc(50% - 5px)", sm: 96}, flex: {lg: "0 0 96px"}}}
       />
 
       <FormControl
         size="small"
-        sx={{
-          width: { xs: "calc(50% - 5px)", sm: 110 },
-          flex: { lg: "0 0 110px" },
-        }}
+        sx={{width: {xs: "calc(50% - 5px)", sm: 110}, flex: {lg: "0 0 110px"}}}
       >
         <InputLabel>Rating</InputLabel>
         <Select
@@ -260,10 +225,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
 
       <FormControl
         size="small"
-        sx={{
-          width: { xs: "calc(50% - 5px)", sm: 148 },
-          flex: { lg: "1 1 148px" },
-        }}
+        sx={{width: {xs: "calc(50% - 5px)", sm: 148}, flex: {lg: "1 1 148px"}}}
       >
         <InputLabel>Sort By</InputLabel>
         <Select
@@ -282,10 +244,7 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
 
       <FormControl
         size="small"
-        sx={{
-          width: { xs: "calc(50% - 5px)", sm: 152 },
-          flex: { lg: "1 1 152px" },
-        }}
+        sx={{width: {xs: "calc(50% - 5px)", sm: 152}, flex: {lg: "1 1 152px"}}}
       >
         <InputLabel>Order</InputLabel>
         <Select
@@ -302,13 +261,13 @@ const AlbumFilters: React.FC<AlbumFiltersProps> = ({
       <Button
         variant="outlined"
         color="primary"
-        onClick={handleResetFilters}
+        onClick={onResetFilters}
         size="small"
         sx={{
-          minWidth: { xs: "100%", sm: 128 },
+          minWidth: {xs: "100%", sm: 128},
           height: 40,
-          ml: { lg: "auto" },
-          fontSize: "0.8rem",
+          ml: {lg: "auto"},
+          fontSize: "0.8rem"
         }}
       >
         Reset Filters

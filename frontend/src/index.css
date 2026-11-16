@@ -19,3 +19,7 @@ code {
   padding-right: 8px;
   box-sizing: border-box;
 }
+
+.artist-virtual-scroll {
+  padding-right: 0;
+}

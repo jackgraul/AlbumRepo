@@ -1,4 +1,4 @@
-import { createTheme } from "@mui/material/styles";
+import {createTheme} from "@mui/material/styles";
 
 const theme = createTheme({
   palette: {
@@ -12,14 +12,14 @@ const theme = createTheme({
     background: {
       default: "#121212",
       paper: "#1e1e1e",
-    },
+    }
   },
   typography: {
     fontFamily: ["Roboto", "Segoe UI", "Arial", "sans-serif"].join(","),
   },
   shape: {
     borderRadius: 12,
-  },
+  }
 });
 
 export default theme;

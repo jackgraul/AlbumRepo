@@ -1,8 +1,8 @@
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Card, CardContent, Typography, CardActionArea } from "@mui/material";
-import { Album } from "../../models/models";
-import { getArtistPath } from "../../utils/slug";
+import {useLocation, useNavigate} from "react-router-dom";
+import {Card, CardContent, Typography, CardActionArea} from "@mui/material";
+import {Album} from "../../models/models";
+import {getArtistPath} from "../../utils/slug";
 
 interface ArtistCardProps {
   id: number;
@@ -12,7 +12,7 @@ interface ArtistCardProps {
   avgRating?: string;
 }
 
-const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums, avgRating }) => {
+const ArtistCard: React.FC<ArtistCardProps> = ({letter, artistName, albums, avgRating}) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -31,10 +31,9 @@ const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums,
         transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
         "&:hover": {
           zIndex: 2,
-          transform: "translateY(-4px)",
           boxShadow: 6,
-          borderColor: "primary.main",
-        },
+          borderColor: "primary.main"
+        }
       }}
     >
       <CardActionArea
@@ -44,9 +43,9 @@ const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums,
             search: location.search,
           })
         }
-        sx={{ flexGrow: 1 }}
+        sx={{flexGrow: 1}}
       >
-        <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
+        <CardContent sx={{p: 1.5, "&:last-child": {pb: 1.5}}}>
           <Typography variant="subtitle1" fontWeight={600} noWrap>
             {artistName || "Unknown Artist"}
           </Typography>
@@ -55,7 +54,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums,
             variant="body2"
             color="text.secondary"
             noWrap
-            sx={{ fontSize: "0.8rem", mt: 0.25 }}
+            sx={{fontSize: "0.8rem", mt: 0.25}}
           >
             {letter}
           </Typography>
@@ -64,7 +63,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums,
             variant="body2"
             color="text.secondary"
             noWrap
-            sx={{ fontSize: "0.8rem" }}
+            sx={{fontSize: "0.8rem"}}
           >
             {albums.length} {albums.length === 1 ? "album" : "albums"}
           </Typography>
@@ -73,7 +72,7 @@ const ArtistCard: React.FC<ArtistCardProps> = ({ id, letter, artistName, albums,
             variant="body2"
             color="text.secondary"
             noWrap
-            sx={{ fontSize: "0.8rem" }}
+            sx={{fontSize: "0.8rem"}}
           >
             Avg. Rating: {avgRating !== undefined ? avgRating : "N/A"}
           </Typography>

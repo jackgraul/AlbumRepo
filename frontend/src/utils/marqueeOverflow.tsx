@@ -1,5 +1,5 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
-import { Typography, TypographyProps, Box } from "@mui/material";
+import React, {useLayoutEffect, useRef, useState} from "react";
+import {Typography, TypographyProps, Box} from "@mui/material";
 
 interface MarqueeOnOverflowProps extends TypographyProps {
   duration?: number;
@@ -41,7 +41,7 @@ const MarqueeOnOverflow: React.FC<MarqueeOnOverflowProps> = ({
       sx={{
         overflow: "hidden",
         whiteSpace: "nowrap",
-        width: "100%",
+        width: "100%"
       }}
     >
       <Typography
@@ -53,7 +53,7 @@ const MarqueeOnOverflow: React.FC<MarqueeOnOverflowProps> = ({
           display: "inline-block",
           whiteSpace: "nowrap",
           "--marquee-duration": `${duration}s`,
-          ...sx,
+          ...sx
         }}
       >
         {children}

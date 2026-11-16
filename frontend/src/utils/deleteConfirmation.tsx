@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from "@mui/material";
+import {Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography} from "@mui/material";
 
 interface DeleteConfirmationDialogProps {
   open: boolean;
@@ -14,7 +14,7 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   title = "Confirm Delete",
   message,
   onConfirm,
-  onCancel,
+  onCancel
 }) => {
   return (
     <Dialog
@@ -22,7 +22,7 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
       onClose={onCancel}
       fullWidth
       maxWidth="sm"
-      sx={{ "& .MuiDialog-paper": { minWidth: 500 } }}
+      sx={{"& .MuiDialog-paper": {minWidth: 500}}}
     >
       <DialogTitle>{title}</DialogTitle>
 

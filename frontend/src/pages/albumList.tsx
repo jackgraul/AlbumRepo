@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import { Box, CircularProgress, Typography } from "@mui/material";
-import { FixedSizeList as List } from "react-window";
-import { useSearchParams, useLocation } from "react-router-dom";
+import React, {useEffect, useState, useMemo, useCallback} from "react";
+import {Box, CircularProgress, Typography} from "@mui/material";
+import {FixedSizeList as List} from "react-window";
+import {useSearchParams, useLocation} from "react-router-dom";
 import AlbumCard from "../components/album/albumCard";
-import AlbumFilters, { ArtistOption } from "../components/album/albumFilters";
-import { getNormalizedLetter, normalizeArtistName } from "../utils/artistName";
+import AlbumFilters, {ArtistOption} from "../components/album/albumFilters";
+import {getNormalizedLetter, normalizeArtistName} from "../utils/artistName";
 import AlbumSummaryBar from "../components/album/albumSummaryBar";
-import { Album } from "../models/models";
+import {Album} from "../models/models";
 import AlbumService from "../services/albumService";
-import { toSlug } from "../utils/slug";
+import {toSlug} from "../utils/slug";
 
 const MIN_CARD_WIDTH = 145;
 const MAX_CARD_WIDTH = 172;
@@ -49,10 +49,9 @@ const getAlbumGridMetrics = (viewportWidth: number) => {
     imageSize,
     contentHeight,
     itemsPerRow,
-    rowHeight,
+    rowHeight
   };
 };
-
 
 const collator = new Intl.Collator(undefined, {
   usage: "sort",
@@ -63,26 +62,141 @@ const collator = new Intl.Collator(undefined, {
 const getArtistLetter = (album: Album): string =>
   getNormalizedLetter(album.artist?.artistName);
 
+interface AlbumRowData {
+  albums: Album[];
+  itemsPerRow: number;
+  contentWidth: number;
+  cardWidth: number;
+  imageSize: number;
+  contentHeight: number;
+  fromSearch: string;
+}
+
+const AlbumRowDataContext = React.createContext<AlbumRowData | null>(null);
+
+function AlbumRow({index, style}: {index: number; style: React.CSSProperties;}) {
+  const data = React.useContext(AlbumRowDataContext);
+  if (!data) return null;
+
+  const startIndex = index * data.itemsPerRow;
+  const rowItems = data.albums.slice(startIndex, startIndex + data.itemsPerRow);
+
+  return (
+    <Box
+      style={style}
+      sx={{width: "100%", py: 0.5}}
+    >
+      <Box
+        sx={{
+          width: `${data.contentWidth}px`,
+          mr: `${SCROLLBAR_GUTTER}px`,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gap: `${GAP}px`
+        }}
+      >
+        {rowItems.map((album) => (
+          <Box
+            key={album.id}
+            sx={{width: `${data.cardWidth}px`, flexShrink: 0}}
+          >
+            <AlbumCard
+              id={album.id}
+              albumName={album.albumName}
+              releaseYear={album.releaseYear}
+              cardWidth={data.cardWidth}
+              imageSize={data.imageSize}
+              contentHeight={data.contentHeight}
+              releaseOrder={album.releaseOrder ?? undefined}
+              genre={album.genre ?? ""}
+              rating={album.rating ?? undefined}
+              coverURL={album.coverURL ?? "/default-cover.png"}
+              artistName={album.artist?.artistName ?? "Unknown Artist"}
+              fromSearch={data.fromSearch}
+              eager
+            />
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
 const AlbumList: React.FC = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedLetter, setSelectedLetter] = useState<string>(searchParams.get("letter")?.toUpperCase() ?? "");
-  const [selectedArtist, setSelectedArtist] = useState<string | null>(searchParams.get("artist") ?? "");
-  const [genreQuery, setGenreQuery] = useState<string | null>(searchParams.get("genre")?.replace(/-/g, " ") ?? "");
-  const [yearQuery, setYearQuery] = useState<string | null>(searchParams.get("year") ?? "");
-  const [minRating, setMinRating] = useState<number | string>(() => {
+  const selectedLetter = searchParams.get("letter")?.toUpperCase() ?? "";
+  const selectedArtist = searchParams.get("artist");
+  const genreQuery = searchParams.get("genre") ?? "";
+  const yearQuery = searchParams.get("year") ?? "";
+  const minRating: number | string = (() => {
     const val = searchParams.get("min");
     if (!val) return "";
     if (val === "null") return "null";
     return Number(val);
-  });
-  const [sortBy, setSortBy] = useState<string>(searchParams.get("sortby") ?? "artist");
-  const [sortOrder, setSortOrder] = useState<string>(searchParams.get("order") ?? "asc");
+  })();
+  const sortBy = searchParams.get("sortby") ?? "artist";
+  const sortOrder = searchParams.get("order") ?? "asc";
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [containerWidth, setContainerWidth] = useState(window.innerWidth);
   const [artistOptions, setArtistOptions] = useState<ArtistOption[]>([]);
-  const isHydratingRef = useRef(false);
+
+  const updateSearchParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value == null || value === "") params.delete(key);
+      else params.set(key, value);
+    });
+
+    if (params.toString() !== searchParams.toString()) {
+      setSearchParams(params, {replace: true});
+    }
+  }, [searchParams, setSearchParams]);
+
+  const setSelectedLetter = useCallback((value: string) => {
+    updateSearchParams({
+      letter: value ? value.toLowerCase() : null,
+      ...(value ? {artist: null} : {})
+    });
+  }, [updateSearchParams]);
+
+  const setSelectedArtist = useCallback((value: string | null) => {
+    updateSearchParams({artist: value});
+  }, [updateSearchParams]);
+
+  const setGenreQuery = useCallback((value: string | null) => {
+    updateSearchParams({genre: value?.trim() ? value : null});
+  }, [updateSearchParams]);
+
+  const setYearQuery = useCallback((value: string | null) => {
+    updateSearchParams({year: value?.trim() ? value : null});
+  }, [updateSearchParams]);
+
+  const setMinRating = useCallback((value: number | string) => {
+    updateSearchParams({min: value === "" ? null : String(value)});
+  }, [updateSearchParams]);
+
+  const setSortBy = useCallback((value: string) => {
+    updateSearchParams({sortby: value === "artist" ? null : value});
+  }, [updateSearchParams]);
+
+  const setSortOrder = useCallback((value: string) => {
+    updateSearchParams({order: value === "asc" ? null : value});
+  }, [updateSearchParams]);
+
+  const resetFilters = useCallback(() => {
+    updateSearchParams({
+      letter: null,
+      artist: null,
+      genre: null,
+      year: null,
+      min: null,
+      sortby: null,
+      order: null
+    });
+  }, [updateSearchParams]);
 
   // handle window resize
   useEffect(() => {
@@ -90,38 +204,6 @@ const AlbumList: React.FC = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const buildSearchParams = () => {
-    const params = new URLSearchParams();
-    if (selectedLetter) params.set("letter", selectedLetter.toLowerCase());
-    if (selectedArtist) params.set("artist", selectedArtist);
-    if (genreQuery) params.set("genre", toSlug(genreQuery));
-    if (yearQuery) params.set("year", yearQuery);
-    if (minRating !== "") params.set("min", String(minRating));
-    if (sortBy !== "artist") params.set("sortby", sortBy);
-    if (sortOrder !== "asc") params.set("order", sortOrder);
-    return params;
-  };
-
-  // sync state to URL
-  useEffect(() => {
-    if (isHydratingRef.current) return;
-
-    const params = buildSearchParams();
-    const next = params.toString();
-    const curr = location.search.replace(/^\?/, "");
-    if (next !== curr) setSearchParams(params, { replace: true });
-  }, [
-    selectedLetter,
-    selectedArtist,
-    genreQuery,
-    yearQuery,
-    minRating,
-    sortBy,
-    sortOrder,
-    location.search,
-    setSearchParams,
-  ]);
 
   // initial data fetch
   useEffect(() => {
@@ -138,7 +220,7 @@ const AlbumList: React.FC = () => {
           const letter = getNormalizedLetter(name);
           const key = name.toLowerCase();
 
-          if (!byKey.has(key)) byKey.set(key, { name, letter });
+          if (!byKey.has(key)) byKey.set(key, {name, letter});
         });
 
         const artists = Array.from(byKey.values()).sort((x, y) => {
@@ -189,9 +271,9 @@ const AlbumList: React.FC = () => {
 
     // genre filter
     if (genreQuery && genreQuery.trim()) {
-      const gq = genreQuery.toLowerCase();
+      const gq = toSlug(genreQuery);
       filtered = filtered.filter((a) =>
-        a.genre?.toLowerCase().includes(gq)
+        toSlug(a.genre).includes(gq)
       );
     }
 
@@ -209,34 +291,34 @@ const AlbumList: React.FC = () => {
       normalizeArtistName(a.artist?.artistName),
       a.releaseYear ?? 9999,
       a.releaseOrder ?? 9999,
-      (a.albumName || "").toLowerCase(),
+      (a.albumName || "").toLowerCase()
     ];
 
     const sortExtractors: Record<string, (a: Album) => SortKey[]> = {
       artist: (a) => [
-        ...artistFallback(a),
+        ...artistFallback(a)
       ],
 
       title: (a) => [
         (a.albumName || "").toLowerCase(),
-        ...artistFallback(a),
+        ...artistFallback(a)
       ],
 
       year: (a) => [
         a.releaseYear ?? 9999,
         a.releaseOrder ?? 9999,
-        ...artistFallback(a),
+        ...artistFallback(a)
       ],
 
       genre: (a) => [
         (a.genre || "").toLowerCase(),
-        ...artistFallback(a),
+        ...artistFallback(a)
       ],
 
       rating: (a) => [
         a.rating ?? -1,
-        ...artistFallback(a),
-      ],
+        ...artistFallback(a)
+      ]
     };
 
     const compareTuples = (
@@ -296,88 +378,34 @@ const AlbumList: React.FC = () => {
     imageSize,
     contentHeight,
     itemsPerRow,
-    rowHeight,
+    rowHeight
   } = getAlbumGridMetrics(containerWidth);
   const rowCount = Math.ceil(filteredAlbums.length / itemsPerRow);
   const ratedAlbums = filteredAlbums.filter((a) => a.rating !== null);
   const listHeight = Math.max(380, window.innerHeight - 220);
 
-  // render contents
-  const Row = useMemo(
-    () =>
-      ({ index, style }: { index: number; style: React.CSSProperties }) => {
-        const startIndex = index * itemsPerRow;
-        const rowItems = filteredAlbums.slice(
-          startIndex,
-          startIndex + itemsPerRow
-        );
-
-        return (
-          <Box
-            style={style}
-            sx={{
-              width: "100%",
-              py: 0.5,
-            }}
-          >
-            <Box
-              sx={{
-                width: `${contentWidth}px`,
-                mr: `${SCROLLBAR_GUTTER}px`,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "stretch",
-                gap: `${GAP}px`,
-              }}
-            >
-              {rowItems.map((album) => (
-                <Box
-                  key={album.id}
-                  sx={{
-                    width: `${cardWidth}px`,
-                    flexShrink: 0,
-                  }}
-                >
-                  <AlbumCard
-                    id={album.id}
-                    albumName={album.albumName}
-                    releaseYear={album.releaseYear}
-                    cardWidth={cardWidth}
-                    imageSize={imageSize}
-                    contentHeight={contentHeight}
-                    releaseOrder={album.releaseOrder ?? undefined}
-                    genre={album.genre ?? ""}
-                    rating={album.rating ?? undefined}
-                    coverURL={
-                      album.coverURL ?? "/default-cover.png"
-                    }
-                    artistName={
-                      album.artist?.artistName ?? "Unknown Artist"
-                    }
-                    fromSearch={location.search}
-                    eager
-                  />
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        );
-      },
-    [
-      filteredAlbums,
-      itemsPerRow,
-      location.search,
-      contentWidth,
-      cardWidth,
-      imageSize,
-      contentHeight,
-    ]
-  );
+  const rowData = useMemo<AlbumRowData>(() => ({
+    albums: filteredAlbums,
+    itemsPerRow,
+    contentWidth,
+    cardWidth,
+    imageSize,
+    contentHeight,
+    fromSearch: location.search
+  }), [
+    filteredAlbums,
+    itemsPerRow,
+    contentWidth,
+    cardWidth,
+    imageSize,
+    contentHeight,
+    location.search
+  ]);
 
   if (loading) {
     return (
       <Box textAlign="center" mt={5}>
-        <CircularProgress size={60} thickness={4} sx={{ mt: 25 }}/>
+        <CircularProgress size={60} thickness={4} sx={{mt: 25}}/>
         <Typography variant="body1" mt={2}>
           Loading albums...
         </Typography>
@@ -388,10 +416,10 @@ const AlbumList: React.FC = () => {
   return (
     <Box
       sx={{
-        px: { xs: 1.5, sm: 2 },
-        pt: { xs: 0.75, sm: 1 },
-        pb: { xs: 0.75, sm: 1 },
-        overflowX: "hidden",
+        px: {xs: 1.5, sm: 2},
+        pt: {xs: 0.75, sm: 1},
+        pb: {xs: 0.75, sm: 1},
+        overflowX: "hidden"
       }}
     >
       <AlbumFilters
@@ -410,6 +438,7 @@ const AlbumList: React.FC = () => {
         setSortBy={setSortBy}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
+        onResetFilters={resetFilters}
       />
 
       <AlbumSummaryBar
@@ -433,17 +462,19 @@ const AlbumList: React.FC = () => {
       ) : (
         <Box
           className="scroll"
-          sx={{ display: "flex", justifyContent: "center" }}
+          sx={{display: "flex", justifyContent: "center"}}
         >
-          <List
-            height={listHeight}
-            itemCount={rowCount}
-            itemSize={rowHeight}
-            overscanCount={OVERSCAN_ROW_COUNT}
-            width={listWidth}
-          >
-            {Row}
-          </List>
+          <AlbumRowDataContext.Provider value={rowData}>
+            <List
+              height={listHeight}
+              itemCount={rowCount}
+              itemSize={rowHeight}
+              overscanCount={OVERSCAN_ROW_COUNT}
+              width={listWidth}
+            >
+              {AlbumRow}
+            </List>
+          </AlbumRowDataContext.Provider>
         </Box>
       )}
     </Box>

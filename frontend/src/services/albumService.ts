@@ -1,22 +1,22 @@
 import axios from "axios";
 import api from "../api/apiClient";
-import { Album } from "../models/models";
+import {Album} from "../models/models";
 
 type AlbumPayload = Omit<Album, "id">;
 
 const toAlbumPayload = (album: Album | AlbumPayload): AlbumPayload => {
-  const { id, ...payload } = album as Album;
+  const {id, ...payload} = album as Album;
   return payload;
 };
 
 class AlbumService {
   static async getAll(): Promise<Album[]> {
-    const { data } = await api.get<Album[]>("/albums");
+    const {data} = await api.get<Album[]>("/albums");
     return data;
   }
 
   static async getBySlug(artistSlug: string, albumSlug: string): Promise<Album> {
-    const { data } = await api.get<Album>(
+    const {data} = await api.get<Album>(
       `/albums/${encodeURIComponent(artistSlug)}/${encodeURIComponent(albumSlug)}`
     );
 
@@ -25,7 +25,7 @@ class AlbumService {
 
   static async lookup(artistId: number, albumName: string): Promise<Album | null> {
     try {
-      const { data } = await api.get<Album>("/albums/lookup", {
+      const {data} = await api.get<Album>("/albums/lookup", {
         params: {
           artistId,
           albumName,
@@ -43,23 +43,23 @@ class AlbumService {
   }
 
   static async create(album: Album | AlbumPayload): Promise<Album> {
-    const { data } = await api.post<Album>("/albums/add-album", {
+    const {data} = await api.post<Album>("/albums/add-album", {
       album: toAlbumPayload(album),
-      rating: album.rating ?? null,
+      rating: album.rating ?? null
     });
     return data;
   }
 
   static async update(id: number, rating: number | null): Promise<Album> {
-    const { data } = await api.put<Album>(
+    const {data} = await api.put<Album>(
       `/albums/update-album/${id}`,
-      { rating }
+      {rating}
     );
     return data;
   }
 
   static async updateMetadata(id: number, album: Album): Promise<Album> {
-    const { data } = await api.put<Album>(
+    const {data} = await api.put<Album>(
       `/albums/update-metadata/${id}`,
       album
     );

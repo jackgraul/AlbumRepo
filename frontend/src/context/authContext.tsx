@@ -1,8 +1,8 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, {createContext, useCallback, useContext, useEffect, useState} from "react";
 import api from "../api/apiClient";
-import { Snackbar, Alert } from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import { User } from "../models/models";
+import {Snackbar, Alert} from "@mui/material";
+import {useNavigate} from "react-router-dom";
+import {User} from "../models/models";
 
 interface AuthContextType {
   user: User | null;
@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setError(null);
 
-      const { data } = await api.get<User>("/auth/me");
+      const {data} = await api.get<User>("/auth/me");
 
       setUser(data);
       return data;
@@ -101,14 +101,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           open={toastOpen}
           autoHideDuration={2000}
           onClose={() => setToastOpen(false)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          sx={{ mb: 10 }}
+          anchorOrigin={{vertical: "bottom", horizontal: "center"}}
+          sx={{mb: 10}}
         >
           <Alert
             onClose={() => setToastOpen(false)}
             severity="success"
             variant="filled"
-            sx={{ width: "100%" }}
+            sx={{width: "100%"}}
           >
             Logged out successfully!
           </Alert>

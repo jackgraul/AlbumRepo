@@ -10,9 +10,7 @@ export const API_BASE_URL =
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: {"Content-Type": "application/json"}
 });
 
 let csrfToken: string | null = null;
@@ -21,7 +19,7 @@ let csrfTokenPromise: Promise<string> | null = null;
 export const refreshCsrfToken = async (): Promise<string> => {
   if (!csrfTokenPromise) {
     csrfTokenPromise = api
-      .get<{ token: string }>("/auth/csrf")
+      .get<{token: string}>("/auth/csrf")
       .then((response) => {
         csrfToken = response.data.token;
         return csrfToken;
