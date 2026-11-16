@@ -3,7 +3,7 @@ import axios from "axios";
 const LOCAL_API_BASE_URL = "http://localhost:7373/api";
 
 export const API_BASE_URL =
-  process.env.NODE_ENV === "development"
+  import.meta.env.DEV
     ? LOCAL_API_BASE_URL
     : "https://albumrepo-backend.onrender.com/api";
 
